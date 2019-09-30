@@ -22,39 +22,39 @@ export async function extractElements(page) {
 				html   : el.outerHTML.replace(/"/g, '\\"'),
 				styles : styles,
 				border : styles['border'],
-				color  : null,//window.elementColor(),
-				font   : null,//window.elementFont(),
-				bounds : null,//window.elementBounds(el, styles),
+				color  : elementColor(),
+				font   : elementFont(),
+				bounds : elementBounds(el, styles),
 				text   : el.innerText
 			});
 		}))),
 
 		'buttons' : await page.$$eval('button, input[type="button"], input[type="submit"]', (els)=> (els.map((el)=> {
-			const styles = window.elementStyles(el);
+			const styles = elementStyles(el);
 
 			return ({
 				html   : el.outerHTML.replace(/"/g, '\\"'),
 				styles : styles,
 				border : styles['border'],
-				color  : null,//window.elementColor(styles),
-				font   : null,//window.elementFont(styles),
-				bounds : null,//window.elementBounds(el, styles),
+				color  : elementColor(styles),
+				font   : elementFont(styles),
+				bounds : elementBounds(el, styles),
 				text   : el.value
 			});
 		}))),
 
 		'images'  : await page.$$eval('img', (els)=> (els.map((el)=> {
-			const styles = window.elementStyles(el);
+			const styles = elementStyles(el);
 
 			return ({
 				html   : el.outerHTML.replace(/"/g, '\\"'),
 				styles : styles,
 				border : styles['border'],
-				color  : null,//window.elementColor(styles),
-				font   : null,//window.elementFont(styles),
-				bounds : null,//window.elementBounds(el, styles),
+				color  : elementColor(styles),
+				font   : elementFont(styles),
+				bounds : elementBounds(el, styles),
 				text   : el.alt,
-				data   : null,//window.imageData(el, elementSize(styles)),
+				data   : imageData(el, elementBounds(styles).size),
 				url    : el.src
 			});
 		})))

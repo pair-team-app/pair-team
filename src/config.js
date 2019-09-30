@@ -11,13 +11,13 @@ import {
 
 
 export async function consts(page) {
-	await page.evaluate(()=> {
-		const CSS_AUTO_STYLES = CSS_AUTO_STYLES;
-		const CSS_CONDENSE_STYLES = CSS_CONDENSE_STYLES;
-		const CSS_NONE_STYLES = CSS_NONE_STYLES;
-		const CSS_NORMAL_STYLES = CSS_NORMAL_STYLES;
-		const CSS_ZERO_STYLES = CSS_ZERO_STYLES;
-	});
+	await page.evaluate((Consts)=> {
+		window.CSS_AUTO_STYLES = Consts.CSS_AUTO_STYLES;
+		window.CSS_CONDENSE_STYLES = Consts.CSS_CONDENSE_STYLES;
+		window.CSS_NONE_STYLES = Consts.CSS_NONE_STYLES;
+		window.CSS_NORMAL_STYLES = Consts.CSS_NORMAL_STYLES;
+		window.CSS_ZERO_STYLES = Consts.CSS_ZERO_STYLES;
+	}, { CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES });
 }
 
 export async function funcs(page) {
@@ -57,7 +57,7 @@ export async function funcs(page) {
 				delete (styles[patt]);
 			}
 
-			if (force && CSS_ZERO_STYLES.find((key, i)=> (key === patt && styles[key].replace(/[^\d]/g) === 0))) {
+			if (force && CSS_ZERO_STYLES.find((key, i)=> (key === patt && styles[key] && styles[key].replace(/[^\d]/g) === 0))) {
 				delete (styles[patt]);
 			}
 
@@ -211,16 +211,14 @@ export async function funcs(page) {
 }
 
 export async function listeners(page) {
-	await page.evaluate(()=> {
-		page.on('console', (msg) => {
-			msg.args().forEach((arg, i) => {
-				console.log(`${i}: ${msg.args()[i]}`);
-			});
+	page.on('console', (msg) => {
+		msg.args().forEach((arg, i) => {
+			console.log(`${i}: ${msg.args()[i]}`);
 		});
+	});
 
-		page.on('dialog', async (dialog) => {
-			console.log('DIALOG -->', { ...dialog });
-			await dialog.dismiss();
-		});
+	page.on('dialog', async (dialog) => {
+		console.log('DIALOG -->', { ...dialog });
+		await dialog.dismiss();
 	});
 }

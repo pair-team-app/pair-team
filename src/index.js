@@ -11,17 +11,16 @@ import { extractElements } from './utils';
 
 
 export async function puppetWorker(url, playgroundID) {
-	const browser = await puppeteer.launch();
+	const browser = await puppeteer.launch({ headless : true });
 	const page = await browser.newPage();
+
+	await page.goto(url);
+	await page.content();
+// 	await page.waitForSelector('[class="app"]');
 
 	await consts(page);
 	await listeners(page);
 	await funcs(page);
-
-	await page.goto(url);
-	await page.waitForSelector('[class="app"]');
-	page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
-
 
 	const extract = {
 		html       : {
@@ -57,7 +56,7 @@ export async function puppetWorker(url, playgroundID) {
 		new : response.playground.is_new
 	};
 
-	console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.yellow.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
+	console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.magenta.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
 	if (playground.new) {
 		response = await sendComponents(extract);
 	}
