@@ -1,0 +1,13 @@
+
+#-- os stuff --#
+.DS_STORE
+._DS_STORE
+
+#-- ide stuff --#
+.idea
+
+#-- compile stuff --#
+build
+
+#-- npm stuff --#
+node_modules
