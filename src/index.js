@@ -6,8 +6,8 @@ import chalk from 'chalk';
 import puppeteer from 'puppeteer';
 
 import { queryPlayground, sendComponents } from './api';
-import { consts, funcs, listeners } from 'config';
-import { extractElements } from 'utils';
+import { consts, funcs, listeners } from './config';
+import { extractElements } from './utils';
 
 
 export async function puppetWorker(url, playgroundID) {
