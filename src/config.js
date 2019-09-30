@@ -1,0 +1,226 @@
+#!/usr/bin/env node
+'use strict';
+
+
+import {
+	CSS_AUTO_STYLES,
+	CSS_CONDENSE_STYLES,
+	CSS_NONE_STYLES,
+	CSS_NORMAL_STYLES,
+	CSS_ZERO_STYLES } from './consts';
+
+
+export async function consts(page) {
+	await page.evaluate(()=> {
+		const CSS_AUTO_STYLES = CSS_AUTO_STYLES;
+		const CSS_CONDENSE_STYLES = CSS_CONDENSE_STYLES;
+		const CSS_NONE_STYLES = CSS_NONE_STYLES;
+		const CSS_NORMAL_STYLES = CSS_NORMAL_STYLES;
+		const CSS_ZERO_STYLES = CSS_ZERO_STYLES;
+	});
+}
+
+export async function funcs(page) {
+	await page.evaluate(()=> {
+		window.rgbaObject = (color)=> {
+			return ({
+				r : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.red) << 0,
+				g : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.green) << 0,
+				b : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.blue) << 0,
+				a : (color.includes('rgba')) ? parseFloat(color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+), (?<alpha>\d(\.\d+)?)\)$/).groups.alpha) * 255 : 255
+			});
+		};
+
+		window.purgeObjProps = (obj, patt)=> {
+			let pruneObj = { ...obj };
+
+			Object.keys(pruneObj).filter((key)=> (pruneObj.hasOwnProperty(key) && patt.test(key))).forEach((key)=> {
+				delete (pruneObj[key]);
+			});
+
+			return (pruneObj);
+		};
+
+		window.purgeStyles = (styles, patt, force=false)=> {
+			const regex = (force) ? new RegExp(`^${patt}`, 'i') : new RegExp(`^${patt}-`, 'i');
+			const purgeKeys = Object.keys(styles).filter((key)=> (regex.test(key)));
+
+			if (force && CSS_AUTO_STYLES.find((key, i)=> (key === patt && styles[key] === 'auto'))) {
+				delete (styles[patt]);
+			}
+
+			if (force && CSS_NONE_STYLES.find((key, i)=> (key === patt && styles[key] === 'none'))) {
+				delete (styles[patt]);
+			}
+
+			if (force && CSS_NORMAL_STYLES.find((key, i)=> (key === patt && styles[key] === 'normal'))) {
+				delete (styles[patt]);
+			}
+
+			if (force && CSS_ZERO_STYLES.find((key, i)=> (key === patt && styles[key].replace(/[^\d]/g) === 0))) {
+				delete (styles[patt]);
+			}
+
+
+			let suffixAttribs = {};
+			purgeKeys.forEach((key)=> {
+				suffixAttribs[key.replace(regex, '')] = null;
+			});
+
+			purgeKeys.forEach((key)=> {
+				const purgeProp = key.replace(regex, '');
+				if (suffixAttribs.hasOwnProperty(purgeProp) || force) {
+					suffixAttribs[purgeProp] = styles[key];
+				}
+			});
+
+			return ((Object.keys(styles).filter((key)=> regex.test(key))) ? purgeObjProps(styles, regex) : styles);
+		};
+
+		window.borderProcess = (styles)=> {
+			const keys = Object.keys(styles).filter((key) => /^border-/i.test(key));
+			let pos = {
+				bottom : null,
+				top    : null,
+				left   : null,
+				right  : null
+			};
+
+			keys.forEach((key)=> {
+				const suffix = key.replace(/^border-/, '');
+				if (pos.hasOwnProperty(suffix)) {
+					pos[suffix] = styles[key];
+				}
+			});
+
+			return ((Object.keys(styles).filter((key) => /^border-/i.test(key))) ? purgeObjProps(styles, /^border-.+/) : styles);
+		};
+
+		window.elementStyles = (element)=> {
+			let styles = {};
+			const compStyles = getComputedStyle(element);
+
+			Object.keys(compStyles).filter((key)=> (isNaN(parseInt(key, 10)))).forEach((key, i)=> {
+				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key].replace(/"/g, '\\"');
+			});
+
+			CSS_CONDENSE_STYLES.forEach((key)=> {
+				styles = purgeStyles(styles, key);
+			});
+
+			CSS_AUTO_STYLES.forEach((key)=> {
+				styles = purgeStyles(styles, key, true);
+			});
+
+			CSS_NONE_STYLES.forEach((key)=> {
+				styles = purgeStyles(styles, key, true);
+			});
+
+			CSS_NORMAL_STYLES.forEach((key)=> {
+				styles = purgeStyles(styles, key, true);
+			});
+
+			CSS_ZERO_STYLES.forEach((key)=> {
+				styles = purgeStyles(styles, key, true);
+			});
+
+			if (styles['zoom'] === 1) {
+				styles = purgeStyles(styles, 'zoom', true);
+			}
+
+			return (styles);
+		};
+
+		window.elementBounds = (el, styles)=> {
+			const origin = {
+				x : el.offset.left,
+				y : el.offset.top
+			};
+
+			const margin = {
+				top : (el.getBoundingClientRect().top - el.offsetTop)
+			};
+
+			const size = {
+				width  : styles.width.replace('px', '') << 0,
+				height : styles.height.replace('px', '') << 0
+			};
+
+			const center = {
+				x : origin.x + ((size.width * 0.5) << 0),
+				y : origin.y + ((size.height * 0.5) << 0)
+			};
+
+			return ({ origin, size, center });
+		};
+
+		window.elementColor = (styles)=> {
+			return ({
+				background : (Object.keys(styles).includes('background-color')) ? styles['background-color'] : rgbaObject('rgba(0, 0, 0, 1)'),
+				foreground : (Object.keys(styles).includes('color')) ? styles['color'] : rgbaObject('rgba(0, 0, 0, 1)')
+			});
+		};
+
+		window.elementFont = (styles)=> {
+			const line = (Object.keys(styles).includes('line-height') && !isNaN(styles['line-height'].replace(/[^\d]/g, ''))) ? styles['line-height'].replace('px', '') << 0 : (styles['font-size'].replace('px', '') << 0) * 1.2;
+			return ({
+				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'].replace(/\\"/g, '') : '',
+				size    : (Object.keys(styles).includes('font-size')) ? styles['font-size'].replace('px', '') << 0 : 0,
+				kerning : (Object.keys(styles).includes('letter-spacing')) ? parseFloat(styles['letter-spacing']) : 0,
+				line    : line
+			})
+		};
+
+		window.elementVisible = (el, styles)=> (el.is(':visible') && styles['visibility'] !== 'hidden' && parentsVisible(el));
+
+		window.hexRGBA = (color)=> {
+			const { red, green, blue, alpha } = color.match(/^#?(?<red>[A-Fa-f\d]{2})(?<green>[A-Fa-f\d]{2})(?<blue>[A-Fa-f\d]{2})((?<alpha>[A-Fa-f\d]{2})?)$/).groups;
+			return ({
+				r : parseInt(red, 16),
+				g : parseInt(green, 16),
+				b : parseInt(blue, 16),
+				a : (alpha) ? parseInt(alpha, 16) : 255
+			});
+		};
+
+		window.imageData = (el, size)=> {
+			const canvas = document.createElement('canvas');
+			canvas.width = size.width;
+			canvas.height = size.height;
+
+			const ctx = canvas.getContext('2d');
+			ctx.drawImage(el, 0, 0, size.width, size.height);
+
+			return (canvas.toDataURL('image/png'));
+		};
+
+		window.parentsVisible = (el)=> {
+			while (el.parentNode != null && el.parentNode instanceof Element) {
+				const parentStyles = elementStyles(el.parentNode);
+
+				if (parentStyles['display'] === 'none' || parentStyles['visibility'] === 'hidden') {
+					return (false);
+				}
+
+				el = el.parentNode;
+			}
+
+			return (true);
+		};
+	});
+}
+
+export async function listeners(page) {
+	await page.evaluate(()=> {
+		page.on('console', (msg) => {
+			msg.args().forEach((arg, i) => {
+				console.log(`${i}: ${msg.args()[i]}`);
+			});
+		});
+
+		page.on('dialog', async (dialog) => {
+			console.log('DIALOG -->', { ...dialog });
+			await dialog.dismiss();
+		});
+	});
+}

@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/de-ai/design-engine-extract/issues"
   },
-  "homepage": "https://github.com/de-ai/design-engine-extract#readme"
+  "homepage": "https://github.com/de-ai/design-engine-extract#readme",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "node-fetch": "^2.6.0",
+    "project-name": "^1.0.0",
+    "puppeteer": "^1.20.0",
+    "tmp-promise": "^2.0.2"
+  }
 }
