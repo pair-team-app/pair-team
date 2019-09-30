@@ -3,6 +3,7 @@
 
 
 import chalk from 'chalk';
+import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
 import { queryPlayground, sendComponents } from './api';
@@ -44,7 +45,7 @@ export async function puppetWorker(url, playgroundID) {
 
 	let response = null;
 	try {
-		response = await queryPlayground(playgroundID);
+		response = await queryPlayground(playgroundID, projectName());
 
 	} catch (e) {
 		console.log('%s Error querying server! %s', chalk.red.bold('ERROR'), e);

@@ -4,12 +4,11 @@
 
 import chalk from 'chalk';
 import fetch from 'node-fetch';
-import projectName from 'project-name';
 
 const API_ENDPT_URL = 'https://api.designengine.ai/playground.php';
 
 
-export async function queryPlayground(playgroundID) {
+export async function queryPlayground(playgroundID, projectName) {
 	console.log('%s Queueing playground…', chalk.cyan.bold('INFO'));
 
 	let response = await fetch(API_ENDPT_URL, {
@@ -20,7 +19,7 @@ export async function queryPlayground(playgroundID) {
 		body    : JSON.stringify({
 			action        : 'PLAYGROUND',
 			playground_id : playgroundID,
-			title         : projectName()
+			title         : projectName
 		})
 	});
 
