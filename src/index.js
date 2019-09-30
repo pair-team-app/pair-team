@@ -10,8 +10,7 @@ import { consts, funcs, listeners } from 'config';
 import { extractElements } from 'utils';
 
 
-export async function puppet(url, playgroundID) {
-
+export async function puppetWorker(url, playgroundID) {
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
 
@@ -37,6 +36,12 @@ export async function puppet(url, playgroundID) {
 //		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
 	console.log('IMAGE[0].border -->', extract.elements.images[0].styles);
 
+	const totals = {
+		'links'   : extract.elements.links.length,
+		'buttons' : extract.elements.buttons.length,
+		'images'  : extract.elements.images.length
+	};
+
 
 	let response = null;
 	try {
@@ -52,10 +57,11 @@ export async function puppet(url, playgroundID) {
 		new : response.playground.is_new
 	};
 
+	console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.yellow.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
 	if (playground.new) {
 		response = await sendComponents(extract);
 	}
 
 	await browser.close();
-	return (extract);
+	return ({ extract, totals, playground });
 }

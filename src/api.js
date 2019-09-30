@@ -10,6 +10,8 @@ const API_ENDPT_URL = 'https://api.designengine.ai/playground.php';
 
 
 export async function queryPlayground(playgroundID) {
+	console.log('%s Queueing playground…', chalk.cyan.bold('INFO'));
+
 	let response = await fetch(API_ENDPT_URL, {
 		method  : 'POST',
 		headers : {
