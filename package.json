@@ -6,6 +6,27 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "design-system",
+    "design",
+    "design-systems",
+    "design-module",
+    "design-npm-module",
+    "design-package",
+    "design-plugin",
+    "design-system",
+    "designer-system",
+    "design-system-module",
+    "designer-module",
+    "designer-plugin",
+    "css-design-system",
+    "node",
+    "node-module",
+    "javascript-module",
+    "javascript",
+    "code-to-design",
+    "design-to-code"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/de-ai/design-engine-extract.git"
