@@ -45,6 +45,7 @@ export async function extractElements(page) {
 
 		'images'  : await page.$$eval('img', (els)=> (els.map((el)=> {
 			const styles = elementStyles(el);
+			const bounds = elementBounds(el, styles);
 
 			return ({
 				html   : el.outerHTML.replace(/"/g, '\\"'),
@@ -52,9 +53,9 @@ export async function extractElements(page) {
 				border : styles['border'],
 				color  : elementColor(styles),
 				font   : elementFont(styles),
-				bounds : elementBounds(el, styles),
+				bounds : bounds,
 				text   : el.alt,
-				data   : imageData(el, elementBounds(styles).size),
+				data   : imageData(el, bounds.size),
 				url    : el.src
 			});
 		})))

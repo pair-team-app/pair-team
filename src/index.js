@@ -33,8 +33,9 @@ export async function puppetWorker(url, playgroundID) {
 	};
 
 //		console.log('::::', extract.elements);
-//		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
-	console.log('IMAGE[0].border -->', extract.elements.images[0].styles);
+// 		console.log('IMAGES -->', extract.elements.images[0]);
+		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
+// 	console.log('IMAGE[0].border -->', extract.elements.images[0].styles);
 
 	const totals = {
 		'links'   : extract.elements.links.length,

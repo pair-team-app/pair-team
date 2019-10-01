@@ -133,13 +133,13 @@ export async function funcs(page) {
 
 		window.elementBounds = (el, styles)=> {
 			const origin = {
-				x : el.offset.left,
-				y : el.offset.top
+				x : (el.offset) ? el.offset.left : 0,
+				y : (el.offset) ? el.offset.top : 0
 			};
 
-			const margin = {
-				top : (el.getBoundingClientRect().top - el.offsetTop)
-			};
+// 			const margin = {
+// 				top : (el.getBoundingClientRect().top - el.offsetTop)
+// 			};
 
 			const size = {
 				width  : styles.width.replace('px', '') << 0,
