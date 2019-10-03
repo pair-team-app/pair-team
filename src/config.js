@@ -7,7 +7,8 @@ import {
 	CSS_CONDENSE_STYLES,
 	CSS_NONE_STYLES,
 	CSS_NORMAL_STYLES,
-	CSS_ZERO_STYLES } from './consts';
+	CSS_ZERO_STYLES,
+	USER_AGENTS } from './consts';
 
 
 export async function consts(page) {
@@ -17,7 +18,8 @@ export async function consts(page) {
 		window.CSS_NONE_STYLES = Consts.CSS_NONE_STYLES;
 		window.CSS_NORMAL_STYLES = Consts.CSS_NORMAL_STYLES;
 		window.CSS_ZERO_STYLES = Consts.CSS_ZERO_STYLES;
-	}, { CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES });
+		window.USER_AGENTS = Consts.USER_AGENTS;
+	}, { CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES, USER_AGENTS });
 }
 
 export async function funcs(page) {
@@ -45,19 +47,19 @@ export async function funcs(page) {
 			const regex = (force) ? new RegExp(`^${patt}`, 'i') : new RegExp(`^${patt}-`, 'i');
 			const purgeKeys = Object.keys(styles).filter((key)=> (regex.test(key)));
 
-			if (force && CSS_AUTO_STYLES.find((key, i)=> (key === patt && styles[key] === 'auto'))) {
+			if (force && CSS_AUTO_STYLES.find((key)=> (key === patt && styles[key] === 'auto'))) {
 				delete (styles[patt]);
 			}
 
-			if (force && CSS_NONE_STYLES.find((key, i)=> (key === patt && styles[key] === 'none'))) {
+			if (force && CSS_NONE_STYLES.find((key)=> (key === patt && styles[key] === 'none'))) {
 				delete (styles[patt]);
 			}
 
-			if (force && CSS_NORMAL_STYLES.find((key, i)=> (key === patt && styles[key] === 'normal'))) {
+			if (force && CSS_NORMAL_STYLES.find((key)=> (key === patt && styles[key] === 'normal'))) {
 				delete (styles[patt]);
 			}
 
-			if (force && CSS_ZERO_STYLES.find((key, i)=> (key === patt && styles[key] && styles[key].replace(/[^\d]/g) === 0))) {
+			if (force && CSS_ZERO_STYLES.find((key)=> (key === patt && styles[key] && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0))) {
 				delete (styles[patt]);
 			}
 
@@ -69,7 +71,7 @@ export async function funcs(page) {
 
 			purgeKeys.forEach((key)=> {
 				const purgeProp = key.replace(regex, '');
-				if (suffixAttribs.hasOwnProperty(purgeProp) || force) {
+				if (suffixAttribs.hasOwnProperty(purgeProp)) {
 					suffixAttribs[purgeProp] = styles[key];
 				}
 			});
@@ -120,9 +122,9 @@ export async function funcs(page) {
 				styles = purgeStyles(styles, key, true);
 			});
 
-			CSS_ZERO_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
-			});
+// 			CSS_ZERO_STYLES.forEach((key)=> {
+// 				styles = purgeStyles(styles, key, true);
+// 			});
 
 			if (styles['zoom'] === 1) {
 				styles = purgeStyles(styles, 'zoom', true);
@@ -220,5 +222,15 @@ export async function listeners(page) {
 	page.on('dialog', async (dialog) => {
 		console.log('DIALOG -->', { ...dialog });
 		await dialog.dismiss();
+	});
+
+	page.on('request', (request)=> {
+// 		console.log('headers', request.headers());
+		request.continue(request.headers());
+	});
+	await page.setRequestInterception(true);
+
+	page.on('response', async (response)=> {
+		console.log('response', (await response.url()).replace('http://localhost:1066', ''));
 	});
 }

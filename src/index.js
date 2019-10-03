@@ -12,12 +12,26 @@ import { extractElements } from './utils';
 
 
 export async function puppetWorker(url, playgroundID) {
-	const browser = await puppeteer.launch({ headless : true });
+	const browser = await puppeteer.launch({
+// 		dumpio : true,
+		devtools : true,
+		headless : true
+	});
 	const page = await browser.newPage();
+
+	await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13 Mobile/15E148 Safari/604.1');
+	await page.setViewport({
+		width    : 1125,
+		height   : 2436,
+		isMobile : true,
+		hasTouch : true,
+		deviceScaleFactor : 3
+	});
+
+// 	await page.waitForSelector('[class="app"]');
 
 	await page.goto(url);
 	await page.content();
-// 	await page.waitForSelector('[class="app"]');
 
 	await consts(page);
 	await listeners(page);
@@ -34,6 +48,8 @@ export async function puppetWorker(url, playgroundID) {
 
 //		console.log('::::', extract.elements);
 // 		console.log('IMAGES -->', extract.elements.images[0]);
+// 		console.log('BUTTONS -->', extract.elements.buttons[0].styles);
+		console.log('BUTTONS -->', JSON.stringify(extract.elements.buttons[0], null, 2));
 // 		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
 // 	console.log('IMAGE[0].border -->', extract.elements.images[0].styles);
 
