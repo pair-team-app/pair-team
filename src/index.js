@@ -13,8 +13,8 @@ import { extractElements } from './utils';
 
 export async function puppetWorker(url, playgroundID) {
 	const devices = [
-		puppeteer.devices['iPhone X'],
-		puppeteer.devices['iPad Pro'],
+// 		puppeteer.devices['iPhone X'],
+// 		puppeteer.devices['iPad Pro'],
 		{
 			name      : 'Chrome',
 			userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
@@ -54,11 +54,12 @@ export async function puppetWorker(url, playgroundID) {
 			playground : playgroundID
 		};
 
-//		console.log('::::', extract.elements);
+// 		console.log('::::', extract.elements);
 // 		console.log('IMAGES -->', extract.elements.images[0]);
-// 		console.log('BUTTONS -->', extract.elements.buttons[0].styles);
+		console.log('BUTTONS -->', JSON.stringify([{...extract.elements.buttons[0], handle : null }, {...extract.elements.buttons[1], handle : null }], null, 2));
 // 		console.log('BUTTONS -->', JSON.stringify(extract.elements.buttons[0], null, 2));
-// 		console.log('BUTTONS -->', extract.elements.buttons[0]);
+// 		console.log('LINKS -->',  [extract.elements.links[0].styles, extract.elements.links[1].styles]);
+// 		console.log('LINKS -->',  [extract.elements.links[0].styles.length]);
 // 		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
 // 	console.log('IMAGE[0].border -->', extract.elements.images[0].styles);
 
@@ -84,6 +85,12 @@ export async function puppetWorker(url, playgroundID) {
 		};
 
 		console.log('\n%s [%s] Found: %s link(s), %s button(s), %s image(s).', chalk.cyan.bold('INFO'), chalk.grey(device.name), chalk.magenta.bold(totals.links), chalk.magenta.bold(totals.buttons), chalk.magenta.bold(totals.images));
+
+
+		const linkURLS = extract.elements.links.map((link)=> (link.href));
+// 		console.log('::::', linkURLS);
+
+
 		console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.magenta.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
 		if (playground.new) {
 			response = await sendComponents(extract);

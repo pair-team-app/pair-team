@@ -41,40 +41,17 @@ export async function funcs(page) {
 			return (pruneObj);
 		};
 
-		window.purgeStyles = (styles, patt, force=false)=> {
-			const regex = (force) ? new RegExp(`^${patt}`, 'i') : new RegExp(`^${patt}-`, 'i');
+		window.purgeStyles = (styles, patt)=> {
+			const regex =  new RegExp(`^${patt}-`, 'i');
 			const purgeKeys = Object.keys(styles).filter((key)=> (regex.test(key)));
 
-			if (force && CSS_AUTO_STYLES.find((key)=> (key === patt && styles[key] === 'auto'))) {
-				delete (styles[patt]);
-			}
-
-			if (force && CSS_NONE_STYLES.find((key)=> (key === patt && styles[key] === 'none'))) {
-				delete (styles[patt]);
-			}
-
-			if (force && CSS_NORMAL_STYLES.find((key)=> (key === patt && styles[key] === 'normal'))) {
-				delete (styles[patt]);
-			}
-
-			if (force && CSS_ZERO_STYLES.find((key)=> (key === patt && styles[key] && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0))) {
-				delete (styles[patt]);
-			}
-
-
-			let suffixAttribs = {};
 			purgeKeys.forEach((key)=> {
-				suffixAttribs[key.replace(regex, '')] = null;
+// 				if (styles.hasOwnProperty(key)) {
+					delete (styles[key]);
+// 				}
 			});
 
-			purgeKeys.forEach((key)=> {
-				const purgeProp = key.replace(regex, '');
-				if (suffixAttribs.hasOwnProperty(purgeProp)) {
-					suffixAttribs[purgeProp] = styles[key];
-				}
-			});
-
-			return ((Object.keys(styles).filter((key)=> regex.test(key))) ? purgeObjProps(styles, regex) : styles);
+			return (styles);
 		};
 
 		window.borderProcess = (styles)=> {
@@ -109,24 +86,28 @@ export async function funcs(page) {
 			});
 
 			CSS_AUTO_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				if (styles.hasOwnProperty(key) && styles[key].startsWith('auto')) {
+					delete (styles[key]);
+				}
 			});
 
 			CSS_NONE_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				if (styles.hasOwnProperty(key) && styles[key].startsWith('none')) {
+					delete (styles[key]);
+				}
 			});
 
 			CSS_NORMAL_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				if (styles.hasOwnProperty(key) && styles[key].startsWith('normal')) {
+					delete (styles[key]);
+				}
 			});
 
-// 			CSS_ZERO_STYLES.forEach((key)=> {
-// 				styles = purgeStyles(styles, key, true);
-// 			});
-
-			if (styles['zoom'] === 1) {
-				styles = purgeStyles(styles, 'zoom', true);
-			}
+			CSS_ZERO_STYLES.forEach((key)=> {
+				if (styles.hasOwnProperty(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0) {
+					delete (styles[key]);
+				}
+			});
 
 			return (styles);
 		};
@@ -212,9 +193,10 @@ export async function funcs(page) {
 
 export async function listeners(page) {
 	page.on('console', (msg) => {
-		msg.args().forEach((arg, i) => {
-			console.log(`${i}: ${msg.args()[i]}`);
-		});
+		console.log(`${msg.text()}`);
+// 		msg.args().forEach((arg, i) => {
+// 			console.log(`${i}: ${msg.args()[i]}`);
+// 		});
 	});
 
 	page.on('dialog', async (dialog) => {
