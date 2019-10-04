@@ -7,8 +7,7 @@ import {
 	CSS_CONDENSE_STYLES,
 	CSS_NONE_STYLES,
 	CSS_NORMAL_STYLES,
-	CSS_ZERO_STYLES,
-	USER_AGENTS } from './consts';
+	CSS_ZERO_STYLES } from './consts';
 
 
 export async function consts(page) {
@@ -18,8 +17,7 @@ export async function consts(page) {
 		window.CSS_NONE_STYLES = Consts.CSS_NONE_STYLES;
 		window.CSS_NORMAL_STYLES = Consts.CSS_NORMAL_STYLES;
 		window.CSS_ZERO_STYLES = Consts.CSS_ZERO_STYLES;
-		window.USER_AGENTS = Consts.USER_AGENTS;
-	}, { CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES, USER_AGENTS });
+	}, { CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES });
 }
 
 export async function funcs(page) {
