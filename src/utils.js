@@ -16,6 +16,8 @@ export async function captureScreen(page) {
 export async function extractElements(page) {
 	const elements = {
 		'links'   : await Promise.all((await page.$$('a')).map(async(node) => {
+
+			await node.hover();
 			const attribs = await page.evaluate((el)=> {
 				const styles = elementStyles(el);
 
@@ -25,7 +27,8 @@ export async function extractElements(page) {
 					border : styles['border'],
 					color  : elementColor(styles),
 					font   : elementFont(styles),
-					text   : el.innerText
+					text   : el.innerText,
+					href   : el.getAttribute('href')
 				});
 			}, node);
 

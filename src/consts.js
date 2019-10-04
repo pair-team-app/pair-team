@@ -98,6 +98,8 @@ export const CSS_NONE_STYLES = [
 	'float',
 	'grid',
 	'grid-template',
+	'max-height',
+	'max-width',
 	'offset',
 	'outline',
 	'perspective',
@@ -145,6 +147,8 @@ export const CSS_NORMAL_STYLES = [
 export const CSS_ZERO_STYLES = [
 	'baseline-shift',
 	'padding',
+	'margin',
+	'min-height',
 	'text-indent',
 	'-webkit-padding',
 	'-webkit-shape',
