@@ -2,36 +2,6 @@
 'use strict';
 
 
-export const DEVICES = {
-	iphone : {
-		mobile    : true,
-		userAgent : 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13 Mobile/15E148 Safari/604.1',
-		viewport  : {
-			width  : 1125,
-			height : 2436,
-			scale  : 3
-		}
-	},
-	ipad   : {
-		mobile    : true,
-		userAgent : 'Mozilla/5.0 (iPad; CPU OS 12_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1',
-		viewport  : {
-			width  : 2048,
-			height : 2732,
-			scale  : 2
-		}
-	},
-	chrome : {
-		mobile    : false,
-		userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-		viewport : {
-			width  : 1920,
-			height : 1080,
-			scale  : 1
-		}
-	}
-};
-
 export const CSS_AUTO_STYLES = [
 	'align-self',
 	'alignment-baseline',

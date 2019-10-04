@@ -8,26 +8,34 @@ import puppeteer from 'puppeteer';
 
 import { queryPlayground, sendComponents } from './api';
 import { consts, funcs, listeners } from './config';
-import { DEVICES } from './consts';
 import { extractElements } from './utils';
 
 
 export async function puppetWorker(url, playgroundID) {
-	const objs = Promise.all(await Object.keys(DEVICES).map(async(key)=> {
+	const devices = [
+		puppeteer.devices['iPhone X'],
+		puppeteer.devices['iPad Pro'],
+		{
+			name      : 'Chrome',
+			userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+			viewport  : {
+				width             : 1920,
+				height            : 1080,
+				deviceScaleFactor : 1,
+				isMobile          : false,
+				hasTouch          : false,
+				isLandscape       : false
+			}
+		}
+	];
+
+	const objs = Promise.all(await devices.map(async(device)=> {
 		const browser = await puppeteer.launch({
 			headless : true
 		});
 
 		const page = await browser.newPage();
-		await page.setUserAgent(DEVICES[key].userAgent);
-		await page.setViewport({
-			width             : DEVICES[key].viewport.width,
-			height            : DEVICES[key].viewport.height,
-			isMobile          : DEVICES[key].mobile,
-			hasTouch          : DEVICES[key].mobile,
-			deviceScaleFactor : DEVICES[key].viewport.scale
-		});
-
+		await page.emulate(device);
 // 	await page.waitForSelector('[class="app"]');
 
 		await page.goto(url);
@@ -75,6 +83,7 @@ export async function puppetWorker(url, playgroundID) {
 			new : response.playground.is_new
 		};
 
+		console.log('\n%s [%s] Found: %s link(s), %s button(s), %s image(s).', chalk.cyan.bold('INFO'), chalk.grey(device.name), chalk.magenta.bold(totals.links), chalk.magenta.bold(totals.buttons), chalk.magenta.bold(totals.images));
 		console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.magenta.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
 		if (playground.new) {
 			response = await sendComponents(extract);
