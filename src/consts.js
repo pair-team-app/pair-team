@@ -98,6 +98,7 @@ export const CSS_NONE_STYLES = [
 	'float',
 	'grid',
 	'grid-template',
+	'mask',
 	'max-height',
 	'max-width',
 	'offset',

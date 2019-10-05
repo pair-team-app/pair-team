@@ -43,46 +43,15 @@ export async function funcs(page) {
 			});
 		};
 
-		window.purgeObjProps = (obj, patt)=> {
+		window.purgeKeys = (obj, keys)=> {
 			let pruneObj = { ...obj };
-
-			Object.keys(pruneObj).filter((key)=> (pruneObj.hasOwnProperty(key) && patt.test(key))).forEach((key)=> {
-				delete (pruneObj[key]);
-			});
-
-			return (pruneObj);
-		};
-
-		window.purgeStyles = (styles, patt)=> {
-			const regex =  new RegExp(`^${patt}-`, 'i');
-			const purgeKeys = Object.keys(styles).filter((key)=> (regex.test(key)));
-
-			purgeKeys.forEach((key)=> {
-// 				if (styles.hasOwnProperty(key)) {
-					delete (styles[key]);
-// 				}
-			});
-
-			return (styles);
-		};
-
-		window.borderProcess = (styles)=> {
-			const keys = Object.keys(styles).filter((key) => /^border-/i.test(key));
-			let pos = {
-				bottom : null,
-				top    : null,
-				left   : null,
-				right  : null
-			};
-
 			keys.forEach((key)=> {
-				const suffix = key.replace(/^border-/, '');
-				if (pos.hasOwnProperty(suffix)) {
-					pos[suffix] = styles[key];
+				if (pruneObj.hasOwnProperty(key)) {
+					delete (pruneObj[key]);
 				}
 			});
 
-			return ((Object.keys(styles).filter((key) => /^border-/i.test(key))) ? purgeObjProps(styles, /^border-.+/) : styles);
+			return (pruneObj);
 		};
 
 		window.elementStyles = (element)=> {
@@ -93,35 +62,45 @@ export async function funcs(page) {
 				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key].replace(/"/g, '\\"');
 			});
 
+			let keys = [];
 			CSS_CONDENSE_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key);
+				const regex =  new RegExp(`^${key}-`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key))));
 			});
 
 			CSS_AUTO_STYLES.forEach((key)=> {
-				if (styles.hasOwnProperty(key) && styles[key].startsWith('auto')) {
-					delete (styles[key]);
-				}
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('auto'))));
 			});
 
 			CSS_NONE_STYLES.forEach((key)=> {
-				if (styles.hasOwnProperty(key) && styles[key].startsWith('none')) {
-					delete (styles[key]);
-				}
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('none'))));
 			});
 
 			CSS_NORMAL_STYLES.forEach((key)=> {
-				if (styles.hasOwnProperty(key) && styles[key].startsWith('normal')) {
-					delete (styles[key]);
-				}
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('normal'))));
 			});
 
 			CSS_ZERO_STYLES.forEach((key)=> {
-				if (styles.hasOwnProperty(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0) {
-					delete (styles[key]);
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0)));
+			});
+
+			Object.keys(styles).forEach((key)=> {
+				if (styles[key].length === 0) {
+					keys.push(key);
 				}
 			});
 
-			return (styles);
+			Object.keys(styles).forEach((key)=> {
+				if (!isNaN(styles[key])) {
+					styles[key] = (styles[key] << 0);
+				}
+			});
+
+			return (purgeKeys(styles, keys));
 		};
 
 		window.elementBounds = (el, styles)=> {
