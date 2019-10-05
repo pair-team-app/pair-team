@@ -57,8 +57,9 @@ export async function puppetWorker(url, playgroundID) {
 
 // 		console.log('::::', extract.elements);
 // 		console.log('IMAGES -->', extract.elements.images[0]);
-		console.log('BUTTONS -->', JSON.stringify([{...extract.elements.buttons[0], handle : null }, {...extract.elements.buttons[1], handle : null }], null, 2));
+// 		console.log('BUTTONS -->', JSON.stringify([{...extract.elements.buttons[0], handle : null }, {...extract.elements.buttons[1], handle : null }], null, 2));
 // 		console.log('BUTTONS -->', JSON.stringify(extract.elements.buttons[0], null, 2));
+		console.log('BUTTONS -->', extract.elements.buttons[0].styles, Object.keys(extract.elements.buttons[0].styles).length);
 // 		console.log('LINKS -->',  [extract.elements.links[0].styles, extract.elements.links[1].styles]);
 // 		console.log('LINKS -->',  [extract.elements.links[0].styles.length]);
 // 		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
