@@ -22,6 +22,18 @@ export async function consts(page) {
 
 export async function funcs(page) {
 	await page.evaluate(()=> {
+		window.scrollToBottom = (lastScrollTop)=> {
+			document.scrollingElement.scrollTop += 100;
+
+			if (document.scrollingElement.scrollTop !== lastScrollTop) {
+				lastScrollTop = document.scrollingElement.scrollTop;
+				requestAnimationFrame(scroll);
+			}
+
+			return (lastScrollTop);
+		};
+
+
 		window.rgbaObject = (color)=> {
 			return ({
 				r : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.red) << 0,
@@ -204,11 +216,11 @@ export async function listeners(page) {
 		await dialog.dismiss();
 	});
 
+	await page.setRequestInterception(true);
 	page.on('request', (request)=> {
 // 		console.log('headers', request.headers());
 		request.continue(request.headers());
 	});
-	await page.setRequestInterception(true);
 
 	page.on('response', async (response)=> {
 		console.log('response', (await response.url()).replace('http://localhost:1066', ''));

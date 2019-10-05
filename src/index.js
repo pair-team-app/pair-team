@@ -38,7 +38,7 @@ export async function puppetWorker(url, playgroundID) {
 		await page.emulate(device);
 // 	await page.waitForSelector('[class="app"]');
 
-		await page.goto(url);
+		const html = await page.goto(url, { waitUntil : 'networkidle2' });
 		await page.content();
 
 		await consts(page);
@@ -47,7 +47,8 @@ export async function puppetWorker(url, playgroundID) {
 
 		const extract = {
 			html       : {
-				doc    : await page.content(),
+// 				doc    : await page.content(),
+				doc    : html,
 				styles : await page.evaluate(()=> (getComputedStyle(document.documentElement)))
 			},
 			elements   : await extractElements(page),

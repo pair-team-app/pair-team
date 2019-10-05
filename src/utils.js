@@ -2,15 +2,24 @@
 'use strict';
 
 
-import { file } from 'tmp-promise';
+export async function captureElementImage(element, encoding='binary') {
+	const boundingBox = await element.boundingBox();
+	const padding = 10;
 
+	return (await element.screenshot({ encoding,
+		clip : {
+			x      : boundingBox.x - padding,
+			y      : boundingBox.y - padding,
+			width  : boundingBox.width + padding * 2,
+			height : boundingBox.height + padding * 2,
+		}
+	}));
+}
 
-export async function captureScreen(page) {
-	const { fd, path, cleanup } = await file();
-	const imagePath = `${path}.png`;
-
-	await page.screenshot({ path : imagePath });
-	return (imagePath);
+export async function captureScreenImage(page, encoding='base64') {
+	return (await page.screenshot({ encoding,
+		fullPage : true
+	}));
 }
 
 export async function extractElements(page) {
