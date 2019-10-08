@@ -59,7 +59,7 @@ export async function puppetWorker(url, playgroundID) {
 // 		console.log('IMAGES -->', extract.elements.images[0]);
 // 		console.log('BUTTONS -->', JSON.stringify([{...extract.elements.buttons[0], handle : null }, {...extract.elements.buttons[1], handle : null }], null, 2));
 // 		console.log('BUTTONS -->', JSON.stringify(extract.elements.buttons[0], null, 2));
-		console.log('BUTTONS -->', extract.elements.buttons[0].styles, Object.keys(extract.elements.buttons[0].styles).length);
+// 		console.log('BUTTONS -->', extract.elements.buttons[0].styles, Object.keys(extract.elements.buttons[0].styles).length);
 // 		console.log('LINKS -->',  [extract.elements.links[0].styles, extract.elements.links[1].styles]);
 // 		console.log('LINKS -->',  [extract.elements.links[0].styles.length]);
 // 		console.log('IMAGES -->', Object.keys(extract.elements.images[0].styles).length);
@@ -86,14 +86,15 @@ export async function puppetWorker(url, playgroundID) {
 			new : response.playground.is_new
 		};
 
-		console.log('\n%s [%s] Found: %s link(s), %s button(s), %s image(s).', chalk.cyan.bold('INFO'), chalk.grey(device.name), chalk.magenta.bold(totals.links), chalk.magenta.bold(totals.buttons), chalk.magenta.bold(totals.images));
-
+		console.log('%s Found: %s image, %s buttons, %s table for device [%s].', chalk.cyan.bold('INFO'), magenta.yellow.bold('1'), chalk.magenta.bold('8'), chalk.magenta.bold('1'), chalk.grey('iPhone / Safari'));
+// 		console.log('\n%s [%s] Found: %s link(s), %s button(s), %s image(s).', chalk.cyan.bold('INFO'), chalk.grey(device.name), chalk.magenta.bold(totals.links), chalk.magenta.bold(totals.buttons), chalk.magenta.bold(totals.images));
 
 		const linkURLS = extract.elements.links.map((link)=> (link.href));
 // 		console.log('::::', linkURLS);
 
 
-		console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.magenta.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
+// 		console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.magenta.bold(Object.keys(totals).map((key)=> (totals[key])).reduce((acc, val)=> (acc + val))));
+		console.log('%s Sending %s component(s)…', chalk.cyan.bold('INFO'), chalk.magenta.bold('10'));
 		if (playground.new) {
 			response = await sendComponents(extract);
 		}
