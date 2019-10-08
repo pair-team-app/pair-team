@@ -22,6 +22,18 @@ export async function consts(page) {
 
 export async function funcs(page) {
 	await page.evaluate(()=> {
+		window.scrollToBottom = (lastScrollTop)=> {
+			document.scrollingElement.scrollTop += 100;
+
+			if (document.scrollingElement.scrollTop !== lastScrollTop) {
+				lastScrollTop = document.scrollingElement.scrollTop;
+				requestAnimationFrame(scroll);
+			}
+
+			return (lastScrollTop);
+		};
+
+
 		window.rgbaObject = (color)=> {
 			return ({
 				r : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.red) << 0,
@@ -31,69 +43,15 @@ export async function funcs(page) {
 			});
 		};
 
-		window.purgeObjProps = (obj, patt)=> {
+		window.purgeKeys = (obj, keys)=> {
 			let pruneObj = { ...obj };
-
-			Object.keys(pruneObj).filter((key)=> (pruneObj.hasOwnProperty(key) && patt.test(key))).forEach((key)=> {
-				delete (pruneObj[key]);
+			keys.forEach((key)=> {
+				if (pruneObj.hasOwnProperty(key)) {
+					delete (pruneObj[key]);
+				}
 			});
 
 			return (pruneObj);
-		};
-
-		window.purgeStyles = (styles, patt, force=false)=> {
-			const regex = (force) ? new RegExp(`^${patt}`, 'i') : new RegExp(`^${patt}-`, 'i');
-			const purgeKeys = Object.keys(styles).filter((key)=> (regex.test(key)));
-
-			if (force && CSS_AUTO_STYLES.find((key, i)=> (key === patt && styles[key] === 'auto'))) {
-				delete (styles[patt]);
-			}
-
-			if (force && CSS_NONE_STYLES.find((key, i)=> (key === patt && styles[key] === 'none'))) {
-				delete (styles[patt]);
-			}
-
-			if (force && CSS_NORMAL_STYLES.find((key, i)=> (key === patt && styles[key] === 'normal'))) {
-				delete (styles[patt]);
-			}
-
-			if (force && CSS_ZERO_STYLES.find((key, i)=> (key === patt && styles[key] && styles[key].replace(/[^\d]/g) === 0))) {
-				delete (styles[patt]);
-			}
-
-
-			let suffixAttribs = {};
-			purgeKeys.forEach((key)=> {
-				suffixAttribs[key.replace(regex, '')] = null;
-			});
-
-			purgeKeys.forEach((key)=> {
-				const purgeProp = key.replace(regex, '');
-				if (suffixAttribs.hasOwnProperty(purgeProp) || force) {
-					suffixAttribs[purgeProp] = styles[key];
-				}
-			});
-
-			return ((Object.keys(styles).filter((key)=> regex.test(key))) ? purgeObjProps(styles, regex) : styles);
-		};
-
-		window.borderProcess = (styles)=> {
-			const keys = Object.keys(styles).filter((key) => /^border-/i.test(key));
-			let pos = {
-				bottom : null,
-				top    : null,
-				left   : null,
-				right  : null
-			};
-
-			keys.forEach((key)=> {
-				const suffix = key.replace(/^border-/, '');
-				if (pos.hasOwnProperty(suffix)) {
-					pos[suffix] = styles[key];
-				}
-			});
-
-			return ((Object.keys(styles).filter((key) => /^border-/i.test(key))) ? purgeObjProps(styles, /^border-.+/) : styles);
 		};
 
 		window.elementStyles = (element)=> {
@@ -104,31 +62,45 @@ export async function funcs(page) {
 				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key].replace(/"/g, '\\"');
 			});
 
+			let keys = [];
 			CSS_CONDENSE_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key);
+				const regex =  new RegExp(`^${key}-`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key))));
 			});
 
 			CSS_AUTO_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('auto'))));
 			});
 
 			CSS_NONE_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('none'))));
 			});
 
 			CSS_NORMAL_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('normal'))));
 			});
 
 			CSS_ZERO_STYLES.forEach((key)=> {
-				styles = purgeStyles(styles, key, true);
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0)));
 			});
 
-			if (styles['zoom'] === 1) {
-				styles = purgeStyles(styles, 'zoom', true);
-			}
+			Object.keys(styles).forEach((key)=> {
+				if (styles[key].length === 0) {
+					keys.push(key);
+				}
+			});
 
-			return (styles);
+			Object.keys(styles).forEach((key)=> {
+				if (!isNaN(styles[key])) {
+					styles[key] = (styles[key] << 0);
+				}
+			});
+
+			return (purgeKeys(styles, keys));
 		};
 
 		window.elementBounds = (el, styles)=> {
@@ -212,13 +184,24 @@ export async function funcs(page) {
 
 export async function listeners(page) {
 	page.on('console', (msg) => {
-		msg.args().forEach((arg, i) => {
-			console.log(`${i}: ${msg.args()[i]}`);
-		});
+		console.log(`${msg.text()}`);
+// 		msg.args().forEach((arg, i) => {
+// 			console.log(`${i}: ${msg.args()[i]}`);
+// 		});
 	});
 
 	page.on('dialog', async (dialog) => {
 		console.log('DIALOG -->', { ...dialog });
 		await dialog.dismiss();
+	});
+
+	await page.setRequestInterception(true);
+	page.on('request', (request)=> {
+// 		console.log('headers', request.headers());
+		request.continue(request.headers());
+	});
+
+	page.on('response', async (response)=> {
+		console.log('response', (await response.url()).replace('http://localhost:1066', ''));
 	});
 }
