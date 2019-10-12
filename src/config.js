@@ -54,6 +54,13 @@ export async function funcs(page) {
 			return (pruneObj);
 		};
 
+		window.elementText = async(element)=> {
+			const innerHTML = await element.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)));
+			if (/^<.+>$/.test(innerHTML)) {
+
+			}
+		};
+
 		window.elementStyles = (element)=> {
 			let styles = {};
 			const compStyles = getComputedStyle(element);

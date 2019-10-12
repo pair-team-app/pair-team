@@ -2,6 +2,8 @@
 'use strict';
 
 
+export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
+
 export const CSS_AUTO_STYLES = [
 	'align-self',
 	'alignment-baseline',

@@ -3,10 +3,9 @@
 
 
 import chalk from 'chalk';
-import stringify from 'json-stringify-safe';
 import fetch from 'node-fetch';
 
-const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
+import { API_ENDPT_URL } from './consts';
 
 
 export async function createPlayground(userID, device, doc) {

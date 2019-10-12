@@ -47,6 +47,9 @@ export async function puppetWorker(url, playgroundID) {
 		await funcs(page);
 
 		const elements = await extractElements(page);
+		console.log(device.name, elements.buttons.map((button)=> ({ ...button,
+			styles : {}
+		})));
 
 		const doc = {
 			html        : (await page.content()).replace(/"/g, '\\"'),
@@ -55,7 +58,7 @@ export async function puppetWorker(url, playgroundID) {
 			url         : await page.url(),
 			image       : await captureScreenImage(page),
 			styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
-			links       : elements.links.map((link)=> (link.href)).join(' ')
+			links       : elements.links.map((link)=> (link.meta.href)).join(' ')
 		};
 
 // 		console.log('::::', extract.doc.styles);
