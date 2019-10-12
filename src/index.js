@@ -8,7 +8,7 @@ import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, listeners } from './config';
-import { captureScreenImage, extractElements } from './utils';
+import { captureScreenImage, extractElements, extractMeta } from './utils';
 
 
 export async function puppetWorker(url, playgroundID) {
@@ -37,6 +37,7 @@ export async function puppetWorker(url, playgroundID) {
 		const page = await browser.newPage();
 		await page.emulate(device);
 		await page.goto(url, { waitUntil : 'networkidle2' });
+		await page.content();
 
 		await consts(page);
 		await listeners(page);
@@ -44,9 +45,11 @@ export async function puppetWorker(url, playgroundID) {
 
 
 		const elements = await extractElements(page);
-		console.log(device.name, elements.links.map((el)=> ({ ...el,
-			styles : {}
-		})));
+		const docMeta = await extractMeta(page, elements);
+		console.log('::::', device.name, Object.keys(elements));
+// 		console.log(device.name, elements.colors.map((el)=> ({ ...el,
+// 			styles : {}
+// 		})));
 
 		const doc = {
 			html        : (await page.content()).replace(/"/g, '\\"'),
@@ -55,11 +58,13 @@ export async function puppetWorker(url, playgroundID) {
 			url         : await page.url(),
 			image       : await captureScreenImage(page),
 			styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
-			links       : elements.links.map((link)=> (link.meta.href)).join(' ')
+			links       : elements.links.map((link)=> (link.meta.href)).join(' '),
+			colors      : docMeta.colors,
+			fonts       : docMeta.fonts
 		};
 
 // 		console.log('::::', doc);
-// 		console.log('::::', elements);
+		console.log('::::', doc.colors);
 // 		console.log('IMAGES -->', elements.images[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0]);
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], (key, val)=> { console.log(key, ':', val, '\n- - - -')}, 2));
