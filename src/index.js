@@ -46,7 +46,7 @@ export async function puppetWorker(url, playgroundID) {
 
 		const elements = await extractElements(page);
 		const docMeta = await extractMeta(page, elements);
-		console.log('::::', device.name, Object.keys(elements));
+// 		console.log('::::', device.name, Object.keys(elements));
 // 		console.log(device.name, elements.colors.map((el)=> ({ ...el,
 // 			styles : {}
 // 		})));
