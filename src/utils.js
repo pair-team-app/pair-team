@@ -26,12 +26,26 @@ export async function captureScreenImage(page, encoding='base64') {
 
 export async function extractElements(page) {
 	const elements = {
-		'links'   : await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
-		'buttons' : await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
-		'images'  : await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))
+		'buttons'    : await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
+		'headings'   : await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
+		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((icon)=> (icon.bounds.x <= 32 && icon.bounds.y <= 32)),
+		'images'     : await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
+		'links'      : await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
+		'textfields' : await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
+		'videos'     : await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
 	};
 
-	return (elements);
+	return (elements)
+}
+
+export async function extractMeta(page, elements) {
+	return ({
+		colors : {
+			bg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['background'].replace(/ none.*$/, ''))))).flat(Infinity))],
+			fg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['color'])))).flat(Infinity))]
+		},
+		fonts  : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))]
+	});
 }
 
 
@@ -53,13 +67,14 @@ const processNode = async(page, node)=> {
 			styles  : styles,
 			classes : (el.className.length > 0) ? el.className : '',
 			meta    : {
-				border : styles['border'],
-				color  : elementColor(styles),
-				font   : elementFont(styles),
-				text   : (el.text || ''),
-				href   : (el.hasAttribute('href')) ? el.getAttribute('href') : null,
-				data   : (el.hasAttribute('src')) ? imageData(el, elementBounds(el, styles).size) : null,
-				url    : (el.hasAttribute('src')) ? el.getAttribute('src') : null,
+				border      : styles['border'],
+				color       : elementColor(styles),
+				font        : elementFont(styles),
+				text        : (el.text || ''),
+				placeholder : (el.hasAttribute('placeholder')) ? el.placeholder : null,
+				href        : (el.hasAttribute('href')) ? el.href : null,
+				data        : (el.tagName === 'IMG' && el.hasAttribute('src')) ? imageData(el, elementBounds(el, styles).size) : null,
+				url         : (el.hasAttribute('src')) ? el.src : (el.childElementCount > 0 && el.firstElementChild.hasAttribute('src')) ? el.firstElementChild.src : null,
 			}
 		});
 	}, node);

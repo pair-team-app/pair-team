@@ -212,6 +212,6 @@ export async function listeners(page) {
 	});
 
 	page.on('response', async (response)=> {
-		console.log('response', (await response.url()).replace('http://localhost:1066', ''));
+// 		console.log('response', (await response.url()).replace('http://localhost:1066', ''));
 	});
 }
