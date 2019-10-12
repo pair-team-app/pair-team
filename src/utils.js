@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+import stringify from 'json-stringify-safe';
+
 
 export async function captureElementImage(element, encoding='binary') {
 	const boundingBox = await element.boundingBox();
@@ -24,12 +26,20 @@ export async function captureScreenImage(page, encoding='base64') {
 
 export async function extractElements(page) {
 	const elements = {
-		'links'   : await Promise.all((await page.$$('a')).map(async(node) => {
+		'links'   : await Promise.all((await page.$$('a')).map(async(node)=> {
 
-			if (await node.boundingBox()) {
-				await node.hover();
+// 			if (await node.boundingBox()) {
+// 				await node.hover();
+// 			}
+
+			let bounds = await node.boundingBox();
+			if (bounds) {
+				Object.keys(bounds).forEach((key)=> {
+					bounds[key] = (bounds[key] << 0);
+				});
 			}
 
+			const children = await node.$$eval('*', (els)=> els.map(({ outerHTML })=> (outerHTML.replace(/"/g, '\\"'))));
 			const attribs = await page.evaluate((el)=> {
 				const styles = elementStyles(el);
 
@@ -42,20 +52,30 @@ export async function extractElements(page) {
 						border : styles['border'],
 						color  : elementColor(styles),
 						font   : elementFont(styles),
-						text   : el.innerText,
+						text   : (/^<.+>$/.test(el.innerHTML)) ? '' : el.innerHTML,
 						href   : el.getAttribute('href')
 					}
 				});
 			}, node);
 
-			return ({...attribs,
-// 				handle : node,
-				bounds : await node.boundingBox(),
-				box    : await node.boxModel()
+			return ({...attribs, children, bounds,
+				meta : { ...attribs.meta,
+					text : (attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.meta.text
+				},
+				box  : await node.boxModel()
 			});
 		})),
 
-		'buttons' : await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]')).map(async(node) => {
+		'buttons' : await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]')).map(async(node)=> {
+
+			let bounds = await node.boundingBox();
+			if (bounds) {
+				Object.keys(bounds).forEach((key)=> {
+					bounds[key] = (bounds[key] << 0);
+				});
+			}
+
+			const children = await node.$$eval('*', (els)=> els.map(({ outerHTML })=> (outerHTML.replace(/"/g, '\\"'))));
 			const attribs = await page.evaluate((el)=> {
 				const styles = elementStyles(el);
 
@@ -68,19 +88,29 @@ export async function extractElements(page) {
 						border : styles['border'],
 						color  : elementColor(styles),
 						font   : elementFont(styles),
-						text   : (el.value.length === 0) ? el.innerHTML : el.value
+						text   : (el.value.length === 0) ? (/^<.+>$/.test(el.innerHTML)) ? '' : el.innerHTML : el.value
 					}
 				});
 			}, node);
 
-			return ({...attribs,
-// 				handle : node,
-				bounds : await node.boundingBox(),
-				box    : await node.boxModel()
+			return ({...attribs, children, bounds,
+				meta : { ...attribs.meta,
+					text : (attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.meta.text
+				},
+				box  : await node.boxModel()
 			});
 		})),
 
-		'images'  : await Promise.all((await page.$$('img')).map(async(node) => {
+		'images'  : await Promise.all((await page.$$('img')).map(async(node)=> {
+
+			let bounds = await node.boundingBox();
+			if (bounds) {
+				Object.keys(bounds).forEach((key)=> {
+					bounds[key] = (bounds[key] << 0);
+				});
+			}
+
+			const children = await node.$$eval('*', (els)=> els.map(({ outerHTML })=> (outerHTML.replace(/"/g, '\\"'))));
 			const attribs = await page.evaluate((el)=> {
 				const styles = elementStyles(el);
 
@@ -100,10 +130,8 @@ export async function extractElements(page) {
 				});
 			}, node);
 
-			return ({...attribs,
-// 				handle : node,
-				bounds : await node.boundingBox(),
-				box    : await node.boxModel()
+			return ({...attribs, children, bounds,
+				box : await node.boxModel()
 			});
 		}))
 	};
