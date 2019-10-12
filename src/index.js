@@ -64,7 +64,7 @@ export async function puppetWorker(url, playgroundID) {
 		};
 
 // 		console.log('::::', doc);
-		console.log('::::', doc.colors);
+// 		console.log('::::', doc.colors);
 // 		console.log('IMAGES -->', elements.images[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0]);
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], (key, val)=> { console.log(key, ':', val, '\n- - - -')}, 2));
