@@ -3,55 +3,56 @@
 
 
 import chalk from 'chalk';
+import stringify from 'json-stringify-safe';
 import fetch from 'node-fetch';
 
-const API_ENDPT_URL = 'https://api.designengine.ai/playground.php';
+const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
 
 
-export async function queryPlayground(playgroundID, projectName) {
-	console.log('%s Queueing playground…', chalk.cyan.bold('INFO'));
-
-	let response = await fetch(API_ENDPT_URL, {
-		method  : 'POST',
-		headers : {
-			'Content-Type' : 'application/json'
-		},
-		body    : JSON.stringify({
-			action        : 'PLAYGROUND',
-			playground_id : playgroundID,
-			title         : projectName
-		})
-	});
-
-	try {
-		response = await response.json();
-
-	} catch (e) {
-		console.log('%s Couldn\'t parse response! %s', chalk.red.bold('ERROR'), e);
-	}
-
-//  console.log('PLAYGROUND -->>', response);
-	return (response);
-}
-
-export async function sendComponents(extract) {
+export async function createPlayground(userID, device, doc) {
 	let response = await fetch(API_ENDPT_URL, {
 		method  : 'POST',
 		headers : { 'Content-Type' : 'application/json' },
 		body    : JSON.stringify({
-			action        : 'ADD_COMPONENTS',
-			playground_id : playgroundID,
-			elements      : extract.elements
+			action  : 'ADD_PLAYGROUND',
+			payload : { ...doc, device,
+				user_id : userID,
+			}
 		})
 	});
 
 	try {
+// 		console.log('RESP -->>', await response.text());
 		response = await response.json();
-//			console.log('::::', response);
 
 	} catch (e) {
 		console.log('%s Couldn\'t parse response! %s', chalk.red.bold('ERROR'), e);
 	}
 
-	return (response);
+//   console.log('PLAYGROUND -->>', response);
+	return (response.playground);
+}
+
+
+export async function sendPlaygroundComponents(playgroundID, components) {
+	let response = await fetch(API_ENDPT_URL, {
+		method  : 'POST',
+		headers : { 'Content-Type' : 'application/json' },
+		body    : JSON.stringify({
+			action  : 'ADD_COMPONENTS',
+			payload : { components,
+				playground_id : playgroundID
+			}
+		})
+	});
+
+	try {
+		response = await response.json();
+// 			console.log('::::', await response.text());
+
+	} catch (e) {
+		console.log('%s Couldn\'t parse response! %s', chalk.red.bold('ERROR'), e);
+	}
+
+	return (response.components);
 }
