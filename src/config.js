@@ -62,6 +62,9 @@ export async function funcs(page) {
 				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key].replace(/"/g, '\\"');
 			});
 
+			styles['font'] = styles['font'].replace(/\\"/g, '"');
+			styles['font-family'] = styles['font-family'].replace(/\\"/g, '"');
+
 			let keys = [];
 			CSS_CONDENSE_STYLES.forEach((key)=> {
 				const regex =  new RegExp(`^${key}-`, 'i');

@@ -26,23 +26,30 @@ export async function extractElements(page) {
 	const elements = {
 		'links'   : await Promise.all((await page.$$('a')).map(async(node) => {
 
-			await node.hover();
+			if (await node.boundingBox()) {
+				await node.hover();
+			}
+
 			const attribs = await page.evaluate((el)=> {
 				const styles = elementStyles(el);
 
 				return ({
+					title  : el.id,
 					html   : el.outerHTML.replace(/"/g, '\\"'),
 					styles : styles,
-					border : styles['border'],
-					color  : elementColor(styles),
-					font   : elementFont(styles),
-					text   : el.innerText,
-					href   : el.getAttribute('href')
+					elements : [],
+					meta : {
+						border : styles['border'],
+						color  : elementColor(styles),
+						font   : elementFont(styles),
+						text   : el.innerText,
+						href   : el.getAttribute('href')
+					}
 				});
 			}, node);
 
 			return ({...attribs,
-				handle : node,
+// 				handle : node,
 				bounds : await node.boundingBox(),
 				box    : await node.boxModel()
 			});
@@ -53,17 +60,21 @@ export async function extractElements(page) {
 				const styles = elementStyles(el);
 
 				return ({
+					title  : el.id,
 					html   : el.outerHTML.replace(/"/g, '\\"'),
 					styles : styles,
-					border : styles['border'],
-					color  : elementColor(styles),
-					font   : elementFont(styles),
-					text   : (el.value.length === 0) ? el.innerHTML : el.value
+					elements : [],
+					meta : {
+						border : styles['border'],
+						color  : elementColor(styles),
+						font   : elementFont(styles),
+						text   : (el.value.length === 0) ? el.innerHTML : el.value
+					}
 				});
 			}, node);
 
 			return ({...attribs,
-				handle : node,
+// 				handle : node,
 				bounds : await node.boundingBox(),
 				box    : await node.boxModel()
 			});
@@ -74,19 +85,23 @@ export async function extractElements(page) {
 				const styles = elementStyles(el);
 
 				return ({
+					title  : el.id,
 					html   : el.outerHTML.replace(/"/g, '\\"'),
 					styles : styles,
-					border : styles['border'],
-					color  : elementColor(styles),
-					font   : elementFont(styles),
-					text   : el.alt,
-					data   : imageData(el, elementBounds(el, styles).size),
-					url    : el.src
+					elements : [],
+					meta : {
+						border : styles['border'],
+						color  : elementColor(styles),
+						font   : elementFont(styles),
+						text   : el.alt,
+						data   : imageData(el, elementBounds(el, styles).size),
+						url    : el.src
+					}
 				});
 			}, node);
 
 			return ({...attribs,
-				handle : node,
+// 				handle : node,
 				bounds : await node.boundingBox(),
 				box    : await node.boxModel()
 			});
