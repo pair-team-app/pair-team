@@ -11,3 +11,7 @@ build
 
 #-- npm stuff --#
 node_modules
+
+
+#-- creds --#
+crypto-creds.json
