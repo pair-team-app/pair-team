@@ -3,6 +3,7 @@
 
 
 // import stringify from 'json-stringify-safe';
+import crypto from 'crypto';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
@@ -78,7 +79,10 @@ export async function puppetWorker(url, playgroundID) {
 
 		await browser.close();
 
-		return ({ doc, elements,
+		return ({ elements,
+			doc    : { ...doc,
+				htmlCrypt :
+			},
 			device : device.name
 		});
 	}));
