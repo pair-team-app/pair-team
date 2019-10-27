@@ -3,7 +3,6 @@
 
 
 // import stringify from 'json-stringify-safe';
-import crypto from 'crypto';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
@@ -12,11 +11,10 @@ import { consts, funcs, listeners } from './config';
 import { captureScreenImage, extractElements, extractMeta } from './utils';
 
 
-export async function puppetWorker(url, playgroundID) {
+export async function renderWorker(url) {
 	const devices = [
 		puppeteer.devices['iPhone X'],
-		puppeteer.devices['iPad Pro'],
-		{
+		puppeteer.devices['iPad Pro'], {
 			name      : 'Chrome',
 			userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
 			viewport  : {
@@ -31,9 +29,7 @@ export async function puppetWorker(url, playgroundID) {
 	];
 
 	const objs = await Promise.all(devices.map(async(device)=> {
-		const browser = await puppeteer.launch({
-			headless : true
-		});
+		const browser = await puppeteer.launch({ headless : true });
 
 		const page = await browser.newPage();
 		await page.emulate(device);
@@ -67,7 +63,7 @@ export async function puppetWorker(url, playgroundID) {
 // 		console.log('::::', doc);
 // 		console.log('::::', doc.colors);
 // 		console.log('IMAGES -->', elements.images[0]);
-// 		console.log('BUTTONS -->', elements.buttons[0]);
+		console.log('BUTTONS -->', elements.buttons[0].title);
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], (key, val)=> { console.log(key, ':', val, '\n- - - -')}, 2));
 // 		console.log('BUTTONS -->', JSON.stringify([{ ...elements.buttons[0], handle : null }, {... elements.buttons[1], handle : null }], null, 2));
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], null, 2));
@@ -79,10 +75,7 @@ export async function puppetWorker(url, playgroundID) {
 
 		await browser.close();
 
-		return ({ elements,
-			doc    : { ...doc,
-				htmlCrypt :
-			},
+		return ({ doc, elements,
 			device : device.name
 		});
 	}));

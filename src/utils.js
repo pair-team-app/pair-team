@@ -1,7 +1,21 @@
 #!/usr/bin/env node
 'use strict';
 
+
+import crypto from 'crypto';
 import stringify from 'json-stringify-safe';
+
+import { CRYPTO_TYPE } from './consts';
+import cryproCreds from '../crypto-creds';
+
+
+const makeCipher = async(enc=true, { type, key }={})=> {
+	type = (!type) ? Object.keys(cryproCreds).find((k)=> (k === CRYPTO_TYPE)) : type;
+	key = (!key) ? cryproCreds[(!type) ? CRYPTO_TYPE : type] : key;
+	const iv = cryproCreds[(Object.keys(cryproCreds).find((k)=> (k === 'iv')))];//crypto.randomFillSync(Buffer.alloc(8)).toString('hex');
+
+	return ((enc) ? await crypto.createCipheriv(type, key, iv) : await crypto.createDecipheriv(type, key, iv));
+};
 
 
 export async function captureElementImage(element, encoding='binary') {
@@ -80,10 +94,31 @@ const processNode = async(page, node)=> {
 	}, node);
 
 	return ({...attribs, children, bounds,
-		title : ((attribs.title.length === 0) ? (attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.meta.text : attribs.title),
-		meta  : { ...attribs.meta,
+		title  : ((attribs.title.length === 0) ? (attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.meta.text : attribs.title),
+		box    : await node.boxModel(),
+		meta   : { ...attribs.meta,
 			text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
 		},
-		box  : await node.boxModel()
+		enc    : {
+			html   : await encryptTxt(attribs.html),
+			styles : await encryptObj(attribs.styles)
+		}
 	});
 };
+
+
+export async function decryptTxt(txt, { type, key }={}) {
+	const cipher = makeCipher({ type, key });
+	return (`${cipher.update(cipher, 'hex', 'utf8')}${cipher.final('utf8')}`);
+}
+
+export async function encryptObj(obj, { type, key }={}) {
+	return (await encryptTxt(JSON.stringify(obj), { type, key }));
+}
+
+export async function encryptTxt(txt, { type, key }={}) {
+	const cipher = await makeCipher({ type, key });
+	const encTxt = await cipher.update(txt, 'utf8', 'hex');
+
+	return (`${encTxt}${cipher.final('hex')}`);
+}
