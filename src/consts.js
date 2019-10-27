@@ -2,7 +2,18 @@
 'use strict';
 
 
+export const CRYPTO_TYPE = 'aes256';
 export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
+
+export const FETCH_CFG = {
+	method  : 'POST',
+	headers : { 'Content-Type' : 'application/json' },
+	body    : {
+		action  : null,
+		payload : null
+	}
+};
+
 
 export const CSS_AUTO_STYLES = [
 	'align-self',
