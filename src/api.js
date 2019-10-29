@@ -36,17 +36,6 @@ const cfg = { ...FETCH_CFG,
 
 
 export async function sendPlaygroundComponents(playgroundID, components) {
-// 	let response = await fetch(API_ENDPT_URL, {
-// 		method  : 'POST',
-// 		headers : { 'Content-Type' : 'application/json' },
-// 		body    : JSON.stringify({
-// 			action  : 'ADD_COMPONENTS',
-// 			payload : { components,
-// 				playground_id : playgroundID
-// 			}
-// 		})
-// 	});
-
 	let response = await fetch(API_ENDPT_URL, { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'ADD_COMPONENTS',
@@ -57,8 +46,8 @@ export async function sendPlaygroundComponents(playgroundID, components) {
 	});
 
 	try {
-			console.log('::::', (await response.text()).slice(0, 512));
-// 		response = await response.json();
+// 			console.log('::::', (await response.text()).slice(0, 512));
+		response = await response.json();
 
 	} catch (e) {
 		console.log('%s Couldn\'t parse response! %s', chalk.red.bold('ERROR'), e);
