@@ -153,6 +153,30 @@ export async function funcs(page) {
 			})
 		};
 
+		window.elementPath = (el)=> {
+			let stack = [];
+			while (el.parentNode !== null) {
+				let sibCount = 0;
+				let sibIndex = 0;
+				for (let i=0; i<el.parentNode.childNodes.length; i++) {
+					let sib = el.parentNode.childNodes[i];
+					if (sib.nodeName === el.nodeName) {
+						if (sib === el) {
+							sibIndex = sibCount;
+						}
+
+						sibCount++;
+					}
+				}
+
+// 				stack.unshift((sibCount > 1) ? `${el.nodeName.toLowerCase()}:${sibIndex}` : el.nodeName.toLowerCase());
+				stack.unshift(`${el.nodeName.toLowerCase()}:${sibIndex}`);
+				el = el.parentNode;
+			}
+
+			return (stack.slice(2).join(' '));
+		};
+
 		window.elementVisible = (el, styles)=> (el.is(':visible') && styles['visibility'] !== 'hidden' && parentsVisible(el));
 
 		window.hexRGBA = (color)=> {

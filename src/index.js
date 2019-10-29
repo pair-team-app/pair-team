@@ -63,7 +63,10 @@ export async function renderWorker(url) {
 // 		console.log('::::', doc);
 // 		console.log('::::', doc.colors);
 // 		console.log('IMAGES -->', elements.images[0]);
-		console.log('BUTTONS -->', elements.buttons[0].title);
+// 		console.log('BUTTONS -->', elements.buttons[0].dom);
+// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${JSON.stringify(link.dom, null, 2)}`)));
+// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${link.path}`)));
+		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.meta.text}`)));
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], (key, val)=> { console.log(key, ':', val, '\n- - - -')}, 2));
 // 		console.log('BUTTONS -->', JSON.stringify([{ ...elements.buttons[0], handle : null }, {... elements.buttons[1], handle : null }], null, 2));
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], null, 2));
