@@ -18,16 +18,16 @@ const makeCipher = async(enc=true, { type, key }={})=> {
 };
 
 
-export async function captureElementImage(element, encoding='binary') {
+export async function captureElementImage(element, encoding='base64') {
 	const boundingBox = await element.boundingBox();
-	const padding = 10;
+	const padding = 0;
 
 	return (await element.screenshot({ encoding,
 		clip : {
 			x      : boundingBox.x - padding,
 			y      : boundingBox.y - padding,
-			width  : boundingBox.width + padding * 2,
-			height : boundingBox.height + padding * 2,
+			width  : boundingBox.width + (padding * 2),
+			height : boundingBox.height + (padding * 2),
 		}
 	}));
 }
@@ -71,6 +71,7 @@ const processNode = async(page, node)=> {
 		});
 	}
 
+// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'svg') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))) : [];
 	const children = await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))));
 	const attribs = await page.evaluate((el)=> {
 		const styles = elementStyles(el);
@@ -86,6 +87,7 @@ const processNode = async(page, node)=> {
 // 			dom    : Array.from(el.getProperties()),
 
 // 			dom    : el.hasChildNodes(), //good
+// 			dom    : el.childElementCount(), //good
 // 			dom    : el.children.length, // >0
 // 			dom    : el.childElementCount, // >0
 // 			dom    : el.childNodes.length, // always =1
@@ -101,7 +103,7 @@ const processNode = async(page, node)=> {
 				text        : (el.innerText || ''),
 				placeholder : (el.hasAttribute('placeholder')) ? el.placeholder : null,
 				href        : (el.hasAttribute('href')) ? el.href : null,
-				data        : (el.tagName === 'IMG' && el.hasAttribute('src')) ? imageData(el, elementBounds(el, styles).size) : null,
+				data        : (el.tagName.toLowerCase() === 'img' && el.hasAttribute('src')) ? imageData(el, elementBounds(el, styles).size) : null,
 				url         : (el.hasAttribute('src')) ? el.src : (el.childElementCount > 0 && el.firstElementChild.hasAttribute('src')) ? el.firstElementChild.src : null,
 			}
 		});
@@ -110,15 +112,20 @@ const processNode = async(page, node)=> {
 	return ({...attribs, children, bounds,
 // 		dom : Array.from(await node.getProperties().map), //
 // 		dom : await (node.getProperty('innerHTML')), // works
-// 		dom    : typeof node.children,
+// 		dom : await (await node.getProperty('childElementCount')).jsonValue(),
+// 		dom : (await (await node.getProperty('tagName')).jsonValue()).toLowerCase(), //works!
+// 		dom    : node.children, // undefined
+// 		dom    : node.childNodes, // undefined
 // 		dom    : typeof await (node.asElement()).childNodes.length,
 // 		dom    : node.asElement(),
 // 		dom    : Array.from(node.asElement().children),
-		box    : await node.boxModel(),
+		title : (attribs.title.length === 0) ? attribs.meta.text : attribs.title,
+// 		image : (bounds) ? await captureElementImage(node) : '',
+		box   : await node.boxModel(),
 // 		meta   : { ...attribs.meta,
-			//text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
+// 			text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
 // 		},
-		enc    : {
+		enc   : {
 			html   : await encryptTxt(attribs.html),
 			styles : await encryptObj(attribs.styles)
 		}
