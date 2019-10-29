@@ -76,15 +76,29 @@ const processNode = async(page, node)=> {
 		const styles = elementStyles(el);
 
 		return ({
-			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : el.textContent,
+// 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.textContent && el.textContent.length > 0) ? el.textContent : '',
+// 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.innerText && el.innerText.length > 0) ? el.innerText : '',
+			title   : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
 			html    : el.outerHTML.replace(/"/g, '\\"'),
 			styles  : styles,
 			classes : (el.className.length > 0) ? el.className : '',
+// 			dom    : el.compareDocumentPosition(el.parentNode),
+// 			dom    : Array.from(el.getProperties()),
+
+// 			dom    : el.hasChildNodes(), //good
+// 			dom    : el.children.length, // >0
+// 			dom    : el.childElementCount, // >0
+// 			dom    : el.childNodes.length, // always =1
+
+// 			dom    : Array.from(el.childNodes),
+// 			dom    : Array.from(el.children.values()),
+// 				dom    : typeof el.children,
+			path    : elementPath(el),
 			meta    : {
 				border      : styles['border'],
 				color       : elementColor(styles),
 				font        : elementFont(styles),
-				text        : (el.text || ''),
+				text        : (el.innerText || ''),
 				placeholder : (el.hasAttribute('placeholder')) ? el.placeholder : null,
 				href        : (el.hasAttribute('href')) ? el.href : null,
 				data        : (el.tagName === 'IMG' && el.hasAttribute('src')) ? imageData(el, elementBounds(el, styles).size) : null,
@@ -94,11 +108,16 @@ const processNode = async(page, node)=> {
 	}, node);
 
 	return ({...attribs, children, bounds,
-		title  : ((attribs.title.length === 0) ? (attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.meta.text : attribs.title),
+// 		dom : Array.from(await node.getProperties().map), //
+// 		dom : await (node.getProperty('innerHTML')), // works
+// 		dom    : typeof node.children,
+// 		dom    : typeof await (node.asElement()).childNodes.length,
+// 		dom    : node.asElement(),
+// 		dom    : Array.from(node.asElement().children),
 		box    : await node.boxModel(),
-		meta   : { ...attribs.meta,
-			text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
-		},
+// 		meta   : { ...attribs.meta,
+			//text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
+// 		},
 		enc    : {
 			html   : await encryptTxt(attribs.html),
 			styles : await encryptObj(attribs.styles)
