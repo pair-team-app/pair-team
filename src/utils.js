@@ -80,14 +80,14 @@ const processNode = async(page, node)=> {
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.textContent && el.textContent.length > 0) ? el.textContent : '',
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.innerText && el.innerText.length > 0) ? el.innerText : '',
 			title   : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
-			html    : el.outerHTML.replace(/"/g, '\\"'),
+			html    : (el.childElementCount) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML,
 			styles  : styles,
 			classes : (el.className.length > 0) ? el.className : '',
 // 			dom    : el.compareDocumentPosition(el.parentNode),
 // 			dom    : Array.from(el.getProperties()),
 
 // 			dom    : el.hasChildNodes(), //good
-// 			dom    : el.childElementCount(), //good
+// 			dom    : el.childElementCount, //good
 // 			dom    : el.children.length, // >0
 // 			dom    : el.childElementCount, // >0
 // 			dom    : el.childNodes.length, // always =1
@@ -133,14 +133,10 @@ const processNode = async(page, node)=> {
 };
 
 
-export async function decryptTxt(txt, { type, key }={}) {
-	const cipher = makeCipher({ type, key });
-	return (`${cipher.update(cipher, 'hex', 'utf8')}${cipher.final('utf8')}`);
-}
-
 export async function encryptObj(obj, { type, key }={}) {
 	return (await encryptTxt(JSON.stringify(obj), { type, key }));
 }
+
 
 export async function encryptTxt(txt, { type, key }={}) {
 	const cipher = await makeCipher({ type, key });

@@ -49,7 +49,8 @@ export async function renderWorker(url) {
 // 		})));
 
 		const doc = {
-			html        : (await page.content()).replace(/"/g, '\\"'),
+// 			html        : (await page.content()).replace(/"/g, '\\"'),
+			html        : (await page.content()),
 			title       : projectName(),
 			description : await page.title(),
 			url         : await page.url(),
