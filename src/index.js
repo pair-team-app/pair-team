@@ -13,8 +13,9 @@ import { captureScreenImage, extractElements, extractMeta } from './utils';
 
 export async function renderWorker(url) {
 	const devices = [
-		puppeteer.devices['iPhone X'],
-		puppeteer.devices['iPad Pro'], {
+// 		puppeteer.devices['iPhone X'],
+// 		puppeteer.devices['iPad Pro'],
+		{
 			name      : 'Chrome',
 			userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
 			viewport  : {
