@@ -10,7 +10,7 @@ import { encryptObj, encryptTxt } from './utils';
 
 
 export async function createPlayground(userID, device, doc) {
-const cfg = { ...FETCH_CFG,
+	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'ADD_PLAYGROUND',
 			payload : { ...doc, device,
