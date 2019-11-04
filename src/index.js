@@ -13,7 +13,7 @@ import { captureScreenImage, extractElements, extractMeta } from './utils';
 
 export async function renderWorker(url) {
 	const devices = [
-// 		puppeteer.devices['iPhone X'],
+		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
 		{
 			name      : 'Chrome',
@@ -48,6 +48,12 @@ export async function renderWorker(url) {
 // 		console.log(device.name, elements.colors.map((el)=> ({ ...el,
 // 			styles : {}
 // 		})));
+
+		await page.$$eval('script', (nodes)=> {
+			nodes.forEach((node)=> {
+				node.parentNode.removeChild(node);
+			});
+		});
 
 		const doc = {
 // 			html        : (await page.content()).replace(/"/g, '\\"'),
