@@ -221,15 +221,22 @@ export async function funcs(page) {
 }
 
 export async function listeners(page) {
+	await page.evaluate(()=> {
+		document.addEventListener('mousewheel', (event) => {
+			console.log(`DOC mousewheel ${event}`);
+		});
+	});
+
 	page.on('console', (msg) => {
-		console.log(`${msg.text()}`);
+		console[msg._type](msg._text);
 // 		msg.args().forEach((arg, i) => {
 // 			console.log(`${i}: ${msg.args()[i]}`);
 // 		});
 	});
 
 	page.on('dialog', async (dialog) => {
-		console.log('DIALOG -->', { ...dialog });
+// 		console.log('DIALOG -->', { ...dialog });
+		console.log('DIALOG -->', dialog._type, dialog._message);
 		await dialog.dismiss();
 	});
 
@@ -241,5 +248,9 @@ export async function listeners(page) {
 
 	page.on('response', async (response)=> {
 // 		console.log('response', (await response.url()).replace('http://localhost:1066', ''));
+	});
+
+	page.on('mousewheel', (event)=> {
+		console.log('PAGE ON mousewheel:', event);
 	});
 }
