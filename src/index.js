@@ -13,7 +13,7 @@ import { captureScreenImage, extractElements, extractMeta } from './utils';
 
 export async function renderWorker(url) {
 	const devices = [
-		puppeteer.devices['iPhone X'],
+// 		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
 		{
 			name      : 'Chrome',
@@ -49,6 +49,9 @@ export async function renderWorker(url) {
 // 			styles : {}
 // 		})));
 
+// 		const snapshot = await page.accessibility.snapshot();
+// 		console.log('accessibility.snapshot()', JSON.stringify(snapshot, null, 2));
+
 		await page.$$eval('script', (nodes)=> {
 			nodes.forEach((node)=> {
 				node.parentNode.removeChild(node);
@@ -57,15 +60,16 @@ export async function renderWorker(url) {
 
 		const doc = {
 // 			html        : (await page.content()).replace(/"/g, '\\"'),
-			html        : (await page.content()),
-			title       : projectName(),
-			description : await page.title(),
-			url         : await page.url(),
-			image       : await captureScreenImage(page),
-			styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
-			links       : elements.links.map((link)=> (link.meta.href)).join(' '),
-			colors      : docMeta.colors,
-			fonts       : docMeta.fonts
+			html          : (await page.content()),
+			title         : projectName(),
+			description   : await page.title(),
+			url           : await page.url(),
+			image         : await captureScreenImage(page),
+			styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
+			accessibility : await page.accessibility.snapshot(),
+			links         : elements.links.map((link)=> (link.meta.href)).join(' '),
+			colors        : docMeta.colors,
+			fonts         : docMeta.fonts
 		};
 
 // 		console.log('::::', doc);
