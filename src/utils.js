@@ -79,11 +79,12 @@ const processNode = async(page, node)=> {
 		return ({
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.textContent && el.textContent.length > 0) ? el.textContent : '',
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.innerText && el.innerText.length > 0) ? el.innerText : '',
-			title   : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
-			tag     : el.tagName.toLowerCase(),
-			html    : ((el.childElementCount) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
-			styles  : styles,
-			classes : (el.className.length > 0) ? el.className : '',
+			title         : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
+			tag           : el.tagName.toLowerCase(),
+			html          : ((el.childElementCount) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
+			styles        : styles,
+			accessibility : {},
+			classes       : (el.className.length > 0) ? el.className : '',
 // 			dom    : el.compareDocumentPosition(el.parentNode),
 // 			dom    : Array.from(el.getProperties()),
 
@@ -96,8 +97,8 @@ const processNode = async(page, node)=> {
 // 			dom    : Array.from(el.childNodes),
 // 			dom    : Array.from(el.children.values()),
 // 				dom    : typeof el.children,
-			path    : elementPath(el),
-			meta    : {
+			path          : elementPath(el),
+			meta          : {
 				border      : styles['border'],
 				color       : elementColor(styles),
 				font        : elementFont(styles),
@@ -127,8 +128,9 @@ const processNode = async(page, node)=> {
 // 			text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
 // 		},
 		enc   : {
-			html   : await encryptTxt(attribs.html),
-			styles : await encryptObj(attribs.styles)
+			html          : await encryptTxt(attribs.html),
+			styles        : await encryptObj(attribs.styles),
+			accessibility : await encryptObj(attribs.accessibility)
 		}
 	});
 };

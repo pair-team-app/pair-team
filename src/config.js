@@ -61,6 +61,10 @@ export async function funcs(page) {
 			}
 		};
 
+		window.elementAccessibility = (element)=> {
+
+		};
+
 		window.elementStyles = (element)=> {
 			let styles = {};
 			const compStyles = getComputedStyle(element);

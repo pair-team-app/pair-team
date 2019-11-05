@@ -14,9 +14,10 @@ export async function createPlayground(userID, device, doc) {
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'ADD_PLAYGROUND',
 			payload : { ...doc, device,
-				user_id : userID,
-				html    : await encryptTxt(doc.html),
-				styles  : await encryptObj(doc.styles)
+				user_id       : userID,
+				html          : await encryptTxt(doc.html),
+				styles        : await encryptObj(doc.styles),
+				accessibility : await encryptObj(doc.accessibility),
 			}
 		})
 	};
