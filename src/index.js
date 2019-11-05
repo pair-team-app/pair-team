@@ -41,6 +41,11 @@ export async function renderWorker(url) {
 		await listeners(page);
 		await funcs(page);
 
+// 		await page.evaluate(()=> {
+// 			document.dispatchEvent(new WheelEvent('mousewheel', { deltaY : 100 }));
+// 		});
+
+		await page.emit('mousewheel', await page.evaluate(()=> (new WheelEvent('mousewheel', { deltaY : 100 }))));
 
 		const elements = await extractElements(page);
 		const docMeta = await extractMeta(page, elements);
