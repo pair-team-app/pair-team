@@ -111,7 +111,7 @@ const processNode = async(page, node)=> {
 		});
 	}, node);
 
-	return ({...attribs, children, bounds,
+	return ({...attribs, children,
 // 		dom : Array.from(await node.getProperties().map), //
 // 		dom : await (node.getProperty('innerHTML')), // works
 // 		dom : await (await node.getProperty('childElementCount')).jsonValue(),
@@ -123,10 +123,10 @@ const processNode = async(page, node)=> {
 // 		dom    : Array.from(node.asElement().children),
 		title : (attribs.title.length === 0) ? attribs.meta.text : attribs.title,
 // 		image : (bounds) ? await captureElementImage(node) : '',
-		box   : await node.boxModel(),
-// 		meta   : { ...attribs.meta,
+		meta  : { ...attribs.meta, bounds,
+			box : await node.boxModel(),
 // 			text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
-// 		},
+		},
 		enc   : {
 			html          : await encryptTxt(attribs.html),
 			styles        : await encryptObj(attribs.styles),
