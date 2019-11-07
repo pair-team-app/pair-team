@@ -81,7 +81,7 @@ const processNode = async(page, node)=> {
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.innerText && el.innerText.length > 0) ? el.innerText : '',
 			title         : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.hasAttribute('placeholder')) ? el.getAttribute('placeholder') : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
 			tag           : el.tagName.toLowerCase(),
-			html          : ((el.childElementCount) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
+			html          : ((el.childElementCount > 0) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
 			styles        : styles,
 			accessibility : {},
 			classes       : (el.className.length > 0) ? el.className : '',
