@@ -36,11 +36,12 @@ export async function createPlayground(userID, device, doc) {
 }
 
 
-export async function sendPlaygroundComponents(playgroundID, components) {
+export async function sendPlaygroundComponents(userID, playgroundID, components) {
 	let response = await fetch(API_ENDPT_URL, { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'ADD_COMPONENTS',
 			payload : { components,
+				user_id       : userID,
 				playground_id : playgroundID
 			}
 		})
