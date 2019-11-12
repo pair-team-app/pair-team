@@ -7,6 +7,9 @@ import stringify from 'json-stringify-safe';
 
 import { CRYPTO_TYPE } from './consts';
 import cryproCreds from '../crypto-creds';
+import inlineCss from 'inline-css';
+import stripHtml from 'string-strip-html';
+import inline from 'web-resource-inliner';
 
 
 const makeCipher = async(enc=true, { type, key }={})=> {
@@ -32,11 +35,26 @@ export async function captureElementImage(element, encoding='base64') {
 	}));
 }
 
+
 export async function captureScreenImage(page, encoding='base64') {
 	return (await page.screenshot({ encoding,
 		fullPage : true
 	}));
 }
+
+
+export async function encryptObj(obj, { type, key }={}) {
+	return (await encryptTxt(JSON.stringify(obj), { type, key }));
+}
+
+
+export async function encryptTxt(txt, { type, key }={}) {
+	const cipher = await makeCipher({ type, key });
+	const encTxt = await cipher.update(txt, 'utf8', 'hex');
+
+	return (`${encTxt}${cipher.final('hex')}`);
+}
+
 
 export async function extractElements(page) {
 	const elements = {
@@ -52,6 +70,7 @@ export async function extractElements(page) {
 	return (elements)
 }
 
+
 export async function extractMeta(page, elements) {
 	return ({
 		colors : {
@@ -63,7 +82,39 @@ export async function extractMeta(page, elements) {
 }
 
 
-const processNode = async(page, node)=> {
+export function formatPageHTML(html, opts={}) {
+	const { styles } = html.match(/style="(?<styles>.+?)"/).groups;
+	return (`<div style="${styles}">${stripHtml(html, {
+		stripTogetherWithTheirContents : ['head'],
+		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body'],
+		trimOnlySpaces                 : true,
+		...opts
+	})}</div>`);
+}
+
+
+export async function inlineCSS(html, relativeTo='build') {
+	const opts = { relativeTo,
+		fileContent : html.replace(/="\//g, '="./'),
+		images      : false,
+		scripts     : false
+	};
+
+	return (new Promise((resolve, reject)=> {
+		inline.html(opts, (err, result)=> {
+			if (err) {
+				reject(err);
+			}
+
+			inlineCss(result, { url : ' '}).then((result)=> {
+				resolve(result);
+			});
+		});
+	}));
+}
+
+
+export async function processNode(page, node) {
 	let bounds = await node.boundingBox();
 	if (bounds) {
 		Object.keys(bounds).forEach((key)=> {
@@ -133,17 +184,13 @@ const processNode = async(page, node)=> {
 			accessibility : await encryptObj(attribs.accessibility)
 		}
 	});
-};
-
-
-export async function encryptObj(obj, { type, key }={}) {
-	return (await encryptTxt(JSON.stringify(obj), { type, key }));
 }
 
 
-export async function encryptTxt(txt, { type, key }={}) {
-	const cipher = await makeCipher({ type, key });
-	const encTxt = await cipher.update(txt, 'utf8', 'hex');
-
-	return (`${encTxt}${cipher.final('hex')}`);
+export async function stripPageTags(page, tags=[]) {
+	await page.$$eval(['noscript', 'script', ...tags].join(', '), (nodes)=> {
+		nodes.forEach((node)=> {
+			node.parentNode.removeChild(node);
+		});
+	});
 }
