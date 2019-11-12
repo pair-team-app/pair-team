@@ -93,7 +93,7 @@ export function formatPageHTML(html, opts={}) {
 }
 
 
-export async function inlineCSS(html, relativeTo='build') {
+export async function inlinePageCSS(html, relativeTo='build') {
 	const opts = { relativeTo,
 		fileContent : html.replace(/="\//g, '="./'),
 		images      : false,
@@ -106,7 +106,7 @@ export async function inlineCSS(html, relativeTo='build') {
 				reject(err);
 			}
 
-			inlineCss(result, { url : ' '}).then((result)=> {
+			inlineCss(result, { url : ' ' }).then((result)=> {
 				resolve(result);
 			});
 		});
@@ -132,6 +132,7 @@ export async function processNode(page, node) {
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.innerText && el.innerText.length > 0) ? el.innerText : '',
 			title         : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.hasAttribute('placeholder')) ? el.getAttribute('placeholder') : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
 			tag           : el.tagName.toLowerCase(),
+// 			html          : ((el.childElementCount > 0) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
 			html          : ((el.childElementCount > 0) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
 			styles        : styles,
 			accessibility : {},

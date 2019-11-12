@@ -7,7 +7,7 @@ import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, listeners } from './config';
-import { captureScreenImage, extractElements, extractMeta, inlineCSS, formatPageHTML, stripPageTags } from './utils';
+import { captureScreenImage, extractElements, extractMeta, inlinePageCSS, formatPageHTML, stripPageTags } from './utils';
 
 
 export async function renderWorker(url) {
@@ -36,7 +36,7 @@ export async function renderWorker(url) {
 		await page.goto(url, { waitUntil : 'networkidle2' });
 
 		await stripPageTags(page, ['iframe']);
-		const html = formatPageHTML(await inlineCSS(await page.content()));
+		const html = formatPageHTML(await inlinePageCSS(await page.content()));
 
 		await consts(page);
 		await listeners(page);
