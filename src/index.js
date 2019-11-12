@@ -2,13 +2,12 @@
 'use strict';
 
 
-// import stringify from 'json-stringify-safe';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, listeners } from './config';
-import { captureScreenImage, extractElements, extractMeta } from './utils';
+import { captureScreenImage, extractElements, extractMeta, inlineCSS, formatPageHTML, stripPageTags } from './utils';
 
 
 export async function renderWorker(url) {
@@ -35,7 +34,9 @@ export async function renderWorker(url) {
 		const page = await browser.newPage();
 		await page.emulate(device);
 		await page.goto(url, { waitUntil : 'networkidle2' });
-		await page.content();
+
+		await stripPageTags(page, ['iframe']);
+		const html = formatPageHTML(await inlineCSS(await page.content()));
 
 		await consts(page);
 		await listeners(page);
@@ -54,18 +55,10 @@ export async function renderWorker(url) {
 // 			styles : {}
 // 		})));
 
-// 		const snapshot = await page.accessibility.snapshot();
-// 		console.log('accessibility.snapshot()', JSON.stringify(snapshot, null, 2));
 
-		await page.$$eval('script', (nodes)=> {
-			nodes.forEach((node)=> {
-				node.parentNode.removeChild(node);
-			});
-		});
-
-		const doc = {
+		const doc = { html,
 // 			html        : (await page.content()).replace(/"/g, '\\"'),
-			html          : (await page.content()),
+// 			html        : await page.content(),
 			title         : projectName(),
 			description   : await page.title(),
 			url           : await page.url(),
