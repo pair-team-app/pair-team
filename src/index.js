@@ -78,38 +78,33 @@ export async function renderWorker(url) {
 		const elements = await extractElements(page);
 		const docMeta = await extractMeta(page, elements);
 // 		console.log('::::', device.name, Object.keys(elements));
+// 		console.log('::::', html);
 // 		console.log(device.name, elements.colors.map((el)=> ({ ...el,
 // 			styles : {}
 // 		})));
 
 
-		const doc = { html,
-// 			html        : (await page.content()).replace(/"/g, '\\"'),
-// 			html        : await page.content(),
-			title         : projectName(),
-			description   : await page.title(),
-			url           : await page.url(),
-			image         : await captureScreenImage(page),
-			styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
-			accessibility : await page.accessibility.snapshot(),
-			links         : elements.links.map((link)=> (link.meta.href)).join(' '),
-			colors        : docMeta.colors,
-			fonts         : docMeta.fonts
+		const doc = { ...docMeta, html,
+// 			html  : (await page.content()).replace(/"/g, '\\"'),
+// 			html  : await page.content(),
+			title : projectName()
 		};
 
 // 		console.log('::::', doc);
 // 		console.log('::::', doc.colors);
 // 		console.log('IMAGES -->', elements.images[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0].dom);
-// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${link.styles.background}`)));
-// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${JSON.stringify(link.styles, null, 2)}`)));
-// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${link.html}`)));
+// 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
+// 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));
+// 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] [${el.html}] ${el.path}`)));
+// 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] [${el.html}] ${JSON.stringify(el.meta).replace(/\\+/g, '\\')}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] (${el.children.map((child)=> (`[${child.title}] ${child.dom}`))})`)));
+// 		console.log('BUTTONS -->', elements.buttons.map((el, i)=> (`[${el.title}] ${el.html}\n${JSON.stringify(el.path, null, 2)}`)));
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], (key, val)=> { console.log(key, ':', val, '\n- - - -')}, 2));
 // 		console.log('BUTTONS -->', JSON.stringify([{ ...elements.buttons[0], handle : null }, {... elements.buttons[1], handle : null }], null, 2));
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], null, 2));
 // 		console.log('BUTTONS -->', elements.buttons[0].styles, Object.keys(elements.buttons[0].styles).length);
-// 		console.log('LINKS -->',  [elements.links[0].styles, elements.links[1].styles]);
+// 		console.log('LINKS -->',  [elements.links[0].styles, elements.links[1].meta]);
 // 		console.log('LINKS -->',  [elements.links[0].styles.length]);
 // 		console.log('IMAGES -->', Object.keys(elements.images[0].styles).length);
 // 	console.log('IMAGE[0].border -->', elements.images[0].styles);

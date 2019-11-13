@@ -77,13 +77,13 @@ export async function funcs(page) {
 // 			};
 
 			const size = {
-				width  : styles.width.replace('px', '') << 0,
-				height : styles.height.replace('px', '') << 0
+				width  : Math.ceil(styles.width.replace('px', '')),
+				height : Math.ceil(styles.height.replace('px', ''))
 			};
 
 			const center = {
-				x : origin.x + ((size.width * 0.5) << 0),
-				y : origin.y + ((size.height * 0.5) << 0)
+				x : origin.x + Math.ceil(size.width * 0.5),
+				y : origin.y + Math.ceil(size.height * 0.5)
 			};
 
 			return ({ origin, size, center });
@@ -97,10 +97,11 @@ export async function funcs(page) {
 		};
 
 		window.elementFont = (styles)=> {
-			const line = (Object.keys(styles).includes('line-height') && !isNaN(styles['line-height'].replace(/[^\d]/g, ''))) ? styles['line-height'].replace('px', '') << 0 : (styles['font-size'].replace('px', '') << 0) * 1.2;
+			const line = (Object.keys(styles).includes('line-height') && !isNaN(styles['line-height'].replace(/[^\d]/g, ''))) ? styles['line-height'].replace('px', '') : styles['font-size'].replace('px', '') * 1.2;
 			return ({
-				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'].replace(/\\"/g, '') : '',
-				size    : (Object.keys(styles).includes('font-size')) ? styles['font-size'].replace('px', '') << 0 : 0,
+// 				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'].replace(/\\"/g, '') : '',
+				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'] : '',
+				size    : (Object.keys(styles).includes('font-size')) ? styles['font-size'].replace('px', '') : 0,
 				kerning : (Object.keys(styles).includes('letter-spacing')) ? parseFloat(styles['letter-spacing']) : 0,
 				line    : line
 			})
@@ -140,15 +141,18 @@ export async function funcs(page) {
 			});
 
 			if (styles.hasOwnProperty('font')) {
-				styles['font'] = styles['font'].replace(/\\"/g, '"');
+// 				styles['font'] = styles['font'].replace(/\\"/g, '"');
+				styles['font'] = styles['font'];
 			}
 
 			if (styles.hasOwnProperty('font-family')) {
-				styles['font-family'] = styles['font-family'].replace(/\\"/g, '"');
+// 				styles['font-family'] = styles['font-family'].replace(/\\"/g, '"');
+				styles['font-family'] = styles['font-family'];
 			}
 
 			if (styles.hasOwnProperty('-webkit-locale')) {
-				styles['-webkit-locale'] = styles['-webkit-locale'].replace(/\\"/g, '"');
+// 				styles['-webkit-locale'] = styles['-webkit-locale'].replace(/\\"/g, '"');
+				styles['-webkit-locale'] = styles['-webkit-locale'];
 			}
 
 			let keys = [];
@@ -183,11 +187,11 @@ export async function funcs(page) {
 				}
 			});
 
-			Object.keys(styles).forEach((key)=> {
-				if (!isNaN(styles[key])) {
-					styles[key] = (styles[key] << 0);
-				}
-			});
+// 			Object.keys(styles).forEach((key)=> {
+// 				if (!isNaN(styles[key])) {
+// 					styles[key] = (styles[key] << 0);
+// 				}
+// 			});
 
 			return (purgeKeys(styles, keys));
 		};
