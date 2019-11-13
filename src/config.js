@@ -2,6 +2,7 @@
 'use strict';
 
 
+import inlineCss from 'inline-css';
 import {
 	CSS_AUTO_STYLES,
 	CSS_CONDENSE_STYLES,
@@ -62,59 +63,7 @@ export async function funcs(page) {
 		};
 
 		window.elementAccessibility = (element)=> {
-
-		};
-
-		window.elementStyles = (element)=> {
-			let styles = {};
-			const compStyles = getComputedStyle(element);
-
-			Object.keys(compStyles).filter((key)=> (isNaN(parseInt(key, 10)))).forEach((key, i)=> {
-				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key].replace(/"/g, '\\"');
-			});
-
-			styles['font'] = styles['font'].replace(/\\"/g, '"');
-			styles['font-family'] = styles['font-family'].replace(/\\"/g, '"');
-
-			let keys = [];
-			CSS_CONDENSE_STYLES.forEach((key)=> {
-				const regex =  new RegExp(`^${key}-`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key))));
-			});
-
-			CSS_AUTO_STYLES.forEach((key)=> {
-				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('auto'))));
-			});
-
-			CSS_NONE_STYLES.forEach((key)=> {
-				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('none'))));
-			});
-
-			CSS_NORMAL_STYLES.forEach((key)=> {
-				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('normal'))));
-			});
-
-			CSS_ZERO_STYLES.forEach((key)=> {
-				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0)));
-			});
-
-			Object.keys(styles).forEach((key)=> {
-				if (styles[key].length === 0) {
-					keys.push(key);
-				}
-			});
-
-			Object.keys(styles).forEach((key)=> {
-				if (!isNaN(styles[key])) {
-					styles[key] = (styles[key] << 0);
-				}
-			});
-
-			return (purgeKeys(styles, keys));
+			return ({});
 		};
 
 		window.elementBounds = (el, styles)=> {
@@ -181,6 +130,68 @@ export async function funcs(page) {
 			return (stack.slice(2).join(' '));
 		};
 
+
+		window.elementStyles = (element)=> {
+			let styles = {};
+			const compStyles = getComputedStyle(element);
+
+			Object.keys(compStyles).filter((key)=> (isNaN(parseInt(key, 10)))).forEach((key, i)=> {
+				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key].replace(/"/g, '\\"');
+			});
+
+			if (styles.hasOwnProperty('font')) {
+				styles['font'] = styles['font'].replace(/\\"/g, '"');
+			}
+
+			if (styles.hasOwnProperty('font-family')) {
+				styles['font-family'] = styles['font-family'].replace(/\\"/g, '"');
+			}
+
+			if (styles.hasOwnProperty('-webkit-locale')) {
+				styles['-webkit-locale'] = styles['-webkit-locale'].replace(/\\"/g, '"');
+			}
+
+			let keys = [];
+			CSS_CONDENSE_STYLES.forEach((key)=> {
+				const regex =  new RegExp(`^${key}-`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key))));
+			});
+
+			CSS_AUTO_STYLES.forEach((key)=> {
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('auto'))));
+			});
+
+			CSS_NONE_STYLES.forEach((key)=> {
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('none'))));
+			});
+
+			CSS_NORMAL_STYLES.forEach((key)=> {
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('normal'))));
+			});
+
+			CSS_ZERO_STYLES.forEach((key)=> {
+				const regex =  new RegExp(`^${key}-?`, 'i');
+				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0)));
+			});
+
+			Object.keys(styles).forEach((key)=> {
+				if (styles[key].length === 0) {
+					keys.push(key);
+				}
+			});
+
+			Object.keys(styles).forEach((key)=> {
+				if (!isNaN(styles[key])) {
+					styles[key] = (styles[key] << 0);
+				}
+			});
+
+			return (purgeKeys(styles, keys));
+		};
+
 		window.elementVisible = (el, styles)=> (el.is(':visible') && styles['visibility'] !== 'hidden' && parentsVisible(el));
 
 		window.hexRGBA = (color)=> {
@@ -220,21 +231,29 @@ export async function funcs(page) {
 	});
 }
 
+export async function globals(page, vars) {
+	await page.evaluate((vars)=> {
+		Object.keys(vars).forEach((key)=> {
+			window[key] = vars[key];
+		});
+	}, vars);
+}
+
 export async function listeners(page) {
 	await page.evaluate(()=> {
-		document.addEventListener('mousewheel', (event) => {
+		document.addEventListener('mousewheel', (event)=> {
 			console.log(`DOC mousewheel ${event}`);
 		});
 	});
 
-	page.on('console', (msg) => {
+	page.on('console', (msg)=> {
 		console[msg._type](msg._text);
 // 		msg.args().forEach((arg, i) => {
 // 			console.log(`${i}: ${msg.args()[i]}`);
 // 		});
 	});
 
-	page.on('dialog', async (dialog) => {
+	page.on('dialog', async (dialog)=> {
 // 		console.log('DIALOG -->', { ...dialog });
 		console.log('DIALOG -->', dialog._type, dialog._message);
 		await dialog.dismiss();

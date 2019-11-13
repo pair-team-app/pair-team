@@ -6,8 +6,18 @@ import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
-import { consts, funcs, listeners } from './config';
-import { captureScreenImage, extractElements, extractMeta, inlinePageCSS, formatPageHTML, stripPageTags } from './utils';
+import {consts, funcs, globals, listeners} from './config';
+import {
+	captureScreenImage,
+	embedPageStyles,
+	extractElements,
+	extractMeta,
+	inlineCSS,
+	formatHTML,
+	pageStyleTag,
+	stripPageTags,
+} from './utils';
+import {CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES} from "./consts";
 
 
 export async function renderWorker(url) {
@@ -36,11 +46,28 @@ export async function renderWorker(url) {
 		await page.goto(url, { waitUntil : 'networkidle2' });
 
 		await stripPageTags(page, ['iframe']);
-		const html = formatPageHTML(await inlinePageCSS(await page.content()));
+		const embedHTML = await embedPageStyles(await page.content());
+		const styleTag = await pageStyleTag(embedHTML);
+
+// 		let name = 'jack';
+// 		let age  = 33;
+// 		let location = 'Berlin/Germany';
+// 		await page.evaluate(({ name, age, location })=> {
+// 			console.log(name);
+// 			console.log(age);
+// 			console.log(location);
+// 		},{ name, age, location });
+
 
 		await consts(page);
 		await listeners(page);
 		await funcs(page);
+		await globals(page, { styleTag });
+
+		const html = formatHTML(await inlineCSS(embedHTML));
+// 		console.log('::::', html);
+// 		console.log('::::', await embedPageStyles(await page.content()));
+
 
 // 		await page.evaluate(()=> {
 // 			document.dispatchEvent(new WheelEvent('mousewheel', { deltaY : 100 }));
@@ -74,8 +101,9 @@ export async function renderWorker(url) {
 // 		console.log('::::', doc.colors);
 // 		console.log('IMAGES -->', elements.images[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0].dom);
-// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${JSON.stringify(link.dom, null, 2)}`)));
-// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${link.path}`)));
+// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${link.styles.background}`)));
+// 		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${JSON.stringify(link.styles, null, 2)}`)));
+		console.log('LINKS -->', elements.links.map((link, i)=> (`[${link.title}] ${link.html}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] (${el.children.map((child)=> (`[${child.title}] ${child.dom}`))})`)));
 // 		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0], (key, val)=> { console.log(key, ':', val, '\n- - - -')}, 2));
 // 		console.log('BUTTONS -->', JSON.stringify([{ ...elements.buttons[0], handle : null }, {... elements.buttons[1], handle : null }], null, 2));
