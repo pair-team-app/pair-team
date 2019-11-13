@@ -3,7 +3,6 @@
 
 
 import crypto from 'crypto';
-import stringify from 'json-stringify-safe';
 
 import { CRYPTO_TYPE } from './consts';
 import cryproCreds from '../crypto-creds';
@@ -12,10 +11,23 @@ import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
 
-const inlineElementStyles = (html, styles)=> {
+const elementRootStyles = async(html, pageStyles)=> {
+	const inline = await inlineElementStyles(html, pageStyles, 'span');
+	const { styles } = inline.match(/^.+? style="(?<styles>.+?)"/).groups;
+
+	let obj = {};
+	styles.slice(0, -1).split(';').forEach((style)=> {
+		const kv = style.split(':');
+		obj[kv[0].trim()] = kv[1].trim();
+	});
+
+	return (obj);
+};
+
+const inlineElementStyles = (html, styles, wrapper=null)=> {
 	return (new Promise((resolve, reject) => {
 		inlineCss(`<html>${styles}${html}</html>`, { url : ' ' }).then((result)=> {
-			resolve(result.replace('<html>', '<span>').replace('</html>', '</span>'));
+			resolve((!wrapper) ? result.replace(/<html.+?>(.+)<\/html>/g, '$1') : result.replace(/^<html(.+)<\/html>$/, `<${wrapper}$1</${wrapper}>`));
 		});
 	}));
 };
@@ -85,7 +97,7 @@ export async function encryptTxt(txt, { type, key }={}) {
 
 export async function extractElements(page) {
 	const elements = {
-		'pages'      : [],
+		'views'      : [],
 		'buttons'    : await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
 		'headings'   : await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
 		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)),
@@ -101,11 +113,18 @@ export async function extractElements(page) {
 
 export async function extractMeta(page, elements) {
 	return ({
-		colors : {
+		accessibility : await page.accessibility.snapshot(),
+		colors        : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['background'].replace(/ none.*$/, ''))))).flat(Infinity))],
 			fg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['color'])))).flat(Infinity))]
 		},
-		fonts  : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))]
+		description   : await page.title(),
+		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
+		image         : await captureScreenImage(page),
+		links         : elements.links.map((link)=> (link.meta.href)).join(' '),
+		pathname      : await page.evaluate(()=> (window.location.pathname)),
+		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
+		url           : await page.url()
 	});
 }
 
@@ -139,7 +158,7 @@ export async function processNode(page, node) {
 	let bounds = await node.boundingBox();
 	if (bounds) {
 		Object.keys(bounds).forEach((key)=> {
-			bounds[key] = (bounds[key] << 0);
+			bounds[key] = Math.ceil(bounds[key]);
 		});
 	}
 
@@ -169,7 +188,8 @@ export async function processNode(page, node) {
 // 			dom    : Array.from(el.childNodes),
 // 			dom    : Array.from(el.children.values()),
 // 			dom    : typeof el.children,
-			path          : elementPath(el),
+// 			path          : elementPath(el),
+			path          : {},
 			pageCSS       : styleTag,
 			meta          : {
 				border      : styles['border'],
@@ -184,7 +204,9 @@ export async function processNode(page, node) {
 		});
 	}, node);
 
-	return ({...attribs, children,
+	const html = (await inlineElementStyles(attribs.html, attribs.pageCSS));
+
+	return ({...attribs, html, children,
 // 		dom : Array.from(await node.getProperties().map), //
 // 		dom : await (node.getProperty('innerHTML')), // works
 // 		dom : await (await node.getProperty('childElementCount')).jsonValue(),
@@ -194,15 +216,13 @@ export async function processNode(page, node) {
 // 		dom    : typeof await (node.asElement()).childNodes.length,
 // 		dom    : node.asElement(),
 // 		dom    : Array.from(node.asElement().children),
-// 		title : (attribs.title.length === 0) ? attribs.meta.text : attribs.title,
-		html  : (await inlineElementStyles(attribs.html, attribs.pageCSS)),
 // 		image : (bounds) ? await captureElementImage(node) : '',
+		path  : await elementRootStyles(attribs.html, attribs.pageCSS),
 		meta  : { ...attribs.meta, bounds,
-			box : await node.boxModel(),
-// 			text : ((attribs.meta.text.length === 0 && children.length > 0) ? (await node.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)))).filter((innerHTML)=> (innerHTML.length > 0 && !/^<.+>$/.test(innerHTML))).pop() : attribs.title)
+			box : await node.boxModel()
 		},
 		enc   : {
-			html          : await encryptTxt(attribs.html),
+			html          : await encryptTxt(html),
 			styles        : await encryptObj(attribs.styles),
 			accessibility : await encryptObj(attribs.accessibility)
 		}
