@@ -12,6 +12,14 @@ import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
 
+const inlineElementStyles = (html, styles)=> {
+	return (new Promise((resolve, reject) => {
+		inlineCss(`<html>${styles}${html}</html>`, { url : ' ' }).then((result)=> {
+			resolve(result.replace('<html>', '<span>').replace('</html>', '</span>'));
+		});
+	}));
+};
+
 const makeCipher = async(enc=true, { type, key }={})=> {
 	type = (!type) ? Object.keys(cryproCreds).find((k)=> (k === CRYPTO_TYPE)) : type;
 	key = (!key) ? cryproCreds[(!type) ? CRYPTO_TYPE : type] : key;
@@ -43,6 +51,25 @@ export async function captureScreenImage(page, encoding='base64') {
 }
 
 
+export async function embedPageStyles(html, relativeTo='build') {
+	const opts = { relativeTo,
+		fileContent : html.replace(/="\//g, '="./'),
+		images      : false,
+		scripts     : false
+	};
+
+	return (new Promise((resolve, reject)=> {
+		inline.html(opts, (err, result)=> {
+			if (err) {
+				reject(err);
+			}
+
+			resolve(result.replace(/\n/g, ''));
+		});
+	}));
+}
+
+
 export async function encryptObj(obj, { type, key }={}) {
 	return (await encryptTxt(JSON.stringify(obj), { type, key }));
 }
@@ -58,6 +85,7 @@ export async function encryptTxt(txt, { type, key }={}) {
 
 export async function extractElements(page) {
 	const elements = {
+		'pages'      : [],
 		'buttons'    : await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
 		'headings'   : await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))),
 		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)),
@@ -82,35 +110,28 @@ export async function extractMeta(page, elements) {
 }
 
 
-export function formatPageHTML(html, opts={}) {
+export function formatHTML(html, opts={}) {
 	const { styles } = html.match(/style="(?<styles>.+?)"/).groups;
 	return (`<div style="${styles}">${stripHtml(html, {
-		stripTogetherWithTheirContents : ['head'],
-		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body'],
+		stripTogetherWithTheirContents : ['head', 'style'],
+		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body', 'style'],
 		trimOnlySpaces                 : true,
 		...opts
 	})}</div>`);
 }
 
 
-export async function inlinePageCSS(html, relativeTo='build') {
-	const opts = { relativeTo,
-		fileContent : html.replace(/="\//g, '="./'),
-		images      : false,
-		scripts     : false
-	};
-
+export async function inlineCSS(html, style='') {
 	return (new Promise((resolve, reject)=> {
-		inline.html(opts, (err, result)=> {
-			if (err) {
-				reject(err);
-			}
-
-			inlineCss(result, { url : ' ' }).then((result)=> {
-				resolve(result);
-			});
+		inlineCss(`${style}${html}`, { url : ' ' }).then((result)=> {
+			resolve(result);
 		});
 	}));
+}
+
+
+export async function pageStyleTag(html) {
+	return (`<style>${Array.from(html.matchAll(/<style.*?>(.+?)<\/style>/g), (match)=> (match.pop())).join(' ')}</style>`);
 }
 
 
@@ -123,33 +144,33 @@ export async function processNode(page, node) {
 	}
 
 // 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'svg') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))) : [];
-	const children = await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))));
+	const children = [];//await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))));
 	const attribs = await page.evaluate((el)=> {
 		const styles = elementStyles(el);
+
+// 		console.log('DERP', inlineElementStyles(el.outerHTML));
 
 		return ({
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.textContent && el.textContent.length > 0) ? el.textContent : '',
 // 			title   : (el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.innerText && el.innerText.length > 0) ? el.innerText : '',
-			title         : (el.textContent) ? el.textContent : (el.hasAttribute('value')) ? el.value : (el.hasAttribute('placeholder')) ? el.getAttribute('placeholder') : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt')) ? el.alt : '',
+			title         : (el.textContent && el.textContent.length > 0) ? el.textContent : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.hasAttribute('placeholder') && el.getAttribute('placeholder').length > 0) ? el.getAttribute('placeholder') : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : el.nodeName.toLowerCase(),
 			tag           : el.tagName.toLowerCase(),
-// 			html          : ((el.childElementCount > 0) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
-			html          : ((el.childElementCount > 0) ? el.outerHTML.replace(el.innerHTML, '') : el.outerHTML).replace(/>/, '>[:]'),
+			html          : el.outerHTML,
 			styles        : styles,
-			accessibility : {},
+			accessibility : elementAccessibility(el),
 			classes       : (el.className.length > 0) ? el.className : '',
 // 			dom    : el.compareDocumentPosition(el.parentNode),
 // 			dom    : Array.from(el.getProperties()),
-
 // 			dom    : el.hasChildNodes(), //good
 // 			dom    : el.childElementCount, //good
 // 			dom    : el.children.length, // >0
 // 			dom    : el.childElementCount, // >0
 // 			dom    : el.childNodes.length, // always =1
-
 // 			dom    : Array.from(el.childNodes),
 // 			dom    : Array.from(el.children.values()),
-// 				dom    : typeof el.children,
+// 			dom    : typeof el.children,
 			path          : elementPath(el),
+			pageCSS       : styleTag,
 			meta          : {
 				border      : styles['border'],
 				color       : elementColor(styles),
@@ -173,7 +194,8 @@ export async function processNode(page, node) {
 // 		dom    : typeof await (node.asElement()).childNodes.length,
 // 		dom    : node.asElement(),
 // 		dom    : Array.from(node.asElement().children),
-		title : (attribs.title.length === 0) ? attribs.meta.text : attribs.title,
+// 		title : (attribs.title.length === 0) ? attribs.meta.text : attribs.title,
+		html  : (await inlineElementStyles(attribs.html, attribs.pageCSS)),
 // 		image : (bounds) ? await captureElementImage(node) : '',
 		meta  : { ...attribs.meta, bounds,
 			box : await node.boxModel(),
