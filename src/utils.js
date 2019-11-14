@@ -130,13 +130,20 @@ export async function extractMeta(page, elements) {
 
 
 export function formatHTML(html, opts={}) {
-	const { styles } = html.match(/style="(?<styles>.+?)"/).groups;
-	return (`<div style="${styles}">${stripHtml(html, {
+	return (stripHtml(html, {
 		stripTogetherWithTheirContents : ['head', 'style'],
 		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body', 'style'],
 		trimOnlySpaces                 : true,
 		...opts
-	})}</div>`);
+	}));
+
+// 	const { styles } = html.match(/style="(?<styles>.+?)"/).groups;
+// 	return (`<div style="${styles}">${stripHtml(html, {
+// 		stripTogetherWithTheirContents : ['head', 'style'],
+// 		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body', 'style'],
+// 		trimOnlySpaces                 : true,
+// 		...opts
+// 	})}</div>`);
 }
 
 
@@ -148,6 +155,26 @@ export async function inlineCSS(html, style='') {
 	}));
 }
 
+
+export async function pageElement(page, doc, html) {
+	const element = await processNode(page, await page.$('body', async(node)=> (node)));
+
+	return ({ ...element, html,
+		title         : (doc.pathname === '' || doc.pathname === '/') ? doc.title : doc.pathname.slice(1),
+		image         : doc.image,
+		accessibility : doc.accessibility,
+		classes       : '',
+		meta          : { ...element.meta,
+			text     : doc.title,
+			url      : doc.url,
+			pathname : (doc.pathname !== '') ? doc.pathname : '/'
+		},
+		enc           : { ...element.enc,
+			html          : await encryptTxt(html),
+			accessibility : await encryptObj(doc.accessibility)
+		}
+	});
+}
 
 export async function pageStyleTag(html) {
 	return (`<style>${Array.from(html.matchAll(/<style.*?>(.+?)<\/style>/g), (match)=> (match.pop())).join(' ')}</style>`);
@@ -217,6 +244,7 @@ export async function processNode(page, node) {
 // 		dom    : node.asElement(),
 // 		dom    : Array.from(node.asElement().children),
 // 		image : (bounds) ? await captureElementImage(node) : '',
+		image : '',
 		path  : await elementRootStyles(attribs.html, attribs.pageCSS),
 		meta  : { ...attribs.meta, bounds,
 			box : await node.boxModel()
