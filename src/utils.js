@@ -160,7 +160,7 @@ export async function pageElement(page, doc, html) {
 	const element = await processNode(page, await page.$('body', async(node)=> (node)));
 
 	return ({ ...element, html,
-		title         : (doc.pathname === '' || doc.pathname === '/') ? doc.title : doc.pathname.slice(1),
+		title         : (doc.pathname === '' || doc.pathname === '/') ? '/index' : `/${doc.pathname.slice(1)}`,
 		image         : doc.image,
 		accessibility : doc.accessibility,
 		classes       : '',
@@ -261,7 +261,9 @@ export async function processNode(page, node) {
 export async function stripPageTags(page, tags=[]) {
 	await page.$$eval(['noscript', 'script', ...tags].join(', '), (nodes)=> {
 		nodes.forEach((node)=> {
-			node.parentNode.removeChild(node);
+			if (node.parentNode) {
+				node.parentNode.removeChild(node);
+			}
 		});
 	});
 }

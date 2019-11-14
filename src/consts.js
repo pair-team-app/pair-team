@@ -5,6 +5,13 @@
 export const CRYPTO_TYPE = 'aes256';
 export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
 
+export const BROWSER_OPTS = {
+	devTools          : true,
+	headless          : true,
+	ignoreHTTPSErrors : true,
+	args              : ['--no-sandbox', '--disable-gpu']
+};
+
 export const FETCH_CFG = {
 	method  : 'POST',
 	headers : { 'Content-Type' : 'application/json' },
