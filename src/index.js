@@ -2,11 +2,14 @@
 'use strict';
 
 
+import chalk from 'chalk';
+import { Strings } from 'lang-js-utils';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
-import {consts, funcs, globals, listeners} from './config';
+import { consts, funcs, globals, listeners } from './config';
+import { BROWSER_OPTS } from './consts';
 import {
 	captureScreenImage,
 	embedPageStyles,
@@ -18,6 +21,35 @@ import {
 	pageStyleTag,
 	stripPageTags,
 } from './utils';
+
+
+async function parsePage(browser, device, url, cnt) {
+	const page = await browser.newPage();
+	await page.emulate(device);
+	const res = await page.goto(url, { waitUntil : 'networkidle0' });
+
+	await stripPageTags(page, ['iframe']);
+	const embedHTML = await embedPageStyles(await page.content());
+	const styleTag = await pageStyleTag(embedHTML);
+
+	await consts(page);
+	await listeners(page);
+	await funcs(page);
+	await globals(page, { styleTag });
+
+	const html = formatHTML(await inlineCSS(embedHTML));
+	const elements = await extractElements(page);
+
+	const docMeta = await extractMeta(page, elements);
+	await elements.views.push(await pageElement(page, { ...docMeta, html,
+		title : projectName()
+	}, html));
+
+	await page.close();
+
+	console.log('%s Finished parsing view %s', chalk.cyan.bold('INFO'), chalk.blue.bold(`/${url.split('/').slice(3).join('/')}`));
+	return(elements);
+}
 
 
 export async function renderWorker(url) {
@@ -39,11 +71,12 @@ export async function renderWorker(url) {
 	];
 
 	const objs = await Promise.all(devices.map(async(device)=> {
-		const browser = await puppeteer.launch({ headless : true });
+		const browser = await puppeteer.launch(BROWSER_OPTS);
 
-		const page = await browser.newPage();
+		console.log('%s Parsing root page…', chalk.cyan.bold('INFO'));
+		let page = await browser.newPage();
 		await page.emulate(device);
-		await page.goto(url, { waitUntil : 'networkidle2' });
+		await page.goto(url, { waitUntil : 'networkidle0' });
 
 		await stripPageTags(page, ['iframe']);
 		let embedHTML = await embedPageStyles(await page.content());
@@ -55,9 +88,6 @@ export async function renderWorker(url) {
 		await globals(page, { styleTag });
 
 		let html = formatHTML(await inlineCSS(embedHTML));
-// 		console.log('::::', html);
-// 		console.log('::::', await embedPageStyles(await page.content()));
-
 
 // 		await page.evaluate(()=> {
 // 			document.dispatchEvent(new WheelEvent('mousewheel', { deltaY : 100 }));
@@ -66,48 +96,23 @@ export async function renderWorker(url) {
 // 		await page.emit('mousewheel', await page.evaluate(()=> (new WheelEvent('mousewheel', { deltaY : 100 }))));
 
 		const elements = await extractElements(page);
-// 		console.log('::::', device.name, Object.keys(elements));
-// 		console.log('::::', html);
-// 		console.log(device.name, elements.colors.map((el)=> ({ ...el,
-// 			styles : {}
-// 		})));
-
 		let docMeta = await extractMeta(page, elements);
 		const doc = { ...docMeta, html,
-// 			html  : (await page.content()).replace(/"/g, '\\"'),
-// 			html  : await page.content(),
 			title : projectName()
 		};
 
 		elements.views.push(await pageElement(page, doc, html));
-// 		const links = doc.links.split(' ').filter((link)=> (link !== url)).filter((link)=> (!/^https?:\/\/.+https?:\/\//.test(link)));
-// 		const derp = await Promise.all(links.map(async(link)=> {
-// // 			console.log('::::', link);
-//
-// 			await page.goto(link, { waitUntil : 'networkidle2' });
-//
-// // 			await stripPageTags(page, ['iframe']);
-// // 			embedHTML = await embedPageStyles(await page.content());
-// // 			styleTag = await pageStyleTag(embedHTML);
-// //
-// // 			await globals(page, { styleTag });
-// //
-// // 			html = formatHTML(await inlineCSS(embedHTML));
-// // 			const els = await extractElements(page);
-// //
-// // 			Object.keys(elements).forEach((key)=> {
-// // 				elements[key] = [ ...elements[key], ...els[key]];
-// // 			});
-// //
-// // 			docMeta = await extractMeta(page, els);
-// // 			elements.views.push(await pageElement(page, { ...docMeta, html,
-// // 				title : projectName()
-// // 			}, html));
-//
-// 			return (await page.content());
-// 		}));
-//
-// 		console.log('>>>>>', derp);
+		await page.close();
+
+		const links = doc.links.split(' ').filter((link)=> (link !== url)).filter((link)=> (!/^https?:\/\/.+https?:\/\//.test(link)));
+		console.log('%s Found (%s) add\'l %s: [%s]…' , chalk.cyan.bold('INFO'), chalk.magenta.bold(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (chalk.blue.bold(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+
+		await Promise.all(links.map(async(link, i)=> {
+			const els = await parsePage(browser, device, link, { ind : (i + 1), tot : links.length });
+			Object.keys(elements).forEach((key)=> {
+				elements[key] = [ ...elements[key], ...els[key]];
+			});
+		}));
 
 
 // 		console.log('::::', doc);
@@ -128,7 +133,7 @@ export async function renderWorker(url) {
 // 		console.log('LINKS -->',  [elements.links[0].styles, elements.links[1].meta]);
 // 		console.log('LINKS -->',  [elements.links[0].styles.length]);
 // 		console.log('IMAGES -->', Object.keys(elements.images[0].styles).length);
-// 	console.log('IMAGE[0].border -->', elements.images[0].styles);
+// 	  console.log('IMAGE[0].border -->', elements.images[0].styles);
 
 		await browser.close();
 
