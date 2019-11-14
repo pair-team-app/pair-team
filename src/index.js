@@ -14,10 +14,10 @@ import {
 	extractMeta,
 	inlineCSS,
 	formatHTML,
+	pageElement,
 	pageStyleTag,
 	stripPageTags,
 } from './utils';
-import {CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES} from "./consts";
 
 
 export async function renderWorker(url) {
@@ -46,25 +46,15 @@ export async function renderWorker(url) {
 		await page.goto(url, { waitUntil : 'networkidle2' });
 
 		await stripPageTags(page, ['iframe']);
-		const embedHTML = await embedPageStyles(await page.content());
-		const styleTag = await pageStyleTag(embedHTML);
-
-// 		let name = 'jack';
-// 		let age  = 33;
-// 		let location = 'Berlin/Germany';
-// 		await page.evaluate(({ name, age, location })=> {
-// 			console.log(name);
-// 			console.log(age);
-// 			console.log(location);
-// 		},{ name, age, location });
-
+		let embedHTML = await embedPageStyles(await page.content());
+		let styleTag = await pageStyleTag(embedHTML);
 
 		await consts(page);
 		await listeners(page);
 		await funcs(page);
 		await globals(page, { styleTag });
 
-		const html = formatHTML(await inlineCSS(embedHTML));
+		let html = formatHTML(await inlineCSS(embedHTML));
 // 		console.log('::::', html);
 // 		console.log('::::', await embedPageStyles(await page.content()));
 
@@ -76,22 +66,53 @@ export async function renderWorker(url) {
 // 		await page.emit('mousewheel', await page.evaluate(()=> (new WheelEvent('mousewheel', { deltaY : 100 }))));
 
 		const elements = await extractElements(page);
-		const docMeta = await extractMeta(page, elements);
 // 		console.log('::::', device.name, Object.keys(elements));
 // 		console.log('::::', html);
 // 		console.log(device.name, elements.colors.map((el)=> ({ ...el,
 // 			styles : {}
 // 		})));
 
-
+		let docMeta = await extractMeta(page, elements);
 		const doc = { ...docMeta, html,
 // 			html  : (await page.content()).replace(/"/g, '\\"'),
 // 			html  : await page.content(),
 			title : projectName()
 		};
 
+		elements.views.push(await pageElement(page, doc, html));
+// 		const links = doc.links.split(' ').filter((link)=> (link !== url)).filter((link)=> (!/^https?:\/\/.+https?:\/\//.test(link)));
+// 		const derp = await Promise.all(links.map(async(link)=> {
+// // 			console.log('::::', link);
+//
+// 			await page.goto(link, { waitUntil : 'networkidle2' });
+//
+// // 			await stripPageTags(page, ['iframe']);
+// // 			embedHTML = await embedPageStyles(await page.content());
+// // 			styleTag = await pageStyleTag(embedHTML);
+// //
+// // 			await globals(page, { styleTag });
+// //
+// // 			html = formatHTML(await inlineCSS(embedHTML));
+// // 			const els = await extractElements(page);
+// //
+// // 			Object.keys(elements).forEach((key)=> {
+// // 				elements[key] = [ ...elements[key], ...els[key]];
+// // 			});
+// //
+// // 			docMeta = await extractMeta(page, els);
+// // 			elements.views.push(await pageElement(page, { ...docMeta, html,
+// // 				title : projectName()
+// // 			}, html));
+//
+// 			return (await page.content());
+// 		}));
+//
+// 		console.log('>>>>>', derp);
+
+
 // 		console.log('::::', doc);
 // 		console.log('::::', doc.colors);
+// 		console.log('VIEWS -->', elements.views.length);
 // 		console.log('IMAGES -->', elements.images[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0].dom);
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));

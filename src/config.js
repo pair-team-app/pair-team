@@ -265,12 +265,13 @@ export async function listeners(page) {
 
 	await page.setRequestInterception(true);
 	page.on('request', (request)=> {
-// 		console.log('headers', request.headers());
+// 		console.log('headers', request.url(), request.headers());
+// 		console.log('REQ: ', request.url());
 		request.continue(request.headers());
 	});
 
 	page.on('response', async (response)=> {
-// 		console.log('response', (await response.url()).replace('http://localhost:1066', ''));
+// 		console.log('response', await response.url(), { 'content-length' : await response.headers()['content-length'] });
 	});
 
 	page.on('mousewheel', (event)=> {
