@@ -2,7 +2,6 @@
 'use strict';
 
 
-import inlineCss from 'inline-css';
 import {
 	CSS_AUTO_STYLES,
 	CSS_CONDENSE_STYLES,
@@ -12,59 +11,19 @@ import {
 
 
 export async function consts(page) {
-	await page.evaluate((Consts)=> {
-		window.CSS_AUTO_STYLES = Consts.CSS_AUTO_STYLES;
-		window.CSS_CONDENSE_STYLES = Consts.CSS_CONDENSE_STYLES;
-		window.CSS_NONE_STYLES = Consts.CSS_NONE_STYLES;
-		window.CSS_NORMAL_STYLES = Consts.CSS_NORMAL_STYLES;
-		window.CSS_ZERO_STYLES = Consts.CSS_ZERO_STYLES;
-	}, { CSS_AUTO_STYLES, CSS_CONDENSE_STYLES, CSS_NONE_STYLES, CSS_NORMAL_STYLES, CSS_ZERO_STYLES });
+	await globals(page, {
+		CSS_AUTO_STYLES,
+		CSS_CONDENSE_STYLES,
+		CSS_NONE_STYLES,
+		CSS_NORMAL_STYLES,
+		CSS_ZERO_STYLES
+	});
 }
+
 
 export async function funcs(page) {
 	await page.evaluate(()=> {
-		window.scrollToBottom = (lastScrollTop)=> {
-			document.scrollingElement.scrollTop += 100;
-
-			if (document.scrollingElement.scrollTop !== lastScrollTop) {
-				lastScrollTop = document.scrollingElement.scrollTop;
-				requestAnimationFrame(scroll);
-			}
-
-			return (lastScrollTop);
-		};
-
-
-		window.rgbaObject = (color)=> {
-			return ({
-				r : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.red) << 0,
-				g : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.green) << 0,
-				b : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.blue) << 0,
-				a : (color.includes('rgba')) ? parseFloat(color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+), (?<alpha>\d(\.\d+)?)\)$/).groups.alpha) * 255 : 255
-			});
-		};
-
-		window.purgeKeys = (obj, keys)=> {
-			let pruneObj = { ...obj };
-			keys.forEach((key)=> {
-				if (pruneObj.hasOwnProperty(key)) {
-					delete (pruneObj[key]);
-				}
-			});
-
-			return (pruneObj);
-		};
-
-		window.elementText = async(element)=> {
-			const innerHTML = await element.$$eval('*', (els)=> els.map(({ innerHTML })=> (innerHTML)));
-			if (/^<.+>$/.test(innerHTML)) {
-
-			}
-		};
-
-		window.elementAccessibility = (element)=> {
-			return ({});
-		};
+// 	await page.evaluateOnNewDocument(()=> {
 
 		window.elementBounds = (el, styles)=> {
 			const origin = {
@@ -109,29 +68,28 @@ export async function funcs(page) {
 			})
 		};
 
-		window.elementPath = (el)=> {
-			let stack = [];
-			while (el.parentNode !== null) {
-				let sibCount = 0;
-				let sibIndex = 0;
-				for (let i=0; i<el.parentNode.childNodes.length; i++) {
-					let sib = el.parentNode.childNodes[i];
-					if (sib.nodeName === el.nodeName) {
-						if (sib === el) {
-							sibIndex = sibCount;
-						}
-
-						sibCount++;
-					}
-				}
-
-// 				stack.unshift((sibCount > 1) ? `${el.nodeName.toLowerCase()}:${sibIndex}` : el.nodeName.toLowerCase());
-				stack.unshift(`${el.nodeName.toLowerCase()}:${sibIndex}`);
-				el = el.parentNode;
-			}
-
-			return (stack.slice(2).join(' '));
-		};
+// 		window.elementPath = (el)=> {
+// 			let stack = [];
+// 			while (el.parentNode !== null) {
+// 				let sibCount = 0;
+// 				let sibIndex = 0;
+// 				for (let i=0; i<el.parentNode.childNodes.length; i++) {
+// 					let sib = el.parentNode.childNodes[i];
+// 					if (sib.nodeName === el.nodeName) {
+// 						if (sib === el) {
+// 							sibIndex = sibCount;
+// 						}
+//
+// 						sibCount++;
+// 					}
+// 				}
+//
+// 				stack.unshift(`${el.nodeName.toLowerCase()}:${sibIndex}`);
+// 				el = el.parentNode;
+// 			}
+//
+// 			return (stack.slice(2).join(' '));
+// 		};
 
 
 		window.elementStyles = (element)=> {
@@ -197,7 +155,7 @@ export async function funcs(page) {
 			return (purgeKeys(styles, keys));
 		};
 
-		window.elementVisible = (el, styles)=> (el.is(':visible') && styles['visibility'] !== 'hidden' && parentsVisible(el));
+		window.elementVisible = (el, styles)=> (styles['width'] !== '0px' && styles['height'] !== '0px' && styles['display'] !== 'none' && styles['visibility'] !== 'hidden' && parentsVisible(el));
 
 		window.hexRGBA = (color)=> {
 			const { red, green, blue, alpha } = color.match(/^#?(?<red>[A-Fa-f\d]{2})(?<green>[A-Fa-f\d]{2})(?<blue>[A-Fa-f\d]{2})((?<alpha>[A-Fa-f\d]{2})?)$/).groups;
@@ -209,13 +167,15 @@ export async function funcs(page) {
 			});
 		};
 
-		window.imageData = (el, size)=> {
+		window.imageData = (el, bounds)=> {
+			const { width, height } = bounds;
+
 			const canvas = document.createElement('canvas');
-			canvas.width = size.width;
-			canvas.height = size.height;
+			canvas.width = width;
+			canvas.height = height;
 
 			const ctx = canvas.getContext('2d');
-			ctx.drawImage(el, 0, 0, size.width, size.height);
+			ctx.drawImage(el, 0, 0, width, height);
 
 			return (canvas.toDataURL('image/png'));
 		};
@@ -233,8 +193,40 @@ export async function funcs(page) {
 
 			return (true);
 		};
+
+		window.purgeKeys = (obj, keys)=> {
+			let pruneObj = { ...obj };
+			keys.forEach((key)=> {
+				if (pruneObj.hasOwnProperty(key)) {
+					delete (pruneObj[key]);
+				}
+			});
+
+			return (pruneObj);
+		};
+
+		window.rgbaObject = (color)=> {
+			return ({
+				r : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.red) << 0,
+				g : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.green) << 0,
+				b : (color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+)(, (?<alpha>\d(\.\d+)?))?\)$/).groups.blue) << 0,
+				a : (color.includes('rgba')) ? parseFloat(color.match(/^rgba?\((?<red>\d+), (?<green>\d+), (?<blue>\d+), (?<alpha>\d(\.\d+)?)\)$/).groups.alpha) * 255 : 255
+			});
+		};
+
+		window.scrollToBottom = (lastScrollTop)=> {
+			document.scrollingElement.scrollTop += 100;
+
+			if (document.scrollingElement.scrollTop !== lastScrollTop) {
+				lastScrollTop = document.scrollingElement.scrollTop;
+				requestAnimationFrame(scroll);
+			}
+
+			return (lastScrollTop);
+		};
 	});
 }
+
 
 export async function globals(page, vars) {
 	await page.evaluate((vars)=> {
@@ -244,46 +236,94 @@ export async function globals(page, vars) {
 	}, vars);
 }
 
-export async function listeners(page) {
-	await page.evaluate(()=> {
-		document.addEventListener('mousewheel', (event)=> {
-			console.log(`DOC mousewheel ${event}`);
-		});
-	});
 
-	page.on('load', ()=> {
-// 		console.log('<PAGE LOAD>');
-	});
+export async function listeners(page, attach=true) {
+	const onMouseWheel = (event)=> {
+		console.log('onMouseWheel -->', event);
+	};
 
-	page.on('close', ()=> {
-// 		console.log('<PAGE CLOSE>');
-	});
+	const onPageError = (err)=> {
+		console.log('onPageError -->', { err });
+	};
 
-	page.on('console', (msg)=> {
-		console[msg._type]('INTERNAL >> ', msg._text);
+	const onPageDOMContentLoaded = ()=> {
+// 		console.log('onPageDOMContentLoaded -->', { url : page.url() });
+	};
+
+	const onPageLoad = ()=> {
+// 		console.log('onPageLoad -->', { url : page.url() });
+	};
+
+	const onPageClose = ()=> {
+// 		console.log('onPageClose -->', { url : page.url() });
+	};
+
+	const onPageConsole = (msg)=> {
+// 		console[msg._type]('onPageConsole -->>', msg._text);
+		console[msg._type](msg._text);
+
+		for (let i=0; i<msg.args().length; ++i) {
+			console[msg._type](`${i}: ${msg.args()[i]}`);
+		}
+
 // 		msg.args().forEach((arg, i) => {
 // 			console.log(`${i}: ${msg.args()[i]}`);
 // 		});
-	});
+	};
 
-	page.on('dialog', async (dialog)=> {
-// 		console.log('DIALOG -->', { ...dialog });
-		console.log('DIALOG -->', dialog._type, dialog._message);
+	const onPageDialog = async(dialog)=> {
+		console.log('onPageDialog -->', { type : dialog._type, message : dialog._message });
 		await dialog.dismiss();
-	});
+	};
 
-	await page.setRequestInterception(true);
-	page.on('request', (request)=> {
-// 		console.log('headers', request.url(), request.headers());
-// 		console.log('REQ: ', request.url());
+	const onPageRequest = (request)=> {
+// 		console.log('onPageRequest -->', { url : request.url(), headers : request.headers() });
 		request.continue(request.headers());
-	});
+	};
 
-	page.on('response', async (response)=> {
-// 		console.log('response', await response.url(), { 'content-length' : await response.headers()['content-length'] });
-	});
+	const onPageResponse = async(response)=> {
+// 		console.log('onPageResponse -->', { url : await response.url(), 'content-length' : await response.headers()['content-length'] });
+	};
 
-	page.on('mousewheel', (event)=> {
-		console.log('PAGE ON mousewheel:', event);
-	});
+	const onPageMouseWheel = (event)=> {
+		console.log('onPageMouseWheel -->', event);
+	};
+
+
+// 	await page.evaluate(()=> {
+	await page.evaluateOnNewDocument(({ attach, onMouseWheel })=> {
+		if (attach) {
+			document.addEventListener('mousewheel', onMouseWheel);
+
+		} else {
+			document.removeEventListener('mousewheel', onMouseWheel);
+		}
+	}, { attach, onPageMouseWheel });
+
+
+	await page.setRequestInterception(attach);
+	if (attach) {
+		page.on('load', onPageLoad);
+		page.on('domcontentloaded', onPageDOMContentLoaded);
+		page.on('error', onPageError);
+		page.on('pageerror', onPageError);
+		page.on('request', onPageRequest);
+		page.on('response', await onPageResponse);
+		page.on('console', onPageConsole);
+		page.on('dialog', await onPageDialog);
+		page.on('close', onPageClose);
+		page.on('mousewheel', onPageMouseWheel);
+
+	} else {
+		page.removeListener('load', onPageLoad);
+		page.removeListener('domcontentloaded', onPageDOMContentLoaded);
+		page.removeListener('error', onPageError);
+		page.removeListener('pageerror', onPageError);
+		page.removeListener('request', onPageRequest);
+		page.removeListener('response', await onPageResponse);
+		page.removeListener('console', onPageConsole);
+		page.removeListener('dialog', await onPageDialog);
+		page.removeListener('close', onPageClose);
+		page.removeListener('mousewheel', onPageMouseWheel);
+	}
 }

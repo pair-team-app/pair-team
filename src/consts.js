@@ -5,13 +5,6 @@
 export const CRYPTO_TYPE = 'aes256';
 export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
 
-export const BROWSER_OPTS = {
-	devTools          : true,
-	headless          : true,
-	ignoreHTTPSErrors : true,
-	args              : ['--no-sandbox', '--disable-gpu']
-};
-
 export const FETCH_CFG = {
 	method  : 'POST',
 	headers : { 'Content-Type' : 'application/json' },
@@ -21,6 +14,25 @@ export const FETCH_CFG = {
 	}
 };
 
+export const BROWSER_OPTS = {
+	devTools          : true,
+	headless          : true,
+	ignoreHTTPSErrors : true,
+	args              : ['--no-sandbox', '--disable-gpu']
+};
+
+export const CHROME_DEVICE = {
+	name      : 'Chrome',
+	userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+	viewport  : {
+		width             : 1920,
+		height            : 1080,
+		deviceScaleFactor : 1,
+		isMobile          : false,
+		hasTouch          : false,
+		isLandscape       : false
+	}
+};
 
 export const CSS_AUTO_STYLES = [
 	'align-self',
