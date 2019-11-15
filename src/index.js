@@ -2,14 +2,13 @@
 'use strict';
 
 
-import chalk from 'chalk';
 import { Strings } from 'lang-js-utils';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, globals, listeners } from './config';
-import { BROWSER_OPTS, CHROME_DEVICE } from './consts';
+import { BROWSER_OPTS, CHROME_DEVICE, ChalkStyles } from './consts';
 import {
 	embedPageStyles,
 	extractElements,
@@ -22,7 +21,7 @@ import {
 } from './utils';
 
 
-const parsePage = async(browser, device, url, cnt=null)=> {
+const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const page = await browser.newPage();
 	await page.emulate(device);
 	await page.goto(url, { waitUntil : 'networkidle0' });
@@ -47,7 +46,7 @@ const parsePage = async(browser, device, url, cnt=null)=> {
 	await listeners(page, false);
 	await page.close();
 
-	console.log('%s Finished parsing [%s] view %s', chalk.cyan.bold('INFO'), chalk.grey(device.name), chalk.blue.bold(`/${url.split('/').slice(3).join('/')}`));
+	console.log('%s%s Finished parsing [%s] view %s', ((ind === 0 && !url.endsWith('/')) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.PATH(`/${url.split('/').slice(3).join('/')}`));
 	return({ doc, elements });
 };
 
@@ -59,7 +58,7 @@ const parseLinks = async(browser, device, url)=> {
 	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
-	return ([ ...new Set(links)]);
+	return ([ ...new Set(links.slice(-1))]);
 };
 
 
@@ -70,14 +69,14 @@ export async function renderWorker(url) {
 		CHROME_DEVICE
 	].reverse();
 
-	const renders = await Promise.all(devices.map(async(device)=> {
-		console.log('%s Parsing [%s] root view…', chalk.cyan.bold('INFO'), chalk.grey(device.name));
+	const browser = await puppeteer.launch(BROWSER_OPTS);
+	const renders = await Promise.all(devices.map(async(device, i)=> {
+		console.log('%s Parsing [%s] root view…%s', ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ((i === devices.length - 1) ? '\n' : ''));
 
-		const browser = await puppeteer.launch(BROWSER_OPTS);
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
 		const links = await parseLinks(browser, device, url);
-		console.log('%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , chalk.cyan.bold('INFO'), chalk.magenta.bold(`${links.length}`), chalk.grey(device.name), Strings.pluralize('view', links.length), links.map((link)=> (chalk.blue.bold(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+		console.log('%s%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
 		await Promise.all(links.map(async(link, i)=> {
 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
 
@@ -85,9 +84,6 @@ export async function renderWorker(url) {
 				elements[key] = [ ...elements[key], ...els[key]];
 			});
 		}));
-
-
-		await browser.close();
 
 
 // 		console.log('::::', doc);
@@ -116,6 +112,7 @@ export async function renderWorker(url) {
 		});
 	}));
 
+	await browser.close();
 	return (renders);
 }
 

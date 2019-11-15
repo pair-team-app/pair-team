@@ -2,20 +2,20 @@
 'use strict';
 
 
-import chalk from 'chalk';
 import fetch from 'node-fetch';
 
-import { API_ENDPT_URL, FETCH_CFG } from './consts'
+import { API_ENDPT_URL, FETCH_CFG, ChalkStyles } from './consts'
 import { encryptObj, encryptTxt } from './utils';
 
 
-export async function createPlayground(userID, device, doc) {
-// 	console.log('createPlayground()', { userID });
+export async function createPlayground(buildID, userID, device, doc) {
+// 	console.log('createPlayground()', { buildID, userID });
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'ADD_PLAYGROUND',
 			payload : { ...doc, device,
+				build_id      : buildID,
 				user_id       : userID,
 				html          : await encryptTxt(doc.html),
 				styles        : await encryptObj(doc.styles),
@@ -29,12 +29,14 @@ export async function createPlayground(userID, device, doc) {
 		response = await response.json();
 
 	} catch (e) {
-		console.log('%s Couldn\'t parse response! %s', chalk.red.bold('ERROR'), e);
+		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 		console.log('RESP -->>', await response.text());
 	}
 
 //   console.log('ADD_PLAYGROUND -->>', { id : response.playground.id, buildID : response.playground.build_id });
-	return (response.playground);
+	return ({ ...response.playground,
+		buildID : response.playground.build_id << 0
+	});
 }
 
 
@@ -56,7 +58,7 @@ export async function sendPlaygroundComponents(userID, playgroundID, components)
 		response = await response.json();
 
 	} catch (e) {
-		console.log('%s Couldn\'t parse response! %s', chalk.red.bold('ERROR'), e);
+		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 		console.log('::::', (await response.text()).slice(0, 512));
 	}
 

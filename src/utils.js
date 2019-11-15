@@ -4,7 +4,7 @@
 
 import crypto from 'crypto';
 
-import { CRYPTO_TYPE } from './consts';
+import { CSS_PURGE_STYLES, CRYPTO_TYPE } from './consts';
 import cryproCreds from '../crypto-creds';
 import inlineCss from 'inline-css';
 import stripHtml from 'string-strip-html';
@@ -19,6 +19,12 @@ const elementRootStyles = async(html, pageStyles)=> {
 	styles.slice(0, -1).split(';').forEach((style)=> {
 		const kv = style.split(':');
 		obj[kv[0].trim()] = kv[1].trim();
+	});
+
+	CSS_PURGE_STYLES.forEach((key)=> {
+		if (obj.hasOwnProperty(key)) {
+			delete (obj[key]);
+		}
 	});
 
 	return (obj);
@@ -245,8 +251,8 @@ export async function processNode(page, node) {
 
 	return ({
 		...attribs, html, rootStyles, accessibility, children,
-		visible : (visible && (bounds.width * bounds.height) > 0),
-		image   : null,//(visible && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
+		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
+		image   : null,//(visible && bounds && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),

@@ -2,6 +2,9 @@
 'use strict';
 
 
+import chalk from 'chalk';
+
+
 export const CRYPTO_TYPE = 'aes256';
 export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
 
@@ -177,6 +180,15 @@ export const CSS_NORMAL_STYLES = [
 	'word-wrap'
 ];
 
+export const CSS_PURGE_STYLES = [
+	'block-size',
+	'font',
+	'height',
+	'max-block-size',
+	'max-height',
+	'-webkit-logical-height'
+];
+
 export const CSS_ZERO_STYLES = [
 	'baseline-shift',
 	'padding',
@@ -187,3 +199,13 @@ export const CSS_ZERO_STYLES = [
 	'-webkit-shape',
 	'word-spacing'
 ];
+
+export const ChalkStyles = {
+	INFO   : chalk.cyanBright('INFO'),
+	ERROR  : chalk.red.bold('ERROR'),
+	DONE   : chalk.greenBright('DONE'),
+	DEVICE : chalk.grey,
+	NUMBER : chalk.magentaBright,
+	PATH   : chalk.blueBright,
+	URL    : chalk.blue.bold.underline
+};
