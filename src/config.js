@@ -7,6 +7,7 @@ import {
 	CSS_CONDENSE_STYLES,
 	CSS_NONE_STYLES,
 	CSS_NORMAL_STYLES,
+	CSS_PURGE_STYLES,
 	CSS_ZERO_STYLES } from './consts';
 
 
@@ -16,6 +17,7 @@ export async function consts(page) {
 		CSS_CONDENSE_STYLES,
 		CSS_NONE_STYLES,
 		CSS_NORMAL_STYLES,
+		CSS_PURGE_STYLES,
 		CSS_ZERO_STYLES
 	});
 }
@@ -24,29 +26,6 @@ export async function consts(page) {
 export async function funcs(page) {
 	await page.evaluate(()=> {
 // 	await page.evaluateOnNewDocument(()=> {
-
-		window.elementBounds = (el, styles)=> {
-			const origin = {
-				x : (el.offset) ? el.offset.left : 0,
-				y : (el.offset) ? el.offset.top : 0
-			};
-
-// 			const margin = {
-// 				top : (el.getBoundingClientRect().top - el.offsetTop)
-// 			};
-
-			const size = {
-				width  : Math.ceil(styles.width.replace('px', '')),
-				height : Math.ceil(styles.height.replace('px', ''))
-			};
-
-			const center = {
-				x : origin.x + Math.ceil(size.width * 0.5),
-				y : origin.y + Math.ceil(size.height * 0.5)
-			};
-
-			return ({ origin, size, center });
-		};
 
 		window.elementColor = (styles)=> {
 			return ({
@@ -100,45 +79,30 @@ export async function funcs(page) {
 				styles[key.replace(/([A-Z]|^moz|^webkit)/g, (c)=> (`-${c.toLowerCase()}`))] = compStyles[key];
 			});
 
-			if (styles.hasOwnProperty('font')) {
-// 				styles['font'] = styles['font'].replace(/"/g, '\\"');
-// 				styles['font'] = styles['font'];
-			}
-
-			if (styles.hasOwnProperty('font-family')) {
-// 				styles['font-family'] = styles['font-family'].replace(/"/g, '\\"');
-// 				styles['font-family'] = styles['font-family'];
-			}
-
-			if (styles.hasOwnProperty('-webkit-locale')) {
-// 				styles['-webkit-locale'] = styles['-webkit-locale'].replace(/"/g, '\\"');
-// 				styles['-webkit-locale'] = styles['-webkit-locale'];
-			}
-
-			let keys = [];
+			let keys = [ ...CSS_PURGE_STYLES];
 			CSS_CONDENSE_STYLES.forEach((key)=> {
 				const regex =  new RegExp(`^${key}-`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key))));
+				keys.push( ...Object.keys(styles).filter((key)=> (regex.test(key))));
 			});
 
 			CSS_AUTO_STYLES.forEach((key)=> {
 				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('auto'))));
+				keys.push( ...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('auto'))));
 			});
 
 			CSS_NONE_STYLES.forEach((key)=> {
 				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('none'))));
+				keys.push( ...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('none'))));
 			});
 
 			CSS_NORMAL_STYLES.forEach((key)=> {
 				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('normal'))));
+				keys.push( ...Object.keys(styles).filter((key)=> (regex.test(key) && styles[key].startsWith('normal'))));
 			});
 
 			CSS_ZERO_STYLES.forEach((key)=> {
 				const regex =  new RegExp(`^${key}-?`, 'i');
-				keys.push(...Object.keys(styles).filter((key)=> (regex.test(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0)));
+				keys.push( ...Object.keys(styles).filter((key)=> (regex.test(key) && parseFloat(styles[key].replace(/[^\d]/g, '')) === 0)));
 			});
 
 			Object.keys(styles).forEach((key)=> {
@@ -155,7 +119,7 @@ export async function funcs(page) {
 			return (purgeKeys(styles, keys));
 		};
 
-		window.elementVisible = (el, styles)=> (styles['width'] !== '0px' && styles['height'] !== '0px' && styles['display'] !== 'none' && styles['visibility'] !== 'hidden' && parentsVisible(el));
+		window.elementVisible = (el, styles)=> (styles['display'] !== 'none' && styles['visibility'] !== 'hidden' && parentsVisible(el));
 
 		window.hexRGBA = (color)=> {
 			const { red, green, blue, alpha } = color.match(/^#?(?<red>[A-Fa-f\d]{2})(?<green>[A-Fa-f\d]{2})(?<blue>[A-Fa-f\d]{2})((?<alpha>[A-Fa-f\d]{2})?)$/).groups;
