@@ -2,6 +2,7 @@
 'use strict';
 
 
+import { AxePuppeteer } from 'axe-puppeteer';
 import { Strings } from 'lang-js-utils';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
@@ -25,6 +26,9 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const page = await browser.newPage();
 	await page.emulate(device);
 	await page.goto(url, { waitUntil : 'networkidle0' });
+
+	const results = await new AxePuppeteer(page).analyze();
+	console.log('AxePuppeteer SAYS:', JSON.stringify(results, null, 2));
 
 	await stripPageTags(page, ['iframe']);
 	const embedHTML = await embedPageStyles(await page.content());
@@ -62,11 +66,19 @@ const parseLinks = async(browser, device, url)=> {
 };
 
 
+export async function derp() {
+	setTimeout(()=> {
+		console.log('MAKE EM WAIT');
+		return (true);
+	});
+}
+
+
 export async function renderWorker(url) {
 	const devices = [
 		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
-		CHROME_DEVICE
+// 		CHROME_DEVICE
 	].reverse();
 
 	const browser = await puppeteer.launch(BROWSER_OPTS);

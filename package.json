@@ -4,13 +4,8 @@
   "description": "Sub module functionality for design-engine-playground",
   "main": "src/index.js",
   "jest": {
-    "moduleDirectories": [
-      "node_modules",
-      "src"
-    ],
-    "moduleFileExtensions": [
-      "js",
-      "jsx"
+    "setupFilesAfterEnv": [
+      "@wordpress/jest-puppeteer-axe"
     ]
   },
   "scripts": {
@@ -48,6 +43,7 @@
   },
   "homepage": "https://github.com/de-ai/design-engine-extract#readme",
   "dependencies": {
+    "axe-puppeteer": "^1.0.0",
     "chalk": "^2.4.2",
     "inline-css": "^2.5.1",
     "json-stringify-safe": "^5.0.1",
@@ -57,5 +53,9 @@
     "puppeteer": "^1.20.0",
     "string-strip-html": "^4.3.7",
     "web-resource-inliner": "^4.3.3"
+  },
+  "devDependencies": {
+    "@wordpress/jest-puppeteer-axe": "^1.4.0",
+    "jest": "^24.9.0"
   }
 }

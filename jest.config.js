@@ -1,5 +1,5 @@
 
 
-module.exports = {
-	moduleDirectories : ["src"]
-};
+// module.exports = {
+// 	moduleDirectories : ["src"]
+// };
