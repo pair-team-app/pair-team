@@ -3,8 +3,18 @@
   "version": "1.0.0",
   "description": "Sub module functionality for design-engine-playground",
   "main": "src/index.js",
+  "jest": {
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "jsx"
+    ]
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [
     "design-system",
