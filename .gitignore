@@ -13,5 +13,10 @@ build
 node_modules
 
 
+#-- testing --#
+*.spec.js
+*.test.js
+
+
 #-- creds --#
 crypto-creds.json
