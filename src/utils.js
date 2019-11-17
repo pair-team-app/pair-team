@@ -256,7 +256,7 @@ export async function processNode(page, node) {
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),
-			data : (tag === 'img' && node.asElement().hasAttribute('src')) ? imageData(node.asElement(), bounds) : meta.data
+			data : (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : meta.data
 		},
 		enc     : {
 			html          : await encryptTxt(html),

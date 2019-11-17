@@ -131,9 +131,7 @@ export async function funcs(page) {
 			});
 		};
 
-		window.imageData = (el, bounds)=> {
-			const { width, height } = bounds;
-
+		window.imageData = (el, { width, height })=> {
 			const canvas = document.createElement('canvas');
 			canvas.width = width;
 			canvas.height = height;
@@ -141,7 +139,10 @@ export async function funcs(page) {
 			const ctx = canvas.getContext('2d');
 			ctx.drawImage(el, 0, 0, width, height);
 
-			return (canvas.toDataURL('image/png'));
+			const imgData = canvas.toDataURL('image/png');
+			canvas.remove();
+
+			return (imgData);
 		};
 
 		window.parentsVisible = (el)=> {
