@@ -52,22 +52,21 @@ export async function captureElementImage(element, encoding='base64') {
 	const padding = 0;
 
 // 	console.log('captureElementImage', await (await element.getProperty('tagName')).jsonValue(), { ...boundingBox });
-
-	return ((boundingBox.width * boundingBox.height > 0) ? await element.screenshot({ encoding,
+	return ((boundingBox.width * boundingBox.height > 0) ? `data:image/png;${encoding},${await element.screenshot({ encoding,
 		clip : {
 			x      : boundingBox.x - padding,
 			y      : boundingBox.y - padding,
 			width  : boundingBox.width + (padding * 2),
 			height : boundingBox.height + (padding * 2),
 		}
-	}) : null);
+	})}` : null);
 }
 
 
 export async function captureScreenImage(page, encoding='base64') {
-	return (await page.screenshot({ encoding,
+	return (`data:image/png;${encoding},${await page.screenshot({ encoding,
 		fullPage : true
-	}));
+	})}`);
 }
 
 
