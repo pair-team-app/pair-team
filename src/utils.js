@@ -2,9 +2,6 @@
 'use strict';
 
 
-import snaphot from '@wildpeaks/snapshot-dom';
-
-
 import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import stripHtml from 'string-strip-html';
@@ -13,6 +10,17 @@ import inline from 'web-resource-inliner';
 import { CSS_PURGE_STYLES, CRYPTO_TYPE } from './consts';
 import cryproCreds from '../crypto-creds';
 
+
+const domNodeID = (flatDOM, backendNodeID)=> {
+// 	console.log('domNodeID', flatDOM.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId })), backendNodeID);
+	const node = flatDOM.find(({ backendNodeId })=> (backendNodeId === backendNodeID));
+// 	const node = flatDOM.find(({ backendNodeId })=> {
+// 		console.log('DOM NODE ID:', backendNodeId, backendNodeID, (backendNodeId === backendNodeID));
+// 		return (backendNodeId === backendNodeID);
+// 	});
+
+	return ((node) ? node.nodeId << 0 : 0);
+};
 
 const elementRootStyles = async(html, pageStyles)=> {
 	const inline = await inlineElementStyles(html, pageStyles, 'span');
@@ -74,10 +82,14 @@ export async function captureScreenImage(page, encoding='base64') {
 }
 
 
-export async function elementAccessibility(page, element) {
-	return (await page.accessibility.snapshot({ interestingOnly : false, root : element }));
-}
+export async function elementBackendNodeID(page, objectID) {
+	const node = (await page._client.send('DOM.describeNode', {
+		objectId : objectID
+	})).node;
 
+// 	console.log('DOM.describeNode', objectID, JSON.stringify(node, null, 2), node.backendNodeId);
+	return (node.backendNodeId << 0);
+}
 
 export async function embedPageStyles(html, relativeTo='build') {
 	const opts = { relativeTo,
@@ -131,10 +143,8 @@ export async function extractMeta(page, elements) {
 // 	const docHandle = await page.evaluateHandle(() => (window.document));
 
 	const doc = await page.$('body');
-	console.log('DOM:', await doc.boundingBox());
+// 	console.log('extractMeta()', await doc.boundingBox());
 	return ({
-		domTree       : snaphot.toJSON(doc, false),
-		accessibility : await page.accessibility.snapshot({ interestingOnly : false }),
 		colors        : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))],
 			fg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('color')) ? element.styles['color'] : element.styles['color'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))]
@@ -147,6 +157,46 @@ export async function extractMeta(page, elements) {
 		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
 		url           : await page.url()
 	});
+}
+
+
+
+
+export function formatAXNode(flatDOM, node) {
+	const { backendDOMNodeId, childIds, name, nodeId, role } = node;
+
+	delete (node['backendDOMNodeId']);
+	delete (node['childIds']);
+	delete (node['ignored']);
+	delete (node['name']);
+	delete (node['nodeId']);
+	delete (node['properties']);
+	delete (node['role']);
+
+	return ({ ...node,
+		axNodeID      : nodeId << 0,
+		nodeID        : domNodeID(flatDOM, backendDOMNodeId),
+		backendNodeID : backendDOMNodeId,
+		name          : name.value,
+		role          : role.value,
+		childIDs      : childIds.map((id)=> (id << 0)),
+		childNodes    : []
+	});
+}
+
+
+export function fillChildNodes(nodes, ids) {
+	const childNodes = nodes.filter(({ axNodeID })=> (ids.indexOf(axNodeID) !== -1)).map((axNode)=> {
+
+		const { childIDs } = axNode;
+		delete (axNode['childIDs']);
+
+		return ({ ...axNode,
+			childNodes : (childIDs.length > 0) ? fillChildNodes(nodes, childIDs) : []
+		})
+	});
+
+	return (childNodes);
 }
 
 
@@ -172,10 +222,19 @@ export async function inlineCSS(html, style='') {
 export async function pageElement(page, doc, html) {
 	const element = await processNode(page, await page.$('body', async(node)=> (node)));
 
-	return ({ ...element, html,
+	const accessibility = {
+		tree   : doc.axTree,
+		report : {
+			failed  : doc.axeReport.failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html))))),
+			passed  : doc.axeReport.passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html))))),
+			aborted : doc.axeReport.aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html)))))
+		}
+	};
+
+	return ({ ...element, html, accessibility,
+		dom           : doc.dom,
 		title         : (doc.pathname === '' || doc.pathname === '/') ? '/index' : `/${doc.pathname.slice(1)}`,
 		image         : doc.image,
-		accessibility : doc.accessibility,
 		classes       : '',
 		meta          : { ...element.meta,
 			text     : doc.title,
@@ -184,7 +243,7 @@ export async function pageElement(page, doc, html) {
 		},
 		enc           : { ...element.enc,
 			html          : await encryptTxt(html),
-			accessibility : await encryptObj(doc.accessibility)
+			accessibility : await encryptObj(accessibility)
 		}
 	});
 }
@@ -219,13 +278,19 @@ export async function processNode(page, node) {
 // 		console.log(`el stuff: [${el.outerHTML}] [${el.nodeName}] [${el.nodeType}]`);
 
 		return ({
+			flatDOM       : window.flatDOM,
+			pageCSS       : window.styleTag,
+
 			title         : (el.textContent && el.textContent.length > 0) ? el.textContent : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.hasAttribute('placeholder') && el.placeholder.length > 0) ? el.placeholder : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : el.nodeName.toLowerCase(),
 			tag           : el.tagName.toLowerCase(),
 			html          : el.outerHTML,
 			styles        : styles,
+			accessibility : {
+				tree   : null,
+				report : window.elementAccessibility(el)
+			},
 			classes       : (el.className.length > 0) ? el.className : '',
 			rootStyles    : {},
-			pageCSS       : window.styleTag,
 			visible       : (window.elementVisible(el, styles)),
 			meta          : {
 				border      : styles['border'],
@@ -235,17 +300,18 @@ export async function processNode(page, node) {
 				placeholder : (el.hasAttribute('placeholder')) ? el.placeholder : null,
 				href        : (el.hasAttribute('href')) ? el.href : null,
 				data        : null,
-				url         : (el.hasAttribute('src')) ? el.src : (el.childElementCount > 0 && el.firstElementChild.hasAttribute('src')) ? el.firstElementChild.src : null,
+				url         : (el.hasAttribute('src')) ? el.src : (el.childElementCount > 0 && el.firstElementChild.hasAttribute('src')) ? el.firstElementChild.src : null
 			}
 		});
 	}, node);
 
 
-	const { tag, styles, pageCSS, visible, meta } = attribs;
+	const { flatDOM, pageCSS, tag, styles, accessibility, visible, meta } = attribs;
 	const html = (await inlineElementStyles(attribs.html, pageCSS));
 	const rootStyles = await elementRootStyles(attribs.html, pageCSS);
-	const accessibility = await elementAccessibility(page, node);
+// 	const accessibility = await elementAccessibility(page, node);
 
+	delete (attribs['flatDOM']);
 	delete (attribs['html']);
 	// 	delete (attribs['styles']);
 	delete (attribs['pageCSS']);
@@ -258,7 +324,8 @@ export async function processNode(page, node) {
 	}
 
 	return ({
-		...attribs, html, rootStyles, accessibility, children,
+		...attribs, html, rootStyles, children,
+		node_id : domNodeID(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)),
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
 		image   : null,//(visible && bounds && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
 		meta    : {

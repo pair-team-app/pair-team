@@ -14,8 +14,10 @@ import {
 	embedPageStyles,
 	extractElements,
 	extractMeta,
-	inlineCSS,
+	fillChildNodes,
+	formatAXNode,
 	formatHTML,
+	inlineCSS,
 	pageElement,
 	pageStyleTag,
 	stripPageTags,
@@ -30,7 +32,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 
 	const client = await page.target().createCDPSession();
 
-	const el = await page.$('h1');
+// 	const el = await page.$('h1');
 // 	console.log('el', el);
 // 	console.log('el', JSON.stringify(el, 2, null));
 
@@ -39,15 +41,26 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await client.send('Accessibility.enable');
 
 
-	const acc = await client.send('Accessibility.getFullAXTree');
-// 	console.log('Accessibility.getFullAXTree', JSON.stringify(acc, null, 2));
-// 	console.log('Accessibility.getFullAXTree', acc);
+	const flatDOM = (await client.send('DOM.getFlattenedDocument', { depth : -1 })).nodes.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId }));
+// 	console.log('DOM.getFlattenedDocument', flatDOM);
 
+	const dom = await client.send('DOM.getDocument', { depth : -1 });
+// 	console.log('DOM.getDocument', JSON.stringify(dom, null, 2));
 
-// 	const snap = await client.send('DOMSnapshot.captureSnapshot', { computedStyles : [] });
-// 	console.log('DOMSnapshot.captureSnapshot', JSON.stringify(snap.documents[0].nodes, null, 2));
-// 	console.log('DOMSnapshot.captureSnapshot', snap.documents[0].nodes);
+	const axNodes = (await client.send('Accessibility.getFullAXTree')).nodes.filter(({ backendDOMNodeId, childIds, name, role })=> ((typeof backendDOMNodeId !== 'undefined') && name && role && !(role.value === 'GenericContainer' && childIds.length === 0))).map((axNode)=> {
+		return (formatAXNode(flatDOM, axNode));
+	});
 
+	let rootNode = axNodes.find(({ role })=> (role === 'WebArea'));
+// 	delete (rootNode['childIDs']);
+
+	const axTree = {
+		rootNode : { ...rootNode,
+			childNodes : fillChildNodes(axNodes, rootNode.childIDs)
+		}
+	};
+
+// 	console.log(':::: acc', JSON.stringify(axTree, null, 2));
 
 
 // 	const nodeID = await page._client.send('DOM.requestNode', {
@@ -56,50 +69,14 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 // 	console.log('DOM.requestNode', el._remoteObject.objectId, nodeID);
 
 
+	const axe = await new AxePuppeteer(page).analyze();
+	const axeReport = {
+		failed  : axe.violations,
+		passed  : axe.passes,
+		aborted : axe.incomplete
+	};
 
-	const dom = await client.send('DOM.getDocument', { depth : -1 });
-	console.log('DOM.getDocument', JSON.stringify(dom, null, 2));
-
-// 	const dom = await client.send('DOM.getFlattenedDocument', { depth : -1 });
-// 	console.log('DOM.getFlattenedDocument', dom, null, 2);
-
-
-	const accNode = acc.nodes[(Math.random() * acc.nodes.length) << 0];
-	console.log('acc node', accNode);
-
-// 	const nodeID = (await page._client.send('DOM.requestNode', {
-// 		objectId: el._remoteObject.objectId
-// 		nodeId: accNode.nodeId
-// 	}));
-// 	console.log('DOM.requestNode', el._remoteObject.objectId, nodeID);
-// 	console.log('DOM.requestNode', nodeId._remoteObject.objectId, nodeID);
-
-
-	const elNode = await page._client.send('DOM.describeNode', {
-// 		nodeId: 48
-// 		nodeId: nodeID
-// 		nodeId: accNode.nodeId << 0
-// 		backendNodeId: accNode.backendDOMNodeId
-		objectId : el._remoteObject.objectId
-	});
-// 	console.log('DOM.describeNode', el._remoteObject.objectId, JSON.stringify(elNode, null, 2));
-
-
-	const node = await page._client.send('DOM.describeNode', {
-// 		nodeId: 48
-// 		nodeId: nodeID
-// 		nodeId: accNode.nodeId << 0
-		backendNodeId : accNode.backendDOMNodeId
-// 		objectId: el._remoteObject.objectId
-	});
-	console.log('DOM.describeNode', accNode.backendDOMNodeId, JSON.stringify(node, null, 2));
-// 	console.log('DOM.describeNode', el._remoteObject.objectId, node);
-// 	console.log('DOM.describeNode', nodeID, node);
-
-
-
-	const results = await new AxePuppeteer(page).analyze();
-// 	console.log('AxePuppeteer SAYS:', JSON.stringify(results, null, 2));
+// 	console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
 
 	await stripPageTags(page, ['iframe']);
 	const embedHTML = await embedPageStyles(await page.content());
@@ -108,11 +85,12 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await consts(page);
 	await listeners(page);
 	await funcs(page);
-	await globals(page, { styleTag });
+	await globals(page, { flatDOM, axeReport, styleTag });
 
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(page);
-	const doc = { ...await extractMeta(page, elements), html,
+	const docMeta = await extractMeta(page, elements);
+	const doc = { ...docMeta, dom, axTree, axeReport, html,
 		title : projectName()
 	};
 
@@ -169,11 +147,11 @@ export async function renderWorker(url) {
 // 		}));
 
 
-// 		console.log('::::', JSON.stringify(doc.accessibility, null, 2));
+		console.log('::::', JSON.stringify(doc.axTree, null, 2));
 // 		console.log('::::', doc.colors);
 // 		console.log('VIEWS -->', elements.views.length);
 // 		console.log('IMAGES -->', elements.images[0]);
-// 		console.log('BUTTONS -->', elements.buttons[0]);
+// 		console.log('BUTTONS -->', elements.buttons[0].accessibility.report);
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] [${el.html}] ${el.path}`)));
