@@ -27,6 +27,16 @@ export async function funcs(page) {
 	await page.evaluate(()=> {
 // 	await page.evaluateOnNewDocument(()=> {
 
+		window.elementAccessibility = (element)=> {
+			const { failed, passed, aborted } = axeReport;
+			return ({
+				failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
+				passed  : passed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
+				aborted : aborted.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift())))))
+			})
+		};
+
+
 		window.elementColor = (styles)=> {
 			return ({
 				background : (Object.keys(styles).includes('background-color')) ? styles['background-color'] : rgbaObject('rgba(0, 0, 0, 1)'),

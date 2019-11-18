@@ -43,7 +43,6 @@
   },
   "homepage": "https://github.com/de-ai/design-engine-extract#readme",
   "dependencies": {
-    "@wildpeaks/snapshot-dom": "^1.4.0",
     "axe-puppeteer": "^1.0.0",
     "chalk": "^2.4.2",
     "inline-css": "^2.5.1",
