@@ -2,13 +2,16 @@
 'use strict';
 
 
-import crypto from 'crypto';
+import snaphot from '@wildpeaks/snapshot-dom';
 
-import { CSS_PURGE_STYLES, CRYPTO_TYPE } from './consts';
-import cryproCreds from '../crypto-creds';
+
+import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
+
+import { CSS_PURGE_STYLES, CRYPTO_TYPE } from './consts';
+import cryproCreds from '../crypto-creds';
 
 
 const elementRootStyles = async(html, pageStyles)=> {
@@ -52,6 +55,7 @@ export async function captureElementImage(element, encoding='base64') {
 	const padding = 0;
 
 // 	console.log('captureElementImage', await (await element.getProperty('tagName')).jsonValue(), { ...boundingBox });
+
 	return ((boundingBox.width * boundingBox.height > 0) ? `data:image/png;${encoding},${await element.screenshot({ encoding,
 		clip : {
 			x      : boundingBox.x - padding,
@@ -124,7 +128,12 @@ export async function extractElements(page) {
 
 
 export async function extractMeta(page, elements) {
+// 	const docHandle = await page.evaluateHandle(() => (window.document));
+
+	const doc = await page.$('body');
+	console.log('DOM:', await doc.boundingBox());
 	return ({
+		domTree       : snaphot.toJSON(doc, false),
 		accessibility : await page.accessibility.snapshot({ interestingOnly : false }),
 		colors        : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))],
@@ -217,7 +226,7 @@ export async function processNode(page, node) {
 			classes       : (el.className.length > 0) ? el.className : '',
 			rootStyles    : {},
 			pageCSS       : window.styleTag,
-			visible       : (elementVisible(el, styles)),
+			visible       : (window.elementVisible(el, styles)),
 			meta          : {
 				border      : styles['border'],
 				color       : window.elementColor(styles),

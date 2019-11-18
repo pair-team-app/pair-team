@@ -26,9 +26,80 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const page = await browser.newPage();
 	await page.emulate(device);
 	await page.goto(url, { waitUntil : 'networkidle0' });
+	await page.content();
+
+	const client = await page.target().createCDPSession();
+
+	const el = await page.$('h1');
+// 	console.log('el', el);
+// 	console.log('el', JSON.stringify(el, 2, null));
+
+	await client.send('DOM.enable');
+// 	await client.send('DOMSnapshot.enable');
+	await client.send('Accessibility.enable');
+
+
+	const acc = await client.send('Accessibility.getFullAXTree');
+// 	console.log('Accessibility.getFullAXTree', JSON.stringify(acc, null, 2));
+// 	console.log('Accessibility.getFullAXTree', acc);
+
+
+// 	const snap = await client.send('DOMSnapshot.captureSnapshot', { computedStyles : [] });
+// 	console.log('DOMSnapshot.captureSnapshot', JSON.stringify(snap.documents[0].nodes, null, 2));
+// 	console.log('DOMSnapshot.captureSnapshot', snap.documents[0].nodes);
+
+
+
+// 	const nodeID = await page._client.send('DOM.requestNode', {
+// 		objectId: el._remoteObject.objectId
+// 	});
+// 	console.log('DOM.requestNode', el._remoteObject.objectId, nodeID);
+
+
+
+	const dom = await client.send('DOM.getDocument', { depth : -1 });
+	console.log('DOM.getDocument', JSON.stringify(dom, null, 2));
+
+// 	const dom = await client.send('DOM.getFlattenedDocument', { depth : -1 });
+// 	console.log('DOM.getFlattenedDocument', dom, null, 2);
+
+
+	const accNode = acc.nodes[(Math.random() * acc.nodes.length) << 0];
+	console.log('acc node', accNode);
+
+// 	const nodeID = (await page._client.send('DOM.requestNode', {
+// 		objectId: el._remoteObject.objectId
+// 		nodeId: accNode.nodeId
+// 	}));
+// 	console.log('DOM.requestNode', el._remoteObject.objectId, nodeID);
+// 	console.log('DOM.requestNode', nodeId._remoteObject.objectId, nodeID);
+
+
+	const elNode = await page._client.send('DOM.describeNode', {
+// 		nodeId: 48
+// 		nodeId: nodeID
+// 		nodeId: accNode.nodeId << 0
+// 		backendNodeId: accNode.backendDOMNodeId
+		objectId : el._remoteObject.objectId
+	});
+// 	console.log('DOM.describeNode', el._remoteObject.objectId, JSON.stringify(elNode, null, 2));
+
+
+	const node = await page._client.send('DOM.describeNode', {
+// 		nodeId: 48
+// 		nodeId: nodeID
+// 		nodeId: accNode.nodeId << 0
+		backendNodeId : accNode.backendDOMNodeId
+// 		objectId: el._remoteObject.objectId
+	});
+	console.log('DOM.describeNode', accNode.backendDOMNodeId, JSON.stringify(node, null, 2));
+// 	console.log('DOM.describeNode', el._remoteObject.objectId, node);
+// 	console.log('DOM.describeNode', nodeID, node);
+
+
 
 	const results = await new AxePuppeteer(page).analyze();
-	console.log('AxePuppeteer SAYS:', JSON.stringify(results, null, 2));
+// 	console.log('AxePuppeteer SAYS:', JSON.stringify(results, null, 2));
 
 	await stripPageTags(page, ['iframe']);
 	const embedHTML = await embedPageStyles(await page.content());
@@ -76,9 +147,9 @@ export async function derp() {
 
 export async function renderWorker(url) {
 	const devices = [
-		puppeteer.devices['iPhone X'],
+// 		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
-// 		CHROME_DEVICE
+		CHROME_DEVICE
 	].reverse();
 
 	const browser = await puppeteer.launch(BROWSER_OPTS);
@@ -87,18 +158,18 @@ export async function renderWorker(url) {
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
-		const links = await parseLinks(browser, device, url);
-		console.log('%s%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-		await Promise.all(links.map(async(link, i)=> {
-			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+// 		const links = await parseLinks(browser, device, url);
+// 		console.log('%s%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+// 		await Promise.all(links.map(async(link, i)=> {
+// 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+//
+// 			Object.keys(elements).forEach((key)=> {
+// 				elements[key] = [ ...elements[key], ...els[key]];
+// 			});
+// 		}));
 
-			Object.keys(elements).forEach((key)=> {
-				elements[key] = [ ...elements[key], ...els[key]];
-			});
-		}));
 
-
-// 		console.log('::::', doc);
+// 		console.log('::::', JSON.stringify(doc.accessibility, null, 2));
 // 		console.log('::::', doc.colors);
 // 		console.log('VIEWS -->', elements.views.length);
 // 		console.log('IMAGES -->', elements.images[0]);
