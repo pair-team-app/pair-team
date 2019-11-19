@@ -11,15 +11,18 @@ import { CSS_PURGE_STYLES, CRYPTO_TYPE } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
-const domNodeID = (flatDOM, backendNodeID)=> {
-// 	console.log('domNodeID', flatDOM.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId })), backendNodeID);
+const domNodeIDs = (flatDOM, backendNodeID)=> {
+// 	console.log('domNodeIDs', flatDOM.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId })), backendNodeID);
 	const node = flatDOM.find(({ backendNodeId })=> (backendNodeId === backendNodeID));
 // 	const node = flatDOM.find(({ backendNodeId })=> {
 // 		console.log('DOM NODE ID:', backendNodeId, backendNodeID, (backendNodeId === backendNodeID));
 // 		return (backendNodeId === backendNodeID);
 // 	});
 
-	return ((node) ? node.nodeId << 0 : 0);
+	return ((node) ? {
+		nodeID       : node.nodeId << 0,
+		parentNodeID : node.parentId << 0
+	} : 0);
 };
 
 const elementRootStyles = async(html, pageStyles)=> {
@@ -175,7 +178,8 @@ export function formatAXNode(flatDOM, node) {
 
 	return ({ ...node,
 		axNodeID      : nodeId << 0,
-		nodeID        : domNodeID(flatDOM, backendDOMNodeId),
+		nodeID        : domNodeIDs(flatDOM, backendDOMNodeId).nodeID,
+		parentNodeID  :domNodeIDs(flatDOM, backendDOMNodeId).parentNodeID,
 		backendNodeID : backendDOMNodeId,
 		name          : name.value,
 		role          : role.value,
@@ -325,7 +329,7 @@ export async function processNode(page, node) {
 
 	return ({
 		...attribs, html, rootStyles, children,
-		node_id : domNodeID(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)),
+		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
 		image   : null,//(visible && bounds && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
 		meta    : {
