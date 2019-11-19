@@ -41,11 +41,15 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await client.send('Accessibility.enable');
 
 
-	const flatDOM = (await client.send('DOM.getFlattenedDocument', { depth : -1 })).nodes.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId }));
+	console.log('flatDOM', (await client.send('DOM.getFlattenedDocument', { depth : -1 })));
+
+
+	const flatDOM = (await client.send('DOM.getFlattenedDocument', { depth : -1 })).nodes.map(({ nodeId, backendNodeId, parentId })=> ({ nodeId, backendNodeId, parentId }));
 // 	console.log('DOM.getFlattenedDocument', flatDOM);
 
 	const dom = await client.send('DOM.getDocument', { depth : -1 });
 // 	console.log('DOM.getDocument', JSON.stringify(dom, null, 2));
+
 
 	const axNodes = (await client.send('Accessibility.getFullAXTree')).nodes.filter(({ backendDOMNodeId, childIds, name, role })=> ((typeof backendDOMNodeId !== 'undefined') && name && role && !(role.value === 'GenericContainer' && childIds.length === 0))).map((axNode)=> {
 		return (formatAXNode(flatDOM, axNode));
