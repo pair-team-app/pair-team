@@ -19,7 +19,8 @@ export async function createPlayground(buildID, userID, device, doc) {
 				user_id       : userID,
 				html          : await encryptTxt(doc.html),
 				styles        : await encryptObj(doc.styles),
-				accessibility : await encryptObj(doc.accessibility)
+// 				accessibility : await encryptObj(doc.accessibility)
+				accessibility : await encryptObj({})
 			}
 		})
 	};

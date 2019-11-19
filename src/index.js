@@ -51,23 +51,15 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		return (formatAXNode(flatDOM, axNode));
 	});
 
-	let rootNode = axNodes.find(({ role })=> (role === 'WebArea'));
-// 	delete (rootNode['childIDs']);
+	const rootNode = axNodes.find(({ role })=> (role === 'WebArea'));
+	const { childIDs } = rootNode;
+	delete (rootNode['childIDs']);
 
-	const axTree = {
-		rootNode : { ...rootNode,
-			childNodes : fillChildNodes(axNodes, rootNode.childIDs)
-		}
+	const axTree = { ...rootNode,
+		childNodes : fillChildNodes(axNodes, childIDs)
 	};
 
 // 	console.log(':::: acc', JSON.stringify(axTree, null, 2));
-
-
-// 	const nodeID = await page._client.send('DOM.requestNode', {
-// 		objectId: el._remoteObject.objectId
-// 	});
-// 	console.log('DOM.requestNode', el._remoteObject.objectId, nodeID);
-
 
 	const axe = await new AxePuppeteer(page).analyze();
 	const axeReport = {
@@ -147,10 +139,12 @@ export async function renderWorker(url) {
 // 		}));
 
 
-		console.log('::::', JSON.stringify(doc.axTree, null, 2));
+// 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
 // 		console.log('::::', doc.colors);
 // 		console.log('VIEWS -->', elements.views.length);
+// 		console.log('VIEWS -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 // 		console.log('IMAGES -->', elements.images[0]);
+// 		console.log('BUTTONS -->', elements.buttons[0].node_id);
 // 		console.log('BUTTONS -->', elements.buttons[0].accessibility.report);
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));
