@@ -5,6 +5,17 @@
 import chalk from 'chalk';
 
 
+export const ChalkStyles = {
+	INFO   : chalk.cyanBright('INFO'),
+	ERROR  : chalk.red.bold('ERROR'),
+	DONE   : chalk.greenBright('DONE'),
+	DEVICE : chalk.grey,
+	NUMBER : chalk.magentaBright,
+	PATH   : chalk.blueBright,
+	URL    : chalk.blue.bold.underline
+};
+
+
 export const CRYPTO_TYPE = 'aes256';
 export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
 
@@ -36,6 +47,11 @@ export const CHROME_DEVICE = {
 		isLandscape       : false
 	}
 };
+
+export const HTML_STRIP_TAGS = [
+	'noscript',
+	'script'
+];
 
 export const CSS_AUTO_STYLES = [
 	'align-self',
@@ -199,13 +215,3 @@ export const CSS_ZERO_STYLES = [
 	'-webkit-shape',
 	'word-spacing'
 ];
-
-export const ChalkStyles = {
-	INFO   : chalk.cyanBright('INFO'),
-	ERROR  : chalk.red.bold('ERROR'),
-	DONE   : chalk.greenBright('DONE'),
-	DEVICE : chalk.grey,
-	NUMBER : chalk.magentaBright,
-	PATH   : chalk.blueBright,
-	URL    : chalk.blue.bold.underline
-};

@@ -7,7 +7,7 @@ import inlineCss from 'inline-css';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
-import { CSS_PURGE_STYLES, CRYPTO_TYPE } from './consts';
+import { CSS_PURGE_STYLES, CRYPTO_TYPE, HTML_STRIP_TAGS } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
@@ -331,7 +331,8 @@ export async function processNode(page, node) {
 		...attribs, html, rootStyles, children,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-		image   : null,//(visible && bounds && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
+// 		image   : null,
+		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),
@@ -348,7 +349,7 @@ export async function processNode(page, node) {
 
 
 export async function stripPageTags(page, tags=[]) {
-	await page.$$eval(['noscript', 'script', ...tags].join(', '), (nodes)=> {
+	await page.$$eval([HTML_STRIP_TAGS, ...tags].join(', '), (nodes)=> {
 		nodes.forEach((node)=> {
 			if (node.parentNode) {
 				node.parentNode.removeChild(node);
