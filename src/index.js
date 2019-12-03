@@ -9,7 +9,7 @@ import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, globals, listeners } from './config';
-import { BROWSER_OPTS, CHROME_DEVICE, ChalkStyles } from './consts';
+import { ChalkStyles, BROWSER_OPTS, CHROME_DEVICE } from './consts';
 import {
 	embedPageStyles,
 	extractElements,
