@@ -8,8 +8,8 @@ import { API_ENDPT_URL, FETCH_CFG, ChalkStyles } from './consts'
 import { encryptObj, encryptTxt } from './utils';
 
 
-export async function createPlayground(buildID, userID, device, doc) {
-// 	console.log('createPlayground()', { buildID, userID });
+export async function createPlayground(buildID, userID, teamID, device, doc) {
+// 	console.log('createPlayground()', { buildID, userID, teamID });
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
@@ -17,6 +17,7 @@ export async function createPlayground(buildID, userID, device, doc) {
 			payload : { ...doc, device,
 				build_id      : buildID,
 				user_id       : userID,
+				team_id       : teamID,
 				html          : await encryptTxt(doc.html),
 				styles        : await encryptObj(doc.styles),
 // 				accessibility : await encryptObj(doc.accessibility)
