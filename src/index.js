@@ -41,9 +41,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await client.send('Accessibility.enable');
 
 
-	console.log('flatDOM', (await client.send('DOM.getFlattenedDocument', { depth : -1 })));
-
-
+// 	console.log('flatDOM', (await client.send('DOM.getFlattenedDocument', { depth : -1 })));
 	const flatDOM = (await client.send('DOM.getFlattenedDocument', { depth : -1 })).nodes.map(({ nodeId, backendNodeId, parentId })=> ({ nodeId, backendNodeId, parentId }));
 // 	console.log('DOM.getFlattenedDocument', flatDOM);
 
@@ -111,17 +109,9 @@ const parseLinks = async(browser, device, url)=> {
 };
 
 
-export async function derp() {
-	setTimeout(()=> {
-		console.log('MAKE EM WAIT');
-		return (true);
-	});
-}
-
-
 export async function renderWorker(url) {
 	const devices = [
-// 		puppeteer.devices['iPhone X'],
+		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
 		CHROME_DEVICE
 	].reverse();
@@ -132,15 +122,15 @@ export async function renderWorker(url) {
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
-// 		const links = await parseLinks(browser, device, url);
-// 		console.log('%s%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-// 		await Promise.all(links.map(async(link, i)=> {
-// 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
-//
-// 			Object.keys(elements).forEach((key)=> {
-// 				elements[key] = [ ...elements[key], ...els[key]];
-// 			});
-// 		}));
+		const links = await parseLinks(browser, device, url);
+		console.log('%s%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+		await Promise.all(links.map(async(link, i)=> {
+			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+
+			Object.keys(elements).forEach((key)=> {
+				elements[key] = [ ...elements[key], ...els[key]];
+			});
+		}));
 
 
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
