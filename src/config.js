@@ -28,6 +28,11 @@ export async function funcs(page) {
 // 	await page.evaluateOnNewDocument(()=> {
 
 		window.elementAccessibility = (element)=> {
+			// slick - `slick.matches(<div class=rocks>, 'div.rocks');` –/» true
+			// select-dom - `select.exists('.foo a[href=bar]', baseElement);` –/» t/f
+			// dom-to-image-more - `domtoimage.toJpeg(NODE, { quality: 0.95 }).then((dataURL)=> { console.log(dataURL); });`
+
+
 			const { failed, passed, aborted } = axeReport;
 			return ({
 				failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
@@ -46,14 +51,10 @@ export async function funcs(page) {
 
 		window.elementFont = (styles)=> {
 			const line = (Object.keys(styles).includes('line-height') && !isNaN(styles['line-height'].replace(/[^\d]/g, ''))) ? styles['line-height'].replace('px', '') : styles['font-size'].replace('px', '') * 1.2;
-			return ({
-// 				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'].replace(/\\"/g, '\\\\"') : '',
+			return ({ line,
 				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'].replace(/"/g, '') : '',
-// 				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'].replace(/\\"/g, '') : '',
-// 				family  : (Object.keys(styles).includes('font-family')) ? styles['font-family'] : '',
 				size    : (Object.keys(styles).includes('font-size')) ? styles['font-size'].replace('px', '') : 0,
-				kerning : (Object.keys(styles).includes('letter-spacing')) ? parseFloat(styles['letter-spacing']) : 0,
-				line    : line
+				kerning : (Object.keys(styles).includes('letter-spacing')) ? parseFloat(styles['letter-spacing']) : 0
 			})
 		};
 

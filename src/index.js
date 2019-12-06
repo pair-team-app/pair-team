@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-
+import * as axe from 'axe-core';
+import getSelector from 'axe-selector';
 import { AxePuppeteer } from 'axe-puppeteer';
 import { Strings } from 'lang-js-utils';
 import projectName from 'project-name';
@@ -61,14 +62,39 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		childNodes : fillChildNodes(axNodes, childIDs)
 	};
 
+// 	console.log(':::: doc el', await page.$('document'));
 // 	console.log(':::: acc', JSON.stringify(axTree, null, 2));
 
-	const axe = await new AxePuppeteer(page).analyze();
-	const axeReport = {
-		failed  : axe.violations,
-		passed  : axe.passes,
-		aborted : axe.incomplete
-	};
+
+
+	/* opts
+	{
+		restoreScroll : true,
+		xpath         : true,
+		absolutePaths : true,
+		elementRef    : true,
+		runOnly       : ['wcag2a', 'wcag2aa'],
+		preload       : {
+			assets  : ['cssom'],
+			timeout : 5000
+		}
+	}
+	 */
+	const axeResults = await new AxePuppeteer(page).analyze();
+// 	axe._tree = axe.utils.getFlattenedTree(await page.$('document'));
+// 	axe._selectorData = axe.utils.getSelectorData(axe._tree);
+
+	const {
+		violations : failed,
+		passes     : passed,
+		incomplete : aborted
+	} = axeResults;
+	const axeReport = { failed, passed, aborted };
+
+	// filter node results
+	console.log(':::: aggr fails', axe.utils.aggregateNodeResults(failed[4].nodes).incomplete[0].any[0].relatedNodes.map(({ html, target })=> ({ html,
+		target : target.shift()
+	})));
 
 // 	console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
 
@@ -79,7 +105,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await consts(page);
 	await listeners(page);
 	await funcs(page);
-	await globals(page, { flatDOM, axeReport, styleTag });
+	await globals(page, { flatDOM, axeReport, styleTag, getSelector });
 
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(page);
