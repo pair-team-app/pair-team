@@ -7,7 +7,7 @@ import inlineCss from 'inline-css';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
-import { CSS_PURGE_STYLES, CRYPTO_TYPE, HTML_STRIP_TAGS } from './consts';
+import { CSS_PURGE_STYLES, HTML_STRIP_TAGS } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
@@ -52,12 +52,13 @@ const inlineElementStyles = (html, styles, wrapper=null)=> {
 	}));
 };
 
-const makeCipher = async(enc=true, { type, key }={})=> {
-	type = (!type) ? Object.keys(cryproCreds).find((k)=> (k === CRYPTO_TYPE)) : type;
-	key = (!key) ? cryproCreds[(!type) ? CRYPTO_TYPE : type] : key;
-	const iv = cryproCreds[(Object.keys(cryproCreds).find((k)=> (k === 'iv')))];//crypto.randomFillSync(Buffer.alloc(8)).toString('hex');
+const makeCipher = async({ method, key }={})=> {
+	method = (method || cryproCreds.method);
+	key = (key || cryproCreds.key);
 
-	return ((enc) ? await crypto.createCipheriv(type, key, iv) : await crypto.createDecipheriv(type, key, iv));
+	const iv = await crypto.randomBytes(cryproCreds.iv);
+	const cipher = await crypto.createCipheriv(method, Buffer.from(key), iv);
+	return ({ cipher, iv });
 };
 
 
@@ -119,10 +120,15 @@ export async function encryptObj(obj, { type, key }={}) {
 
 
 export async function encryptTxt(txt, { type, key }={}) {
-	const cipher = await makeCipher({ type, key });
-	const encTxt = await cipher.update(txt, 'utf8', 'hex');
+	const { cipher, iv } = await makeCipher({ type, key });
+	const encTxt = Buffer.concat([cipher.update(txt), cipher.final()]);
 
-	return (`${encTxt}${cipher.final('hex')}`);
+	return (`${iv.toString('hex')}:${encTxt.toString('hex')}`);
+
+
+// 	const cipher = await makeCipher({ type, key });
+// 	const encTxt = await cipher.update(txt, 'utf8', 'hex');
+// 	return (`${encTxt}${cipher.final('hex')}`);
 }
 
 
@@ -225,32 +231,34 @@ export async function inlineCSS(html, style='') {
 
 export async function pageElement(page, doc, html) {
 	const element = await processNode(page, await page.$('body', async(node)=> (node)));
+	const { meta, enc } = element;
 
-	const accessibility = {
-		tree   : doc.axTree,
+	const { url, dom, image, pathname,
+		axTree : tree,
+		title  : text,
+	} = doc;
+
+	const accessibility = await encryptObj({ tree,
 		report : {
 			failed  : doc.axeReport.failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html))))),
 			passed  : doc.axeReport.passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html))))),
 			aborted : doc.axeReport.aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html)))))
 		}
-	};
+	});
 
-	return ({ ...element, html, accessibility,
-		dom           : doc.dom,
-		title         : (doc.pathname === '' || doc.pathname === '/') ? '/index' : `/${doc.pathname.slice(1)}`,
-		image         : doc.image,
-		classes       : '',
-		meta          : { ...element.meta,
-			text     : doc.title,
-			url      : doc.url,
-			pathname : (doc.pathname !== '') ? doc.pathname : '/'
+	delete (doc['image']);
+	return ({ ...element, html, accessibility, dom, image,
+		title   : (pathname === '' || pathname === '/') ? '/index' : `/${pathname.slice(1)}`,
+		classes : '',
+		meta    : { ...meta, url, text,
+			pathname : (pathname !== '') ? pathname : '/'
 		},
-		enc           : { ...element.enc,
-			html          : await encryptTxt(html),
-			accessibility : await encryptObj(accessibility)
+		enc     : { ...enc, accessibility,
+			html : await encryptTxt(html),
 		}
 	});
 }
+
 
 export async function pageStyleTag(html) {
 	return (`<style>${Array.from(html.matchAll(/<style.*?>(.+?)<\/style>/g), (match)=> (match.pop())).join(' ')}</style>`);
@@ -284,14 +292,13 @@ export async function processNode(page, node) {
 		return ({
 			flatDOM       : window.flatDOM,
 			pageCSS       : window.styleTag,
-
 			title         : (el.textContent && el.textContent.length > 0) ? el.textContent : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.hasAttribute('placeholder') && el.placeholder.length > 0) ? el.placeholder : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : el.nodeName.toLowerCase(),
 			tag           : el.tagName.toLowerCase(),
 			html          : el.outerHTML,
 			styles        : styles,
 			accessibility : {
 				tree   : null,
-				report : null//window.elementAccessibility(el)
+				report : window.elementAccessibility(el)
 			},
 			classes       : (el.className.length > 0) ? el.className : '',
 			rootStyles    : {},
@@ -313,7 +320,6 @@ export async function processNode(page, node) {
 	const { flatDOM, pageCSS, tag, styles, accessibility, visible, meta } = attribs;
 	const html = (await inlineElementStyles(attribs.html, pageCSS));
 	const rootStyles = await elementRootStyles(attribs.html, pageCSS);
-// 	const accessibility = await elementAccessibility(page, node);
 
 	delete (attribs['flatDOM']);
 	delete (attribs['html']);
