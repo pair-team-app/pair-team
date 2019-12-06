@@ -47,6 +47,7 @@
     "chalk": "^2.4.2",
     "inline-css": "^2.5.1",
     "json-stringify-safe": "^5.0.1",
+    "jszip": "^3.2.2",
     "lang-js-utils": "file:///labor/projects/npm_modules/lang-js-utils",
     "node-fetch": "^2.6.0",
     "project-name": "^1.0.0",
