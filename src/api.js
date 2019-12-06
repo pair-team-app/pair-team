@@ -27,18 +27,20 @@ export async function createPlayground(buildID, userID, teamID, device, doc) {
 	};
 
 	let response = await fetch(API_ENDPT_URL, cfg);
-	try {
-		response = await response.json();
+	console.log('RESP -->>', await response.text());
 
-	} catch (e) {
-		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
-		console.log('RESP -->>', await response.text());
-	}
-
-//   console.log('ADD_PLAYGROUND -->>', { id : response.playground.id, buildID : response.playground.build_id });
-	return ({ ...response.playground,
-		buildID : response.playground.build_id << 0
-	});
+// 	try {
+// 		response = await response.json();
+//
+// 	} catch (e) {
+// 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
+// 		console.log('RESP -->>', await response.text());
+// 	}
+//
+// //   console.log('ADD_PLAYGROUND -->>', { id : response.playground.id, buildID : response.playground.build_id });
+// 	return ({ ...response.playground,
+// 		buildID : response.playground.build_id << 0
+// 	});
 }
 
 

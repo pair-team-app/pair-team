@@ -16,7 +16,6 @@ export const ChalkStyles = {
 };
 
 
-export const CRYPTO_TYPE = 'aes256';
 export const API_ENDPT_URL = 'https://api.designengine.ai/playgrounds.php';
 
 export const FETCH_CFG = {
