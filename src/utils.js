@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 'use strict';
 
-
+import getSelector from 'axe-selector';
 import crypto from 'crypto';
 import inlineCss from 'inline-css';
+import JSZip from 'jszip';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
-import { CSS_PURGE_STYLES, HTML_STRIP_TAGS } from './consts';
+import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, ZIP_OPTS } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
 const domNodeIDs = (flatDOM, backendNodeID)=> {
 // 	console.log('domNodeIDs', flatDOM.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId })), backendNodeID);
 	const node = flatDOM.find(({ backendNodeId })=> (backendNodeId === backendNodeID));
-// 	const node = flatDOM.find(({ backendNodeId })=> {
-// 		console.log('DOM NODE ID:', backendNodeId, backendNodeID, (backendNodeId === backendNodeID));
-// 		return (backendNodeId === backendNodeID);
-// 	});
 
 	return ((node) ? {
 		nodeID       : node.nodeId << 0,
@@ -132,6 +129,19 @@ export async function encryptTxt(txt, { type, key }={}) {
 }
 
 
+export async function zipContent(content, filename=`${(Date.now() * 0.001).toString().replace('.', '_')}.dat`) {
+	const zip = new JSZip();
+	return (await (new Promise((resolve, reject)=> {
+		zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
+			resolve(data);
+
+		}).catch((e)=> {
+			reject(e);
+		});
+	})));
+}
+
+
 export async function extractElements(page) {
 	const elements = {
 		'views'      : [],
@@ -151,7 +161,7 @@ export async function extractElements(page) {
 export async function extractMeta(page, elements) {
 // 	const docHandle = await page.evaluateHandle(() => (window.document));
 
-	const doc = await page.$('body');
+// 	const doc = await page.$('body');
 // 	console.log('extractMeta()', await doc.boundingBox());
 	return ({
 		colors        : {
@@ -160,15 +170,13 @@ export async function extractMeta(page, elements) {
 		},
 		description   : await page.title(),
 		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
-		image         : await captureScreenImage(page),
+		image         : await zipContent(await captureScreenImage(page)),
 		links         : elements.links.map((link)=> (link.meta.href)).join(' '),
 		pathname      : await page.evaluate(()=> (window.location.pathname)),
 		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
 		url           : await page.url()
 	});
 }
-
-
 
 
 export function formatAXNode(flatDOM, node) {
@@ -185,7 +193,7 @@ export function formatAXNode(flatDOM, node) {
 	return ({ ...node,
 		axNodeID      : nodeId << 0,
 		nodeID        : domNodeIDs(flatDOM, backendDOMNodeId).nodeID,
-		parentNodeID  :domNodeIDs(flatDOM, backendDOMNodeId).parentNodeID,
+		parentNodeID  : domNodeIDs(flatDOM, backendDOMNodeId).parentNodeID,
 		backendNodeID : backendDOMNodeId,
 		name          : name.value,
 		role          : role.value,
@@ -233,18 +241,27 @@ export async function pageElement(page, doc, html) {
 	const element = await processNode(page, await page.$('body', async(node)=> (node)));
 	const { meta, enc } = element;
 
-	const { url, dom, image, pathname,
+	const { url, dom, image, pathname, axeReport,
 		axTree : tree,
 		title  : text,
 	} = doc;
 
-	const accessibility = await encryptObj({ tree,
+	const { failed, passed, aborted } = axeReport;
+	const accessibility = await zipContent(await encryptObj({ tree,
 		report : {
-			failed  : doc.axeReport.failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html))))),
-			passed  : doc.axeReport.passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html))))),
-			aborted : doc.axeReport.aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|body)/.test(html)))))
+			failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
+			passed  : passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
+			aborted : aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html)))))
 		}
-	});
+	}));
+
+// 	const accessibility = await zipContent(await encryptObj({ tree,
+// 		report : {
+// 			failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
+// 			passed  : passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
+// 			aborted : aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html)))))
+// 		}
+// 	}));
 
 	delete (doc['image']);
 	return ({ ...element, html, accessibility, dom, image,
@@ -254,7 +271,7 @@ export async function pageElement(page, doc, html) {
 			pathname : (pathname !== '') ? pathname : '/'
 		},
 		enc     : { ...enc, accessibility,
-			html : await encryptTxt(html),
+			html : await zipContent(await encryptTxt(html)),
 		}
 	});
 }
@@ -278,6 +295,8 @@ export async function processNode(page, node) {
 		}
 	} catch (e) {/* …\(^_^)/… */}
 
+// 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
+
 
 // 	console.log('::::', (await page.evaluate((el)=> (el), node)));
 // 	console.log('::::', await (await node.asElement()).getProperty('accessibility'));
@@ -286,10 +305,12 @@ export async function processNode(page, node) {
 // 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))) : [];
 // 	const children = [];
 	const attribs = await page.evaluate((el)=> {
-		const styles = elementStyles(el);
+		const styles = window.elementStyles(el);
 // 		console.log(`el stuff: [${el.outerHTML}] [${el.nodeName}] [${el.nodeType}]`);
 
 		return ({
+			localName     : el.localName,
+// 			matches       : axe.commons.matches(el, 'a'),
 			flatDOM       : window.flatDOM,
 			pageCSS       : window.styleTag,
 			title         : (el.textContent && el.textContent.length > 0) ? el.textContent : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.hasAttribute('placeholder') && el.placeholder.length > 0) ? el.placeholder : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : el.nodeName.toLowerCase(),
@@ -301,7 +322,7 @@ export async function processNode(page, node) {
 				report : window.elementAccessibility(el)
 			},
 			classes       : (el.className.length > 0) ? el.className : '',
-			rootStyles    : {},
+			rootStyles    : null,
 			visible       : (window.elementVisible(el, styles)),
 			meta          : {
 				border      : styles['border'],
@@ -322,9 +343,13 @@ export async function processNode(page, node) {
 	const rootStyles = await elementRootStyles(attribs.html, pageCSS);
 
 	delete (attribs['flatDOM']);
-	delete (attribs['html']);
-	// 	delete (attribs['styles']);
 	delete (attribs['pageCSS']);
+	delete (attribs['html']);
+// 	delete (attribs['styles']); // needed for accessibility on 'view' types
+// 	delete (attribs['accessibility']);
+// 	delete (attribs['']);
+
+// 	console.log('::::', attribs.localName, attribs);
 
 	const bounds = await node.boundingBox();
 	if (bounds) {
@@ -337,18 +362,17 @@ export async function processNode(page, node) {
 		...attribs, html, rootStyles, children,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-// 		image   : null,
-		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await captureElementImage(node) : null,
+		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await zipContent(await captureElementImage(node)) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),
 			data : (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : meta.data
 		},
 		enc     : {
-			html          : await encryptTxt(html),
-			styles        : await encryptObj(styles),
-			root_styles   : await encryptObj(rootStyles),
-			accessibility : await encryptObj(accessibility)
+			html          : await zipContent(await encryptTxt(html)),
+			styles        : await zipContent(await encryptObj(styles)),
+			root_styles   : await zipContent(await encryptObj(rootStyles)),
+			accessibility : await zipContent(await encryptObj(accessibility))
 		}
 	});
 }

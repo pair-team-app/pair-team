@@ -27,6 +27,15 @@ export const FETCH_CFG = {
 	}
 };
 
+export const ZIP_OPTS = {
+	type               : 'binarystring',
+	mimeType           : 'application/dat',
+	streamFiles        : true,
+	compression        : 'DEFLATE',
+	compressionOptions : { level : 9 }
+};
+
+
 export const BROWSER_OPTS = {
 	devTools          : true,
 	headless          : true,

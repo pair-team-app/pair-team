@@ -5,7 +5,7 @@
 import fetch from 'node-fetch';
 
 import { API_ENDPT_URL, FETCH_CFG, ChalkStyles } from './consts'
-import { encryptObj, encryptTxt } from './utils';
+import {encryptObj, encryptTxt, zipContent} from './utils';
 
 
 export async function createPlayground(buildID, userID, teamID, device, doc) {
@@ -18,10 +18,8 @@ export async function createPlayground(buildID, userID, teamID, device, doc) {
 				build_id      : buildID,
 				user_id       : userID,
 				team_id       : teamID,
-				html          : await encryptTxt(doc.html),
-				styles        : await encryptObj(doc.styles),
-// 				accessibility : await encryptObj(doc.accessibility)
-				accessibility : await encryptObj({})
+				html          : await zipContent(await encryptTxt(doc.html)),
+				styles        : await zipContent(await encryptObj(doc.styles))
 			}
 		})
 	};
