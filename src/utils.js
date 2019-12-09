@@ -78,7 +78,8 @@ export async function captureElementImage(element, encoding='base64') {
 
 export async function captureScreenImage(page, encoding='base64') {
 	return (`data:image/png;${encoding},${await page.screenshot({ encoding,
-		fullPage : true
+		fullPage       : true,
+		omitBackground : true
 	})}`);
 }
 
@@ -350,6 +351,8 @@ export async function processNode(page, node) {
 // 	delete (attribs['']);
 
 // 	console.log('::::', attribs.localName, attribs);
+
+	console.log('::|::', await getSelector(node));
 
 	const bounds = await node.boundingBox();
 	if (bounds) {
