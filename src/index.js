@@ -92,9 +92,18 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const axeReport = { failed, passed, aborted };
 
 	// filter node results
-	console.log(':::: aggr fails', axe.utils.aggregateNodeResults(failed[4].nodes).incomplete[0].any[0].relatedNodes.map(({ html, target })=> ({ html,
-		target : target.shift()
-	})));
+//	const aggrResults = await new Promise(((resolve, reject) => {
+//		axe.utils.aggregateNodeResults(failed[4].nodes).incomplete[0].any[0].relatedNodes.map(({ html, target })=> ({ html,
+//			target : target.shift()
+//		}))
+//	}));
+//	console.log('::|::', aggrResults);
+
+
+
+//	console.log(':::: aggr fails', axe.utils.aggregateNodeResults(failed[4].nodes).incomplete[0].any[0].relatedNodes.map(({ html, target })=> ({ html,
+//		target : target.shift();
+//	})));
 
 // 	console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
 
