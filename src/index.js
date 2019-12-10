@@ -119,11 +119,20 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(page);
 	const docMeta = await extractMeta(page, elements);
-	const doc = { ...docMeta, dom, axTree, axeReport, html,
+
+	const doc = { ...docMeta, axTree, axeReport, html,
 		title : projectName()
 	};
 
 	await elements.views.push(await pageElement(page, doc, html));
+
+	delete (doc['accessibility']);
+	delete (doc['axTree']);
+	delete (doc['axeReport']);
+	delete (doc['html']);
+	delete (doc['image']);
+	delete (doc['pathname']);
+	delete (doc['styles']);
 
 	await listeners(page, false);
 	await page.close();
@@ -157,15 +166,15 @@ export async function renderWorker(url) {
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
-		const links = await parseLinks(browser, device, url);
-		console.log('%s%s Parsing (%s) add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-		await Promise.all(links.map(async(link, i)=> {
-			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
-
-			Object.keys(elements).forEach((key)=> {
-				elements[key] = [ ...elements[key], ...els[key]];
-			});
-		}));
+//		const links = await parseLinks(browser, device, url);
+//		console.log('%s%s Parsing %s add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+//		await Promise.all(links.map(async(link, i)=> {
+//			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+//
+//			Object.keys(elements).forEach((key)=> {
+//				elements[key] = [ ...elements[key], ...els[key]];
+//			});
+//		}));
 
 
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
@@ -173,7 +182,7 @@ export async function renderWorker(url) {
 // 		console.log('VIEWS -->', elements.views.length);
 // 		console.log('VIEWS -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 // 		console.log('IMAGES -->', elements.images[0]);
-// 		console.log('BUTTONS -->', elements.buttons[0].node_id);
+// 		console.log('BUTTONS -->', elements.buttons[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0].accessibility.report);
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));

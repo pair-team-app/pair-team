@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import getSelector from 'axe-selector';
+//import getSelector from 'axe-selector';
 import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import JSZip from 'jszip';
@@ -59,28 +59,29 @@ const makeCipher = async({ method, key }={})=> {
 };
 
 
-export async function captureElementImage(element, encoding='base64') {
+export async function captureScreenImage(page) {
+	return (await page.screenshot({
+		fullPage       : true,
+		omitBackground : true
+	}));
+}
+
+
+export async function captureElementImage(element) {
 	const boundingBox = await element.boundingBox();
 	const padding = 0;
 
 // 	console.log('captureElementImage', await (await element.getProperty('tagName')).jsonValue(), { ...boundingBox });
 
-	return ((boundingBox.width * boundingBox.height > 0) ? `data:image/png;${encoding},${await element.screenshot({ encoding,
-		clip : {
+	return ((boundingBox.width * boundingBox.height > 0) ? await element.screenshot({
+		omitBackground : true,
+		clip           : {
 			x      : boundingBox.x - padding,
 			y      : boundingBox.y - padding,
 			width  : boundingBox.width + (padding * 2),
 			height : boundingBox.height + (padding * 2),
 		}
-	})}` : null);
-}
-
-
-export async function captureScreenImage(page, encoding='base64') {
-	return (`data:image/png;${encoding},${await page.screenshot({ encoding,
-		fullPage       : true,
-		omitBackground : true
-	})}`);
+	}) : null);
 }
 
 
@@ -242,7 +243,7 @@ export async function pageElement(page, doc, html) {
 	const element = await processNode(page, await page.$('body', async(node)=> (node)));
 	const { meta, enc } = element;
 
-	const { url, dom, image, pathname, axeReport,
+	const { url, image, pathname, axeReport,
 		axTree : tree,
 		title  : text,
 	} = doc;
@@ -256,16 +257,8 @@ export async function pageElement(page, doc, html) {
 		}
 	}));
 
-// 	const accessibility = await zipContent(await encryptObj({ tree,
-// 		report : {
-// 			failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
-// 			passed  : passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
-// 			aborted : aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html)))))
-// 		}
-// 	}));
 
-	delete (doc['image']);
-	return ({ ...element, html, accessibility, dom, image,
+	return ({ ...element, html, accessibility, image,
 		title   : (pathname === '' || pathname === '/') ? '/index' : `/${pathname.slice(1)}`,
 		classes : '',
 		meta    : { ...meta, url, text,
@@ -310,7 +303,6 @@ export async function processNode(page, node) {
 // 		console.log(`el stuff: [${el.outerHTML}] [${el.nodeName}] [${el.nodeType}]`);
 
 		return ({
-			localName     : el.localName,
 // 			matches       : axe.commons.matches(el, 'a'),
 			flatDOM       : window.flatDOM,
 			pageCSS       : window.styleTag,
@@ -346,13 +338,15 @@ export async function processNode(page, node) {
 	delete (attribs['flatDOM']);
 	delete (attribs['pageCSS']);
 	delete (attribs['html']);
-// 	delete (attribs['styles']); // needed for accessibility on 'view' types
-// 	delete (attribs['accessibility']);
+// 	delete (attribs['styles']); // needed for extracting fonts / colors / etc
+ 	delete (attribs['accessibility']);
+ 	delete (attribs['visible']);
+ 	delete (attribs['rootStyles']);
+// 	delete (attribs['']);
 // 	delete (attribs['']);
 
 // 	console.log('::::', attribs.localName, attribs);
-
-	console.log('::|::', await getSelector(node));
+//	console.log('::|::', await getSelector(node));
 
 	const bounds = await node.boundingBox();
 	if (bounds) {
@@ -361,8 +355,7 @@ export async function processNode(page, node) {
 		});
 	}
 
-	return ({
-		...attribs, html, rootStyles, children,
+	const element = { ...attribs,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
 		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await zipContent(await captureElementImage(node)) : null,
@@ -377,7 +370,30 @@ export async function processNode(page, node) {
 			root_styles   : await zipContent(await encryptObj(rootStyles)),
 			accessibility : await zipContent(await encryptObj(accessibility))
 		}
-	});
+	};
+
+
+
+
+
+	return (element);
+
+//	return ({ ...attribs, html, rootStyles,
+//		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
+//		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
+//		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await zipContent(await captureElementImage(node)) : null,
+//		meta    : {
+//			...meta, bounds,
+//			box  : await node.boxModel(),
+//			data : (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : meta.data
+//		},
+//		enc     : {
+//			html          : await zipContent(await encryptTxt(html)),
+//			styles        : await zipContent(await encryptObj(styles)),
+//			root_styles   : await zipContent(await encryptObj(rootStyles)),
+//			accessibility : await zipContent(await encryptObj(accessibility))
+//		}
+//	});
 }
 
 
