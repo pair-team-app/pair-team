@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import * as axe from 'axe-core';
+//import * as axe from 'axe-core';
 import getSelector from 'axe-selector';
 import { AxePuppeteer } from 'axe-puppeteer';
 import { Strings } from 'lang-js-utils';
@@ -46,7 +46,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const flatDOM = (await client.send('DOM.getFlattenedDocument', { depth : -1 })).nodes.map(({ nodeId, backendNodeId, parentId })=> ({ nodeId, backendNodeId, parentId }));
 // 	console.log('DOM.getFlattenedDocument', flatDOM);
 
-	const dom = await client.send('DOM.getDocument', { depth : -1 });
+//	const dom = await client.send('DOM.getDocument', { depth : -1 });
 // 	console.log('DOM.getDocument', JSON.stringify(dom, null, 2));
 
 
@@ -166,15 +166,15 @@ export async function renderWorker(url) {
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
-//		const links = await parseLinks(browser, device, url);
-//		console.log('%s%s Parsing %s add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-//		await Promise.all(links.map(async(link, i)=> {
-//			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
-//
-//			Object.keys(elements).forEach((key)=> {
-//				elements[key] = [ ...elements[key], ...els[key]];
-//			});
-//		}));
+		const links = await parseLinks(browser, device, url);
+		console.log('%s%s Parsing %s add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+		await Promise.all(links.map(async(link, i)=> {
+			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+
+			Object.keys(elements).forEach((key)=> {
+				elements[key] = [ ...elements[key], ...els[key]];
+			});
+		}));
 
 
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
