@@ -2,9 +2,11 @@
 'use strict';
 
 //import getSelector from 'axe-selector';
+import atob from 'atob';
 import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import JSZip from 'jszip';
+import { Images } from 'lang-js-utils';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
@@ -59,11 +61,13 @@ const makeCipher = async({ method, key }={})=> {
 };
 
 
-export async function captureScreenImage(page) {
-	return (await page.screenshot({
+export async function captureScreenImage(page, encoding='base64') {
+	const image = await page.screenshot({ encoding,
 		fullPage       : true,
 		omitBackground : true
-	}));
+	});
+
+	return ((encoding === 'base64') ? `data:image/png;base64,${image}` : image);
 }
 
 
@@ -172,7 +176,7 @@ export async function extractMeta(page, elements) {
 		},
 		description   : await page.title(),
 		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
-		image         : await zipContent(await captureScreenImage(page)),
+		image         : await captureScreenImage(page),
 		links         : elements.links.map((link)=> (link.meta.href)).join(' '),
 		pathname      : await page.evaluate(()=> (window.location.pathname)),
 		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
@@ -248,6 +252,7 @@ export async function pageElement(page, doc, html) {
 		title  : text,
 	} = doc;
 
+	const { width, height } = await Images.dimensions(image);
 	const { failed, passed, aborted } = axeReport;
 	const accessibility = await zipContent(await encryptObj({ tree,
 		report : {
@@ -257,12 +262,13 @@ export async function pageElement(page, doc, html) {
 		}
 	}));
 
-
-	return ({ ...element, html, accessibility, image,
+	return ({ ...element, html, accessibility,
 		title   : (pathname === '' || pathname === '/') ? '/index' : `/${pathname.slice(1)}`,
+		image   : await zipContent(await captureScreenImage(page, 'binary')),
 		classes : '',
 		meta    : { ...meta, url, text,
-			pathname : (pathname !== '') ? pathname : '/'
+			pathname : (pathname !== '') ? pathname : '/',
+			bounds   : { ...meta.bounds, width, height }
 		},
 		enc     : { ...enc, accessibility,
 			html : await zipContent(await encryptTxt(html)),
@@ -373,27 +379,7 @@ export async function processNode(page, node) {
 	};
 
 
-
-
-
 	return (element);
-
-//	return ({ ...attribs, html, rootStyles,
-//		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
-//		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-//		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await zipContent(await captureElementImage(node)) : null,
-//		meta    : {
-//			...meta, bounds,
-//			box  : await node.boxModel(),
-//			data : (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : meta.data
-//		},
-//		enc     : {
-//			html          : await zipContent(await encryptTxt(html)),
-//			styles        : await zipContent(await encryptObj(styles)),
-//			root_styles   : await zipContent(await encryptObj(rootStyles)),
-//			accessibility : await zipContent(await encryptObj(accessibility))
-//		}
-//	});
 }
 
 

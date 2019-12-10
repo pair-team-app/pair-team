@@ -61,6 +61,6 @@ export async function sendPlaygroundComponents(userID, playgroundID, components)
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 	}
 
- 	console.log('ADD_COMPONENTS -->>', response.query);
+ 	console.log('ADD_COMPONENTS -->>', response.components);
 	return (response.components);
 }
