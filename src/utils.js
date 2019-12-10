@@ -364,7 +364,7 @@ export async function processNode(page, node) {
 	const element = { ...attribs,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-		image   : (visible && bounds && (bounds.width * bounds.height) > 0) ? await zipContent(await captureElementImage(node)) : null,
+		image   : (visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent(await captureElementImage(node)) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),
