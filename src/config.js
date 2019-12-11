@@ -215,11 +215,11 @@ export async function globals(page, vars) {
 
 export async function listeners(page, attach=true) {
 	const onMouseWheel = (event)=> {
-		console.log('onMouseWheel -->', event);
+//		console.log('onMouseWheel -->', event);
 	};
 
 	const onPageError = (err)=> {
-		console.log('onPageError -->', { err });
+//		console.log('onPageError -->', { err });
 	};
 
 	const onPageDOMContentLoaded = ()=> {
@@ -248,7 +248,7 @@ export async function listeners(page, attach=true) {
 	};
 
 	const onPageDialog = async(dialog)=> {
-		console.log('onPageDialog -->', { type : dialog._type, message : dialog._message });
+//		console.log('onPageDialog -->', { type : dialog._type, message : dialog._message });
 		await dialog.dismiss();
 	};
 
@@ -262,7 +262,7 @@ export async function listeners(page, attach=true) {
 	};
 
 	const onPageMouseWheel = (event)=> {
-		console.log('onPageMouseWheel -->', event);
+//		console.log('onPageMouseWheel -->', event);
 	};
 
 

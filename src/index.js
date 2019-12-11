@@ -137,7 +137,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await listeners(page, false);
 	await page.close();
 
-	console.log('%s%s Finished parsing [%s] view %s', ((ind === 0 && !url.endsWith('/')) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.PATH(`/${url.split('/').slice(3).join('/')}`));
+	console.log('%s %s Finished parsing view %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.PATH(`/${url.split('/').slice(3).join('/')}`));
 	return({ doc, elements });
 };
 
@@ -149,6 +149,7 @@ const parseLinks = async(browser, device, url)=> {
 	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
+//	return ([ ...new Set(links)]);
 	return ([ ...new Set(links.slice(-1))]);
 };
 
@@ -162,12 +163,12 @@ export async function renderWorker(url) {
 
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 	const renders = await Promise.all(devices.map(async(device, i)=> {
-		console.log('%s Parsing [%s] root view…%s', ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ((i === devices.length - 1) ? '\n' : ''));
+		console.log('%s %s Parsing root view…', ChalkStyles.INFO, ChalkStyles.DEVICE(device.name));
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
 		const links = await parseLinks(browser, device, url);
-		console.log('%s%s Parsing %s add\'l [%s] %s: [ %s ]…' , ((i === 0) ? '\n' : ''), ChalkStyles.INFO, ChalkStyles.NUMBER(`${links.length}`), ChalkStyles.DEVICE(device.name), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+		console.log('%s %s Parsing %s add\'l %s: [ %s ]…' , ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.NUMBER(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
 		await Promise.all(links.map(async(link, i)=> {
 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
 

@@ -28,7 +28,7 @@ export async function createPlayground(buildID, userID, teamID, device, doc) {
 
  	} catch (e) {
  		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
- 		console.log('RESP -->>', await response.text());
+// 		console.log('RESP -->>', await response.text());
  	}
 
  //   console.log('ADD_PLAYGROUND -->>', { id : response.playground.id, buildID : response.playground.build_id });
@@ -52,6 +52,7 @@ export async function sendPlaygroundComponents(userID, playgroundID, components)
 	};
 
 	let response = await fetch(API_ENDPT_URL, cfg);
+//	console.log('RESP -->>', response.headers.raw(), await response.text());
 //	console.log('RESP -->>', await response.text());
 
 	try {
@@ -61,6 +62,6 @@ export async function sendPlaygroundComponents(userID, playgroundID, components)
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 	}
 
- 	console.log('ADD_COMPONENTS -->>', response.components);
+// 	console.log('ADD_COMPONENTS -->>', response.components);
 	return (response.components);
 }
