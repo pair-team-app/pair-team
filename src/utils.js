@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-//import getSelector from 'axe-selector';
-import atob from 'atob';
+import getSelector from 'axe-selector';
 import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import JSZip from 'jszip';
@@ -15,7 +14,6 @@ import cryproCreds from '../crypto-creds';
 
 
 const domNodeIDs = (flatDOM, backendNodeID)=> {
-// 	console.log('domNodeIDs', flatDOM.map(({ nodeId, backendNodeId })=> ({ nodeId, backendNodeId })), backendNodeID);
 	const node = flatDOM.find(({ backendNodeId })=> (backendNodeId === backendNodeID));
 
 	return ((node) ? {
@@ -127,11 +125,6 @@ export async function encryptTxt(txt, { type, key }={}) {
 	const encTxt = Buffer.concat([cipher.update(txt), cipher.final()]);
 
 	return (`${iv.toString('hex')}:${encTxt.toString('hex')}`);
-
-
-// 	const cipher = await makeCipher({ type, key });
-// 	const encTxt = await cipher.update(txt, 'utf8', 'hex');
-// 	return (`${encTxt}${cipher.final('hex')}`);
 }
 
 
@@ -283,22 +276,10 @@ export async function pageStyleTag(html) {
 
 
 export async function processNode(page, node) {
-	const children = [];
-	try {
-		const properties = await node.getProperties();
-		for (const property of properties.values()) {
-// 			console.log(':-:', await property.jsonValue());
-			const element = property.asElement();
-			if (element) {
-				children.push(element);
-			}
-		}
-	} catch (e) {/* …\(^_^)/… */}
-
 // 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
 
 
-// 	console.log('::::', (await page.evaluate((el)=> (el), node)));
+// 	console.log('::::', getSelector(await page.$('body', (el)=> (el))));
 // 	console.log('::::', await (await node.asElement()).getProperty('accessibility'));
 
 // 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'svg') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))) : [];
@@ -310,6 +291,7 @@ export async function processNode(page, node) {
 
 		return ({
 // 			matches       : axe.commons.matches(el, 'a'),
+			selector      : el.matches('a'),
 			flatDOM       : window.flatDOM,
 			pageCSS       : window.styleTag,
 			title         : (el.textContent && el.textContent.length > 0) ? el.textContent : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.hasAttribute('placeholder') && el.placeholder.length > 0) ? el.placeholder : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : el.nodeName.toLowerCase(),
@@ -337,6 +319,9 @@ export async function processNode(page, node) {
 	}, node);
 
 
+//	console.log('::|::', JSON.stringify(attribs, null, 2));
+//	console.log('::|::', attribs.selector);
+
 	const { flatDOM, pageCSS, tag, styles, accessibility, visible, meta } = attribs;
 	const html = (await inlineElementStyles(attribs.html, pageCSS));
 	const rootStyles = await elementRootStyles(attribs.html, pageCSS);
@@ -352,7 +337,7 @@ export async function processNode(page, node) {
 // 	delete (attribs['']);
 
 // 	console.log('::::', attribs.localName, attribs);
-//	console.log('::|::', await getSelector(node));
+//	console.log('::|::', getSelector(node.asElement()));
 
 	const bounds = await node.boundingBox();
 	if (bounds) {

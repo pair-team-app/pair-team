@@ -31,10 +31,12 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await page.goto(url, { waitUntil : 'networkidle0' });
 	await page.content();
 
+//	await page.addScriptTag({ path : './node_modules/design-engine-playground/node_modules/design-engine-extract/node_modules/axe-selector/dist/getSelector.js' });
+
 	const client = await page.target().createCDPSession();
 
 // 	const el = await page.$('h1');
-// 	console.log('el', el);
+// 	console.log('el', el.matches('a'));
 // 	console.log('el', JSON.stringify(el, 2, null));
 
 	await client.send('DOM.enable');
@@ -114,7 +116,11 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await consts(page);
 	await listeners(page);
 	await funcs(page);
-	await globals(page, { flatDOM, axeReport, styleTag, getSelector });
+	await globals(page, { flatDOM, axeReport, styleTag });
+
+	await page.exposeFunction('getSelector', (el)=> {
+		return (getSelector(el));
+	});
 
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(page);

@@ -236,15 +236,15 @@ export async function listeners(page, attach=true) {
 
 	const onPageConsole = (msg)=> {
 // 		console[msg._type]('onPageConsole -->>', msg._text);
-		console[msg._type](msg._text);
+//		console[msg._type](msg._text);
 
-		for (let i=0; i<msg.args().length; ++i) {
-			console[msg._type](`${i}: ${msg.args()[i]}`);
-		}
+//		for (let i=0; i<msg.args().length; ++i) {
+//			console[msg._type](`${i}: ${msg.args()[i]}`);
+//		}
 
-// 		msg.args().forEach((arg, i) => {
-// 			console.log(`${i}: ${msg.args()[i]}`);
-// 		});
+ 		msg.args().forEach((arg, i) => {
+ 			console.log(`${i}: ${msg.args()[i]}`);
+ 		});
 	};
 
 	const onPageDialog = async(dialog)=> {
