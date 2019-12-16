@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-//import * as axe from 'axe-core';
 import getSelector from 'axe-selector';
 import { AxePuppeteer } from 'axe-puppeteer';
 import { Strings } from 'lang-js-utils';
@@ -68,23 +67,8 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 // 	console.log(':::: acc', JSON.stringify(axTree, null, 2));
 
 
-
-	/* opts
-	{
-		restoreScroll : true,
-		xpath         : true,
-		absolutePaths : true,
-		elementRef    : true,
-		runOnly       : ['wcag2a', 'wcag2aa'],
-		preload       : {
-			assets  : ['cssom'],
-			timeout : 5000
-		}
-	}
-	 */
 	const axeResults = await new AxePuppeteer(page).analyze();
-// 	axe._tree = axe.utils.getFlattenedTree(await page.$('document'));
-// 	axe._selectorData = axe.utils.getSelectorData(axe._tree);
+//	console.log('AxePuppeteer SAYS:', JSON.stringify(axeResults, null, 2));
 
 	const {
 		violations : failed,
@@ -92,22 +76,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		incomplete : aborted
 	} = axeResults;
 	const axeReport = { failed, passed, aborted };
-
-	// filter node results
-//	const aggrResults = await new Promise(((resolve, reject) => {
-//		axe.utils.aggregateNodeResults(failed[4].nodes).incomplete[0].any[0].relatedNodes.map(({ html, target })=> ({ html,
-//			target : target.shift()
-//		}))
-//	}));
-//	console.log('::|::', aggrResults);
-
-
-
-//	console.log(':::: aggr fails', axe.utils.aggregateNodeResults(failed[4].nodes).incomplete[0].any[0].relatedNodes.map(({ html, target })=> ({ html,
-//		target : target.shift();
-//	})));
-
-// 	console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
+//	console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
 
 	await stripPageTags(page, ['iframe']);
 	const embedHTML = await embedPageStyles(await page.content());
