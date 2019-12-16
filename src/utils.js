@@ -204,7 +204,6 @@ export function formatAXNode(flatDOM, node) {
 
 export function fillChildNodes(nodes, ids) {
 	const childNodes = nodes.filter(({ axNodeID })=> (ids.indexOf(axNodeID) !== -1)).map((axNode)=> {
-
 		const { childIDs } = axNode;
 		delete (axNode['childIDs']);
 
