@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import getSelector from 'axe-selector';
+import resemble from 'node-resemble-js';
 import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import JSZip from 'jszip';
