@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-import getSelector from 'axe-selector';
 import { AxePuppeteer } from 'axe-puppeteer';
 import { Strings } from 'lang-js-utils';
 import projectName from 'project-name';
@@ -124,14 +123,14 @@ const parseLinks = async(browser, device, url)=> {
 	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
-//	return ([ ...new Set(links)]);
-	return ([ ...new Set(links.slice(-1))]);
+	return ([ ...new Set(links)]);
+//	return ([ ...new Set(links.slice(-1))]);
 };
 
 
 export async function renderWorker(url) {
 	const devices = [
-// 		puppeteer.devices['iPhone 8'],
+ 		puppeteer.devices['iPhone 8'],
 // 		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
 		CHROME_DEVICE
@@ -143,15 +142,15 @@ export async function renderWorker(url) {
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
-//		const links = await parseLinks(browser, device, url);
-//		console.log('%s %s Parsing %s add\'l %s: [ %s ]…' , ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.NUMBER(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-//		await Promise.all(links.map(async(link, i)=> {
-//			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
-//
-//			Object.keys(elements).forEach((key)=> {
-//				elements[key] = [ ...elements[key], ...els[key]];
-//			});
-//		}));
+		const links = await parseLinks(browser, device, url);
+		console.log('%s %s Parsing %s add\'l %s: [ %s ]…' , ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.NUMBER(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+		await Promise.all(links.map(async(link, i)=> {
+			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+
+			Object.keys(elements).forEach((key)=> {
+				elements[key] = [ ...elements[key], ...els[key]];
+			});
+		}));
 
 
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
