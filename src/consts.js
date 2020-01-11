@@ -16,7 +16,7 @@ export const ChalkStyles = {
 };
 
 
-export const API_ENDPT_URL = 'https://api.designengine.ai/v2/pairurl.php';
+export const API_ENDPT_URL = 'https://api.designengine.ai/v2/pairurl-2.php';
 
 export const FETCH_CFG = {
 	method  : 'POST',
@@ -47,8 +47,8 @@ export const CHROME_DEVICE = {
 	name      : 'Chrome',
 	userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
 	viewport  : {
-		width             : 1280,
-		height            : 720,
+		width             : 800,
+		height            : 600,
 		deviceScaleFactor : 1,
 		isMobile          : false,
 		hasTouch          : false,

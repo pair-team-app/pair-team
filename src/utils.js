@@ -59,9 +59,11 @@ const makeCipher = async({ method, key }={})=> {
 };
 
 
-export async function captureScreenImage(page, encoding='base64') {
+export async function captureScreenImage(page, encoding='binary') {
 	const image = await page.screenshot({ encoding,
-		fullPage       : true,
+		type           : 'jpeg',
+		quality        : 6,
+		fullPage       : false,//true,
 		omitBackground : true
 	});
 
@@ -69,21 +71,25 @@ export async function captureScreenImage(page, encoding='base64') {
 }
 
 
-export async function captureElementImage(element) {
+export async function captureElementImage(element, encoding='binary') {
 	const boundingBox = await element.boundingBox();
 	const padding = 0;
 
 // 	console.log('captureElementImage', await (await element.getProperty('tagName')).jsonValue(), { ...boundingBox });
 
-	return ((boundingBox.width * boundingBox.height > 0) ? await element.screenshot({
+	const image = (boundingBox.width * boundingBox.height > 0) ? await element.screenshot({ encoding,
 		omitBackground : true,
-		clip           : {
-			x      : boundingBox.x - padding,
-			y      : boundingBox.y - padding,
-			width  : boundingBox.width + (padding * 2),
-			height : boundingBox.height + (padding * 2),
-		}
-	}) : null);
+		type           : 'jpeg',
+		quality        : 6,
+//		clip           : {
+//			x      : boundingBox.x - padding,
+//			y      : boundingBox.y - padding,
+//			width  : boundingBox.width + (padding * 2),
+//			height : boundingBox.height + (padding * 2),
+//		}
+	}) : null;
+
+	return ((encoding === 'base64' ? `\`data:image/png;base64,${image}\`` : image));
 }
 
 
@@ -169,7 +175,7 @@ export async function extractMeta(page, elements) {
 		},
 		description   : await page.title(),
 		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
-		image         : await captureScreenImage(page),
+//		image         : await captureScreenImage(page, 'base64'),
 		links         : elements.links.map((link)=> (link.meta.href)).join(' '),
 		pathname      : await page.evaluate(()=> (window.location.pathname)),
 		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
@@ -256,7 +262,7 @@ export async function pageElement(page, doc, html) {
 
 	return ({ ...element, html, accessibility,
 		title   : (pathname === '' || pathname === '/') ? '/index' : `/${pathname.slice(1)}`,
-		image   : await zipContent(await captureScreenImage(page, 'binary')),
+		image   : await zipContent(await captureScreenImage(page)),
 		classes : '',
 		meta    : { ...meta, url, text,
 			pathname : (pathname !== '') ? pathname : '/',
@@ -339,12 +345,6 @@ export async function processNode(page, node) {
 //	console.log('::|::', getSelector(node.asElement()));
 
 	const bounds = await node.boundingBox();
-	if (bounds) {
-		Object.keys(bounds).forEach((key) => {
-			bounds[key] = Math.ceil(bounds[key]);
-		});
-	}
-
 	const element = { ...attribs,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
