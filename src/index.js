@@ -84,21 +84,21 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	await consts(page);
 	await listeners(page);
 	await funcs(page);
-	await globals(page, { flatDOM, axeReport, styleTag });
+	await globals(page, { device, flatDOM, axeReport, styleTag });
 
 	await page.exposeFunction('getSelector', (el)=> {
 		return (getSelector(el));
 	});
 
 	const html = formatHTML(await inlineCSS(embedHTML));
-	const elements = await extractElements(page);
-	const docMeta = await extractMeta(page, elements);
+	const elements = await extractElements(device, page);
+	const docMeta = await extractMeta(device, page, elements);
 
 	const doc = { ...docMeta, axTree, axeReport, html,
 		title : projectName()
 	};
 
-	await elements.views.push(await pageElement(page, doc, html));
+	await elements.views.push(await pageElement(device, page, doc, html));
 
 	delete (doc['accessibility']);
 	delete (doc['axTree']);
@@ -133,7 +133,7 @@ export async function renderWorker(url) {
  		puppeteer.devices['iPhone 6'],
 // 		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
-		CHROME_DEVICE
+//		CHROME_DEVICE
 	].reverse();
 
 	const browser = await puppeteer.launch(BROWSER_OPTS);
@@ -160,6 +160,7 @@ export async function renderWorker(url) {
 // 		console.log('IMAGES -->', elements.images[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0]);
 // 		console.log('BUTTONS -->', elements.buttons[0].accessibility.report);
+// 		console.log('IMAGES -->', elements.views.map(({ id, title, image }, i)=> (JSON.stringify({ id, title, image }, null, 2))));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] [${el.html}] ${el.path}`)));

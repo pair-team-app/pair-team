@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 'use strict';
 
-import resemble from 'node-resemble-js';
 import crypto from 'crypto';
+import dataUriToBuffer from 'data-uri-to-buffer';
 import inlineCss from 'inline-css';
+import Jimp from 'jimp';
 import JSZip from 'jszip';
 import { Images } from 'lang-js-utils';
+import resemble from 'node-resemble-js';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
-import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, ZIP_OPTS } from './consts';
+import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, JPEG_QUALITY, ZIP_OPTS } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
@@ -59,37 +61,46 @@ const makeCipher = async({ method, key }={})=> {
 };
 
 
-export async function captureScreenImage(page, encoding='binary') {
-	const image = await page.screenshot({ encoding,
+export async function captureScreenImage(page, scale=1.0, encoding='base64') {
+//	console.log('::|::', 'captureScreenImage()', { page : typeof page, scale, encoding });
+
+	const dataURI = `data:image/jpeg;base64,${await page.screenshot({ encoding,
 		type           : 'jpeg',
-		quality        : 6,
-		fullPage       : false,//true,
+		quality        : 100,
+		fullPage       : false,
 		omitBackground : true
+	})}`;
+
+	const image = await Jimp.read(dataUriToBuffer(dataURI)).then(async(image)=> {
+		return (await image.scale(scale).quality(JPEG_QUALITY).getBase64Async(Jimp.MIME_JPEG));
+	}).catch((e)=> {
+		console.log('//|\\\\', 'captureScreenImage()', e);
 	});
 
-	return ((encoding === 'base64') ? `data:image/png;base64,${image}` : image);
+	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, encoding, dataURI : { data : dataURI, size : dataURI.length }, image : { data : image, size : image.length } });
+	return (image);
 }
 
 
-export async function captureElementImage(element, encoding='binary') {
+export async function captureElementImage(element, scale=1.0, encoding='base64') {
+//	console.log('::|::', 'captureElementImage()', { element : typeof element, scale, encoding });
+
 	const boundingBox = await element.boundingBox();
-	const padding = 0;
-
-// 	console.log('captureElementImage', await (await element.getProperty('tagName')).jsonValue(), { ...boundingBox });
-
-	const image = (boundingBox.width * boundingBox.height > 0) ? await element.screenshot({ encoding,
-		omitBackground : true,
+	const dataURI = (boundingBox.width * boundingBox.height > 0) ? `data:image/jpeg;base64,${await element.screenshot({ encoding,
 		type           : 'jpeg',
-		quality        : 6,
-//		clip           : {
-//			x      : boundingBox.x - padding,
-//			y      : boundingBox.y - padding,
-//			width  : boundingBox.width + (padding * 2),
-//			height : boundingBox.height + (padding * 2),
-//		}
+		quality        : 100,
+		omitBackground : true
+	})}` : null;
+
+	const image = (dataURI) ? await Jimp.read(dataUriToBuffer(dataURI)).then(async(image)=> {
+		return (await image.scale(scale).quality(JPEG_QUALITY).getBase64Async(Jimp.MIME_JPEG));
+
+	}).catch((e)=> {
+		reject(e);
 	}) : null;
 
-	return ((encoding === 'base64' ? `\`data:image/png;base64,${image}\`` : image));
+	console.log('::|::', 'captureElementImage()', { element : typeof element, scale, encoding, dataURI : { data : dataURI, size : dataURI.length }, image : { data : image, size : image.length } });
+	return (image);
 }
 
 
@@ -147,23 +158,27 @@ export async function zipContent(content, filename=`${(Date.now() * 0.001).toStr
 }
 
 
-export async function extractElements(page) {
+export async function extractElements(device, page) {
+//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : typeof page });
+
 	const elements = {
 		'views'      : [],
-		'buttons'    : (await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((element)=> (element.visible)),
-		'headings'   : (await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((element)=> (element.visible)),
-		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
-		'images'     : (await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((element)=> (element.visible)),
-		'links'      : (await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((element)=> (element.visible)),
-		'textfields' : (await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((element)=> (element.visible)),
-// 		'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node))))).filter((element)=> (element.visible)),
+		'buttons'    : (await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		'headings'   : (await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
+		'images'     : (await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		'links'      : (await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		'textfields' : (await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+// 		'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 	};
 
 	return (elements)
 }
 
 
-export async function extractMeta(page, elements) {
+export async function extractMeta(device, page, elements) {
+//	console.log('::|::', 'extractMeta()', { device : device.viewport.deviceScaleFactor, page : typeof page, elements : elements.length });
+
 // 	const docHandle = await page.evaluateHandle(() => (window.document));
 
 // 	const doc = await page.$('body');
@@ -175,7 +190,7 @@ export async function extractMeta(page, elements) {
 		},
 		description   : await page.title(),
 		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
-//		image         : await captureScreenImage(page, 'base64'),
+//		image         : await captureScreenImage(page, device.viewport.deviceScaleFactor, 'base64'),
 		links         : elements.links.map((link)=> (link.meta.href)).join(' '),
 		pathname      : await page.evaluate(()=> (window.location.pathname)),
 		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
@@ -241,14 +256,19 @@ export async function inlineCSS(html, style='') {
 }
 
 
-export async function pageElement(page, doc, html) {
-	const element = await processNode(page, await page.$('body', async(node)=> (node)));
+export async function pageElement(device, page, doc, html) {
+//	console.log('::|::', 'pageElement()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
+
+	const element = await processNode(device, page, await page.$('body', async(node)=> (node)));
 	const { meta, enc } = element;
 
-	const { url, image, pathname, axeReport,
+	const { url, pathname, axeReport,
 		axTree : tree,
 		title  : text,
 	} = doc;
+
+	const image = await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
+//	console.log('pageElement()', { image });
 
 	const { width, height } = await Images.dimensions(image);
 	const { failed, passed, aborted } = axeReport;
@@ -262,7 +282,7 @@ export async function pageElement(page, doc, html) {
 
 	return ({ ...element, html, accessibility,
 		title   : (pathname === '' || pathname === '/') ? '/index' : `/${pathname.slice(1)}`,
-		image   : await zipContent(await captureScreenImage(page)),
+		image   : await zipContent(image),
 		classes : '',
 		meta    : { ...meta, url, text,
 			pathname : (pathname !== '') ? pathname : '/',
@@ -280,15 +300,17 @@ export async function pageStyleTag(html) {
 }
 
 
-export async function processNode(page, node) {
+export async function processNode(device, page, node) {
+//	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : typeof page, node : typeof node});
+
 // 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
 
 
 // 	console.log('::::', getSelector(await page.$('body', (el)=> (el))));
 // 	console.log('::::', await (await node.asElement()).getProperty('accessibility'));
 
-// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'svg') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))) : [];
-// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(page, node)))) : [];
+// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'svg') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
+// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
 // 	const children = [];
 	const attribs = await page.evaluate((el)=> {
 		const styles = window.elementStyles(el);
@@ -342,13 +364,13 @@ export async function processNode(page, node) {
 // 	delete (attribs['']);
 
 // 	console.log('::::', attribs.localName, attribs);
-//	console.log('::|::', getSelector(node.asElement()));
+//	console.log('[::]', { scale : device.viewport.deviceScaleFactor });
 
 	const bounds = await node.boundingBox();
 	const element = { ...attribs,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-		image   : (visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent(await captureElementImage(node)) : null,
+		image   : (visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent(await captureElementImage(node, (1 / device.viewport.deviceScaleFactor))) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),

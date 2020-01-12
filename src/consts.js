@@ -17,6 +17,7 @@ export const ChalkStyles = {
 
 
 export const API_ENDPT_URL = 'https://api.designengine.ai/v2/pairurl-2.php';
+export const JPEG_QUALITY = 75;
 
 export const FETCH_CFG = {
 	method  : 'POST',
