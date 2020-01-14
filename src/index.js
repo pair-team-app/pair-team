@@ -130,7 +130,7 @@ const parseLinks = async(browser, device, url)=> {
 
 export async function renderWorker(url) {
 	const devices = [
- 		puppeteer.devices['iPhone 8'],
+ 		puppeteer.devices['iPhone 6'],
 // 		puppeteer.devices['iPhone X'],
 // 		puppeteer.devices['iPad Pro'],
 		CHROME_DEVICE
