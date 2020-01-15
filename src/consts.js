@@ -16,6 +16,8 @@ export const ChalkStyles = {
 };
 
 
+export const IMAGE_MAX_HEIGHT = 600;
+export const JPEG_COMPRESSION = 25;
 export const API_ENDPT_URL = 'https://api.designengine.ai/v2/pairurl-2.php';
 
 export const FETCH_CFG = {
