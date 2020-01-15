@@ -2,16 +2,14 @@
 'use strict';
 
 import crypto from 'crypto';
-import dataUriToBuffer from 'data-uri-to-buffer';
 import inlineCss from 'inline-css';
 import Jimp from 'jimp';
 import JSZip from 'jszip';
 import { Images } from 'lang-js-utils';
-import resemble from 'node-resemble-js';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
-import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, JPEG_QUALITY, ZIP_OPTS } from './consts';
+import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, IMAGE_MAX_HEIGHT, JPEG_COMPRESSION, ZIP_OPTS } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
@@ -61,45 +59,44 @@ const makeCipher = async({ method, key }={})=> {
 };
 
 
-export async function captureScreenImage(page, scale=1.0, encoding='base64') {
-//	console.log('::|::', 'captureScreenImage()', { page : typeof page, scale, encoding });
+export async function captureScreenImage(page, scale=1.0) {
+//	console.log('::|::', 'captureScreenImage()', { page : page.pathname, scale });
 
-	const dataURI = `data:image/jpeg;base64,${await page.screenshot({ encoding,
-		type           : 'jpeg',
-		quality        : 100,
-		fullPage       : false,
+	const pngData = await page.screenshot({
+		fullPage       : true,
 		omitBackground : true
-	})}`;
+	});
 
-	const image = await Jimp.read(dataUriToBuffer(dataURI)).then(async(image)=> {
-		return (await image.scale(scale).quality(JPEG_QUALITY).getBase64Async(Jimp.MIME_JPEG));
+	const pngImage = await Jimp.read(pngData).then(async(image)=> {
+		return (await image.scale(scale));
 	}).catch((e)=> {
 		console.log('//|\\\\', 'captureScreenImage()', e);
 	});
 
-	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, encoding, dataURI : { data : dataURI, size : dataURI.length }, image : { data : image, size : image.length } });
-	return (image);
+//	console.log('-=|=-', 'captureScreenImage()', 'jpeg', jpgImage);
+
+	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG);
+	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG), size : (await Jimp.read(pngData)).bitmap.data.byteLength }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG), size : pngImage.bitmap.data.byteLength }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image, size : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap.data.byteLength } });
+	return ({ full : await pngImage.getBase64Async(Jimp.MIME_JPEG), cropped : image });
 }
 
 
-export async function captureElementImage(element, scale=1.0, encoding='base64') {
-//	console.log('::|::', 'captureElementImage()', { element : typeof element, scale, encoding });
+export async function captureElementImage(element, scale=1.0) {
+//	console.log('::|::', 'captureElementImage()', { element : element.tagName, scale});
 
 	const boundingBox = await element.boundingBox();
-	const dataURI = (boundingBox.width * boundingBox.height > 0) ? `data:image/jpeg;base64,${await element.screenshot({ encoding,
-		type           : 'jpeg',
-		quality        : 100,
+	const pngData = (boundingBox.width * boundingBox.height > 0) ? await element.screenshot({
 		omitBackground : true
-	})}` : null;
-
-	const image = (dataURI) ? await Jimp.read(dataUriToBuffer(dataURI)).then(async(image)=> {
-		return (await image.scale(scale).quality(JPEG_QUALITY).getBase64Async(Jimp.MIME_JPEG));
-
-	}).catch((e)=> {
-		reject(e);
 	}) : null;
 
-	console.log('::|::', 'captureElementImage()', { element : typeof element, scale, encoding, dataURI : { data : dataURI, size : dataURI.length }, image : { data : image, size : image.length } });
+	const image = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
+		return (await image.scale(scale).quality(JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG));
+
+	}).catch((e)=> {
+		return (null);
+	}) : null;
+
+//	console.log('::|::', 'captureElementImage()', { element : element.tagName, scale, dataURI : { data : dataURI, size : dataURI.length }, image : { data : image, size : image.length } });
 	return (image);
 }
 
@@ -159,7 +156,7 @@ export async function zipContent(content, filename=`${(Date.now() * 0.001).toStr
 
 
 export async function extractElements(device, page) {
-//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : typeof page });
+	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() });
 
 	const elements = {
 		'views'      : [],
@@ -177,7 +174,7 @@ export async function extractElements(device, page) {
 
 
 export async function extractMeta(device, page, elements) {
-//	console.log('::|::', 'extractMeta()', { device : device.viewport.deviceScaleFactor, page : typeof page, elements : elements.length });
+	console.log('::|::', 'extractMeta()', { device : device.viewport.deviceScaleFactor, page : page.url(), elements : elements.length });
 
 // 	const docHandle = await page.evaluateHandle(() => (window.document));
 
@@ -190,8 +187,8 @@ export async function extractMeta(device, page, elements) {
 		},
 		description   : await page.title(),
 		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
-//		image         : await captureScreenImage(page, device.viewport.deviceScaleFactor, 'base64'),
-		links         : elements.links.map((link)=> (link.meta.href)).join(' '),
+		image         : (await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor))).cropped,
+		//links         : elements.links.map((link)=> (link.meta.href)).join(' '),
 		pathname      : await page.evaluate(()=> (window.location.pathname)),
 		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
 		url           : await page.url()
@@ -267,7 +264,7 @@ export async function pageElement(device, page, doc, html) {
 		title  : text,
 	} = doc;
 
-	const image = await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
+	const image = (await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor))).cropped;
 //	console.log('pageElement()', { image });
 
 	const { width, height } = await Images.dimensions(image);
@@ -301,7 +298,7 @@ export async function pageStyleTag(html) {
 
 
 export async function processNode(device, page, node) {
-//	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : typeof page, node : typeof node});
+	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : page.url(), node : node.tagName });
 
 // 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
 
@@ -364,13 +361,13 @@ export async function processNode(device, page, node) {
 // 	delete (attribs['']);
 
 // 	console.log('::::', attribs.localName, attribs);
-//	console.log('[::]', { scale : device.viewport.deviceScaleFactor });
+//	console.log('::|::', getSelector(node.asElement()));
 
 	const bounds = await node.boundingBox();
 	const element = { ...attribs,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-		image   : (visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent(await captureElementImage(node, (1 / device.viewport.deviceScaleFactor))) : null,
+		image   : (tag.toLowerCase() !== 'body' && visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent(await captureElementImage(node, (1 / device.viewport.deviceScaleFactor))) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),
