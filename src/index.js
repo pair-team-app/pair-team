@@ -142,19 +142,20 @@ export async function renderWorker(url) {
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
-//		const links = await parseLinks(browser, device, url);
-//		console.log('%s %s Parsing %s add\'l %s: [ %s ]…' , ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.NUMBER(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-//		await Promise.all(links.map(async(link, i)=> {
-//			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
-//
-//			Object.keys(elements).forEach((key)=> {
-//				elements[key] = [ ...elements[key], ...els[key]];
-//			});
-//		}));
+		const links = await parseLinks(browser, device, url);
+		console.log('%s %s Parsing %s add\'l %s: [ %s ]…' , ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.NUMBER(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
+		await Promise.all(links.map(async(link, i)=> {
+			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
+
+			Object.keys(elements).forEach((key)=> {
+				elements[key] = [ ...elements[key], ...els[key]];
+			});
+		}));
 
 
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
 // 		console.log('::::', doc.colors);
+ 		console.log('::::', 'size', JSON.stringify(elements, null, 0).length);
 // 		console.log('VIEWS -->', elements.views.length);
 // 		console.log('VIEWS -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 // 		console.log('IMAGES -->', elements.images[0]);

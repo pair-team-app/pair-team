@@ -45,6 +45,8 @@ const inlineElementStyles = (html, styles, wrapper=null)=> {
 	return (new Promise((resolve, reject) => {
 		inlineCss(`<html>${styles}${html}</html>`, { url : ' ' }).then((result)=> {
 			resolve((!wrapper) ? result.replace(/<html.+?>(.+)<\/html>/g, '$1') : result.replace(/^<html(.+)<\/html>$/, `<${wrapper}$1</${wrapper}>`));
+		}).catch((error)=> {
+			reject(error);
 		});
 	}));
 };
@@ -73,30 +75,28 @@ export async function captureScreenImage(page, scale=1.0) {
 		console.log('//|\\\\', 'captureScreenImage()', e);
 	});
 
-//	console.log('-=|=-', 'captureScreenImage()', 'jpeg', jpgImage);
-
-	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG);
-	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG), size : (await Jimp.read(pngData)).bitmap.data.byteLength }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG), size : pngImage.bitmap.data.byteLength }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image, size : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap.data.byteLength } });
+	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).quality(100 - JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG);
+//	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG) }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG) }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image } });
 	return ({ full : await pngImage.getBase64Async(Jimp.MIME_JPEG), cropped : image });
 }
 
 
 export async function captureElementImage(element, scale=1.0) {
-//	console.log('::|::', 'captureElementImage()', { element : element.tagName, scale});
+//	console.log('::|::', 'captureElementImage()', { element : (await (await element.getProperty('tagName')).jsonValue()).toLowerCase(), scale});
 
 	const boundingBox = await element.boundingBox();
 	const pngData = (boundingBox.width * boundingBox.height > 0) ? await element.screenshot({
 		omitBackground : true
 	}) : null;
 
-	const image = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
-		return (await image.scale(scale).quality(JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG));
-
+	const pngImage = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
+		return (await image.scale(scale));
 	}).catch((e)=> {
 		return (null);
 	}) : null;
 
-//	console.log('::|::', 'captureElementImage()', { element : element.tagName, scale, dataURI : { data : dataURI, size : dataURI.length }, image : { data : image, size : image.length } });
+	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).quality(100 - JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG);
+//	console.log('::|::', 'captureElementImage()', { element : (await (await element.getProperty('tagName')).jsonValue()).toLowerCase(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG) }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG) }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image } });
 	return (image);
 }
 
@@ -156,15 +156,15 @@ export async function zipContent(content, filename=`${(Date.now() * 0.001).toStr
 
 
 export async function extractElements(device, page) {
-	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() });
+//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() });
 
 	const elements = {
 		'views'      : [],
 		'buttons'    : (await Promise.all((await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		'headings'   : (await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+//		'headings'   : (await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
 		'images'     : (await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		'links'      : (await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+//		'links'      : (await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 		'textfields' : (await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 // 		'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 	};
@@ -174,7 +174,7 @@ export async function extractElements(device, page) {
 
 
 export async function extractMeta(device, page, elements) {
-	console.log('::|::', 'extractMeta()', { device : device.viewport.deviceScaleFactor, page : page.url(), elements : elements.length });
+//	console.log('::|::', 'extractMeta()', { device : device.viewport.deviceScaleFactor, page : page.url(), elements : elements.length });
 
 // 	const docHandle = await page.evaluateHandle(() => (window.document));
 
@@ -298,7 +298,7 @@ export async function pageStyleTag(html) {
 
 
 export async function processNode(device, page, node) {
-	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : page.url(), node : node.tagName });
+//	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : page.url(), node : (await (await element.getProperty('tagName')).jsonValue()).toLowerCase() });
 
 // 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
 
@@ -360,14 +360,14 @@ export async function processNode(device, page, node) {
 // 	delete (attribs['']);
 // 	delete (attribs['']);
 
-// 	console.log('::::', attribs.localName, attribs);
+// 	console.log('::::', attribs);
 //	console.log('::|::', getSelector(node.asElement()));
 
 	const bounds = await node.boundingBox();
 	const element = { ...attribs,
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
-		image   : (tag.toLowerCase() !== 'body' && visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent(await captureElementImage(node, (1 / device.viewport.deviceScaleFactor))) : null,
+		image   : (tag !== 'body' && visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent((await captureElementImage(node, (1 / device.viewport.deviceScaleFactor))).cropped) : null,
 		meta    : {
 			...meta, bounds,
 			box  : await node.boxModel(),
