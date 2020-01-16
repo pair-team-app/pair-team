@@ -25,14 +25,7 @@ export async function consts(page) {
 
 export async function funcs(page) {
 	await page.evaluate(()=> {
-// 	await page.evaluateOnNewDocument(()=> {
-
 		window.elementAccessibility = (element)=> {
-			// slick - `slick.matches(<div class=rocks>, 'div.rocks');` –/» true
-			// select-dom - `select.exists('.foo a[href=bar]', baseElement);` –/» t/f
-			// dom-to-image-more - `domtoimage.toJpeg(NODE, { quality: 0.95 }).then((dataURL)=> { console.log(dataURL); });`
-
-
 			const { failed, passed, aborted } = axeReport;
 			return ({
 				failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
@@ -57,30 +50,6 @@ export async function funcs(page) {
 				kerning : (Object.keys(styles).includes('letter-spacing')) ? parseFloat(styles['letter-spacing']) : 0
 			})
 		};
-
-// 		window.elementPath = (el)=> {
-// 			let stack = [];
-// 			while (el.parentNode !== null) {
-// 				let sibCount = 0;
-// 				let sibIndex = 0;
-// 				for (let i=0; i<el.parentNode.childNodes.length; i++) {
-// 					let sib = el.parentNode.childNodes[i];
-// 					if (sib.nodeName === el.nodeName) {
-// 						if (sib === el) {
-// 							sibIndex = sibCount;
-// 						}
-//
-// 						sibCount++;
-// 					}
-// 				}
-//
-// 				stack.unshift(`${el.nodeName.toLowerCase()}:${sibIndex}`);
-// 				el = el.parentNode;
-// 			}
-//
-// 			return (stack.slice(2).join(' '));
-// 		};
-
 
 		window.elementStyles = (element)=> {
 			let styles = {};
@@ -121,11 +90,6 @@ export async function funcs(page) {
 					keys.push(key);
 				}
 			});
-
-// 			Object.keys(styles).forEach((key)=> {
-// 					styles[key] = (styles[key].replace(/\\"/g, '\\\\"'));
-// 					styles[key] = (styles[key].replace(/"/g, '\\"'));
-// 			});
 
 			return (purgeKeys(styles, keys));
 		};

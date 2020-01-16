@@ -9,7 +9,7 @@ import { Images } from 'lang-js-utils';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 
-import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, IMAGE_MAX_HEIGHT, JPEG_COMPRESSION, ZIP_OPTS } from './consts';
+import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, IMAGE_MAX_HEIGHT, ZIP_OPTS } from './consts';
 import cryproCreds from '../crypto-creds';
 
 
@@ -65,8 +65,6 @@ const makeCipher = async({ method, key }={})=> {
 
 
 export async function captureScreenImage(page, scale=1.0) {
-//	console.log('::|::', 'captureScreenImage()', { page : page.pathname, scale });
-
 	const pngData = await page.screenshot({
 		fullPage       : true,
 		omitBackground : true
@@ -79,14 +77,11 @@ export async function captureScreenImage(page, scale=1.0) {
 	}) : null;
 
 	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).getBase64Async(Jimp.MIME_PNG);
-//	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG) }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG) }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image } });
 	return ({ full : await pngImage.getBase64Async(Jimp.MIME_PNG), cropped : image });
 }
 
 
 export async function captureElementImage(element, scale=1.0) {
-//	console.log('::|::', 'captureElementImage()', { element : (await (await element.getProperty('tagName')).jsonValue()).toLowerCase(), scale});
-
 	const boundingBox = await element.boundingBox();
 	const pngData = (boundingBox.width * boundingBox.height > 0) ? await element.screenshot({
 		omitBackground : true
