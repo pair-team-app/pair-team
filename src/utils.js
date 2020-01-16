@@ -22,6 +22,7 @@ const domNodeIDs = (flatDOM, backendNodeID)=> {
 	} : 0);
 };
 
+
 const elementRootStyles = async(html, pageStyles)=> {
 	const inline = await inlineElementStyles(html, pageStyles, 'span');
 	const { styles } = inline.match(/^.+? style="(?<styles>.+?)"/).groups;
@@ -41,6 +42,7 @@ const elementRootStyles = async(html, pageStyles)=> {
 	return (obj);
 };
 
+
 const inlineElementStyles = (html, styles, wrapper=null)=> {
 	return (new Promise((resolve, reject) => {
 		inlineCss(`<html>${styles}${html}</html>`, { url : ' ' }).then((result)=> {
@@ -50,6 +52,7 @@ const inlineElementStyles = (html, styles, wrapper=null)=> {
 		});
 	}));
 };
+
 
 const makeCipher = async({ method, key }={})=> {
 	method = (method || cryproCreds.method);
@@ -69,15 +72,15 @@ export async function captureScreenImage(page, scale=1.0) {
 		omitBackground : true
 	});
 
-	const pngImage = await Jimp.read(pngData).then(async(image)=> {
-		return (await image.scale(scale));
+	const pngImage = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
+		return (await image.scale(scale, Jimp.RESIZE_BICUBIC));
 	}).catch((e)=> {
 		console.log('//|\\\\', 'captureScreenImage()', e);
-	});
+	}) : null;
 
-	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).quality(100 - JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG);
+	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).getBase64Async(Jimp.MIME_PNG);
 //	console.log('::|::', 'captureScreenImage()', { page : page.url(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG) }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG) }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image } });
-	return ({ full : await pngImage.getBase64Async(Jimp.MIME_JPEG), cropped : image });
+	return ({ full : await pngImage.getBase64Async(Jimp.MIME_PNG), cropped : image });
 }
 
 
@@ -90,12 +93,12 @@ export async function captureElementImage(element, scale=1.0) {
 	}) : null;
 
 	const pngImage = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
-		return (await image.scale(scale));
+		return (await image.scale(scale, Jimp.RESIZE_BEZIER));
 	}).catch((e)=> {
 		return (null);
 	}) : null;
 
-	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).quality(100 - JPEG_COMPRESSION).getBase64Async(Jimp.MIME_JPEG);
+	const image = await pngImage.clone().crop(0, 0, pngImage.bitmap.width, Math.min(pngImage.bitmap.height, IMAGE_MAX_HEIGHT)).getBase64Async(Jimp.MIME_PNG);
 //	console.log('::|::', 'captureElementImage()', { element : (await (await element.getProperty('tagName')).jsonValue()).toLowerCase(), scale, srcPNG : { image : (await Jimp.read(pngData)).bitmap, dataURI : await (await Jimp.read(pngData)).getBase64Async(Jimp.MIME_PNG) }, pngImage : { image : pngImage.bitmap, dataURI : await pngImage.getBase64Async(Jimp.MIME_PNG) }, finalImage : { image : pngImage.clone().crop(0, 0, pngImage.bitmap.width, IMAGE_MAX_HEIGHT).quality(100 - JPEG_COMPRESSION).bitmap, dataURI : image } });
 	return (image);
 }
@@ -109,6 +112,7 @@ export async function elementBackendNodeID(page, objectID) {
 // 	console.log('DOM.describeNode', objectID, JSON.stringify(node, null, 2), node.backendNodeId);
 	return (node.backendNodeId << 0);
 }
+
 
 export async function embedPageStyles(html, relativeTo='build') {
 	const opts = { relativeTo,
@@ -144,14 +148,9 @@ export async function encryptTxt(txt, { type, key }={}) {
 
 export async function zipContent(content, filename=`${(Date.now() * 0.001).toString().replace('.', '_')}.dat`) {
 	const zip = new JSZip();
-	return (await (new Promise((resolve, reject)=> {
-		zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
-			resolve(data);
-
-		}).catch((e)=> {
-			reject(e);
-		});
-	})));
+	return (zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
+		return(data);
+	}));
 }
 
 
@@ -164,12 +163,12 @@ export async function extractElements(device, page) {
 //		'headings'   : (await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 		'icons'      : (await Promise.all((await page.$$('img, svg', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
 		'images'     : (await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-//		'links'      : (await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		'links'      : (await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 		'textfields' : (await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 // 		'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 	};
 
-	return (elements)
+	return (elements);
 }
 
 
@@ -181,17 +180,17 @@ export async function extractMeta(device, page, elements) {
 // 	const doc = await page.$('body');
 // 	console.log('extractMeta()', await doc.boundingBox());
 	return ({
-		colors        : {
+		colors      : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))],
 			fg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('color')) ? element.styles['color'] : element.styles['color'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))]
 		},
-		description   : await page.title(),
-		fonts         : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
-		image         : (await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor))).cropped,
-		//links         : elements.links.map((link)=> (link.meta.href)).join(' '),
-		pathname      : await page.evaluate(()=> (window.location.pathname)),
-		styles        : await page.evaluate(()=> (elementStyles(document.documentElement))),
-		url           : await page.url()
+		description : await page.title(),
+		fonts       : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> (element.styles['font-family'])))).flat(Infinity))],
+		image       : (await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor))).cropped,
+//		links       : elements.links.map((link)=> (link.meta.href)).join(' '),
+		pathname    : await page.evaluate(()=> (window.location.pathname)),
+		styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
+		url         : await page.url()
 	});
 }
 
@@ -248,6 +247,8 @@ export async function inlineCSS(html, style='') {
 	return (new Promise((resolve, reject)=> {
 		inlineCss(`${style}${html}`, { url : ' ' }).then((result)=> {
 			resolve(result);
+		}).catch((error)=> {
+			reject(error);
 		});
 	}));
 }
@@ -265,7 +266,7 @@ export async function pageElement(device, page, doc, html) {
 	} = doc;
 
 	const image = (await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor))).cropped;
-//	console.log('pageElement()', { image });
+	console.log('pageElement()', { image });
 
 	const { width, height } = await Images.dimensions(image);
 	const { failed, passed, aborted } = axeReport;
@@ -278,7 +279,7 @@ export async function pageElement(device, page, doc, html) {
 	}));
 
 	return ({ ...element, html, accessibility,
-		title   : (pathname === '' || pathname === '/') ? '/index' : `/${pathname.slice(1)}`,
+		title   : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.slice(1)}`,
 		image   : await zipContent(image),
 		classes : '',
 		meta    : { ...meta, url, text,
@@ -299,23 +300,13 @@ export async function pageStyleTag(html) {
 
 export async function processNode(device, page, node) {
 //	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : page.url(), node : (await (await element.getProperty('tagName')).jsonValue()).toLowerCase() });
-
 // 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
-
-
-// 	console.log('::::', getSelector(await page.$('body', (el)=> (el))));
-// 	console.log('::::', await (await node.asElement()).getProperty('accessibility'));
-
-// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'svg') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
 // 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
-// 	const children = [];
 	const attribs = await page.evaluate((el)=> {
 		const styles = window.elementStyles(el);
 // 		console.log(`el stuff: [${el.outerHTML}] [${el.nodeName}] [${el.nodeType}]`);
 
 		return ({
-// 			matches       : axe.commons.matches(el, 'a'),
-			selector      : el.matches('a'),
 			flatDOM       : window.flatDOM,
 			pageCSS       : window.styleTag,
 			title         : (el.textContent && el.textContent.length > 0) ? el.textContent : (el.hasAttribute('value') && el.value.length > 0) ? el.value : (el.hasAttribute('placeholder') && el.placeholder.length > 0) ? el.placeholder : (el.nodeName.toLowerCase() === 'img' && el.hasAttribute('alt') && el.alt.length > 0) ? el.alt : el.nodeName.toLowerCase(),
@@ -368,8 +359,7 @@ export async function processNode(device, page, node) {
 		node_id : domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId)).nodeID,
 		visible : (visible && bounds && (bounds.width * bounds.height) > 0),
 		image   : (tag !== 'body' && visible && bounds && (bounds.width * bounds.height) > 0 && Object.keys(accessibility.report).map((key)=> (accessibility.report[key].length)).reduce((acc, val)=> (acc + val), 0) > 0) ? await zipContent((await captureElementImage(node, (1 / device.viewport.deviceScaleFactor))).cropped) : null,
-		meta    : {
-			...meta, bounds,
+		meta    : { ...meta, bounds,
 			box  : await node.boxModel(),
 			data : (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : meta.data
 		},
@@ -380,7 +370,6 @@ export async function processNode(device, page, node) {
 			accessibility : await zipContent(await encryptObj(accessibility))
 		}
 	};
-
 
 	return (element);
 }
