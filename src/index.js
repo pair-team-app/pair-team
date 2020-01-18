@@ -24,6 +24,8 @@ import {
 
 
 const parsePage = async(browser, device, url, { ind, tot }=null)=> {
+	console.log('::|::', 'parsePage()', { url }, '::|::');
+
 	const page = await browser.newPage();
 	await page.emulate(device);
 	await page.goto(url, { waitUntil : 'networkidle0' });
@@ -93,6 +95,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(device, page);
 	const docMeta = await extractMeta(device, page, elements);
+	console.log('::|::', 'extractMeta() -=[¡¡]=-  // complete', { docMeta }, '::|::');
 
 	const doc = { ...docMeta, axTree, axeReport, html,
 		title : projectName()
@@ -108,14 +111,16 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	delete (doc['pathname']);
 	delete (doc['styles']);
 
+	console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Finished parsing view ${ChalkStyles.PATH(page.url())}`);
+
 	await listeners(page, false);
 	await page.close();
-
-	console.log('%s %s Finished parsing view %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.PATH(`/${url.split('/').slice(3).join('/')}`));
 	return({ doc, elements });
 };
 
 const parseLinks = async(browser, device, url)=> {
+	console.log('::|::', 'parseLinks()', { url }, '::|::');
+
 	const page = await browser.newPage();
 	await page.emulate(device);
 	await page.goto(url, { waitUntil : 'networkidle0' });
@@ -129,20 +134,21 @@ const parseLinks = async(browser, device, url)=> {
 
 
 export async function renderWorker(url) {
+	console.log('::|::', 'renderWorker()', { url }, '::|::');
+
 	const devices = [
- 		puppeteer.devices['iPhone 6'],
+		puppeteer.devices['iPhone 6'],
 //		CHROME_DEVICE
 	].reverse();
-
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 	const renders = await Promise.all(devices.map(async(device, i)=> {
-		console.log('%s %s Parsing root view…', ChalkStyles.INFO, ChalkStyles.DEVICE(device.name));
+		console.log(`${ChalkStyles.HEADER()}${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting root view elements…`);
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
+		const links = await parseLinks(browser, device, url); //
+		console.log(`${ChalkStyles.H_DIV()} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}}: [ ${links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', ')} ]…`);
 
-		const links = await parseLinks(browser, device, url);
-		console.log('%s %s Parsing %s add\'l %s: [ %s ]…' , ChalkStyles.INFO, ChalkStyles.DEVICE(device.name), ChalkStyles.NUMBER(`${links.length}`), Strings.pluralize('view', links.length), links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', '));
-		await Promise.all(links.map(async(link, i)=> {
+		await Promise.all(links.slice(Math.min(2, links.length)).map(async(link, i)=> {
 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
 
 			Object.keys(elements).forEach((key)=> {
@@ -150,10 +156,10 @@ export async function renderWorker(url) {
 			});
 		}));
 
-
+		console.log('\n', ChalkStyles.H_DIV(), '\n', ChalkStyles.HEADER(), '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|', ChalkStyles.FOOTER());
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
-// 		console.log('::::', doc.colors);
- 		console.log('::::', 'size', JSON.stringify(elements, null, 0).length);
+// 		console.log('::::', 'doc.links', { links : doc.links });
+// 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
 // 		console.log('VIEWS -->', elements.views.length);
 // 		console.log('VIEWS -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 // 		console.log('IMAGES -->', elements.images[0]);
@@ -176,7 +182,7 @@ export async function renderWorker(url) {
 // 		console.log('IMAGES -->', Object.keys(elements.images[0].styles).length);
 // 	  console.log('IMAGE[0].border -->', elements.images[0].styles);
 
-		return ({ doc, elements,
+		return ({ doc, links, elements,
 			device : device.name
 		});
 	}));
