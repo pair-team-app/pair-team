@@ -95,7 +95,6 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(device, page);
 	const docMeta = await extractMeta(device, page, elements);
-	console.log('::|::', 'extractMeta() -=[¡¡]=-  // complete', { docMeta }, '::|::');
 
 	const doc = { ...docMeta, axTree, axeReport, html,
 		title : projectName()
