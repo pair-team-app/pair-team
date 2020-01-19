@@ -142,11 +142,13 @@ export async function renderWorker(url) {
 
 	const devices = [
 		puppeteer.devices['iPhone 6'],
-//		CHROME_DEVICE
+		CHROME_DEVICE
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
+
+	console.log(ChalkStyles.HEADER());
 	const renders = await Promise.all(devices.map(async(device, i)=> {
-		console.log(`${ChalkStyles.HEADER()}${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('Index')} view elements…`);
+		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('Index')} view elements…`);
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 		const links = await parseLinks(browser, device, url); //
@@ -160,9 +162,7 @@ export async function renderWorker(url) {
 			});
 		}));
 
-		console.log(ChalkStyles.FOOTER(), '\n');
-
-		console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
+//		console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
 // 		console.log('::::', 'doc.links', { links : doc.links });
 // 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
@@ -194,6 +194,8 @@ export async function renderWorker(url) {
 	}));
 
 	await browser.close();
+
+	console.log(ChalkStyles.FOOTER(), '\n');
 	return (renders);
 }
 
