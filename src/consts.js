@@ -11,7 +11,7 @@ export const ChalkStyles = {
 	ERROR  : chalk.red.bold('ERROR'),
 	DONE   : chalk.greenBright.bold('DONE'),
 	DEVICE : (dev)=> (`[${chalk.grey.bold(dev)}]`),
-	FOOTER : (len=50)=> (`${'\n'}\\_<>${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('<>')}/\n`),
+	FOOTER : (len=50)=> (`\\_<>${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('<>')}/\n`),
 	H_DIV  : (len=50)=> (`${'\n'}|${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}|${'\n'}`),
 	HEADER : (len=50)=> (`${'\n'}/${chalk.whiteBright('<>')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('<>')}\\_\n`),
 	NUMBER : (val, bare=false)=> ((bare) ? chalk.yellow.bold(val) : `(${chalk.yellow.bold(val)})`),

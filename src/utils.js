@@ -297,7 +297,7 @@ export async function inlineCSS(html, style='') {
 
 
 export async function pageElement(device, page, doc, html) {
-//	console.log('::|::', 'pageElement() -=[¡]=-  // init', { page : page.url() }, '::|::');
+//	console.log('::|::', 'pageElement() -=[¡]=-  // init', { page : page.url(), doc }, '::|::');
 //	console.log('pageElement()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
 
 //	console.log('::|::', 'pageElement()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
@@ -305,9 +305,9 @@ export async function pageElement(device, page, doc, html) {
 
 
 	const element = await processNode(device, page, await page.$('body', async(node)=> (node)));
-	const { meta, enc } = element;
+	const { meta, zip } = element;
 
-	const { title, url, pathname, axeReport,
+	const { url, pathname, axeReport,
 		axTree : tree,
 		title  : text,
 	} = doc;
@@ -326,15 +326,28 @@ export async function pageElement(device, page, doc, html) {
 		}
 	}));
 //	console.log('::|::', 'pageElement() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
+//	console.log('::|::', 'pageElement() -=[¡V]=-', { element : { ...element, html, accessibility,
+//			title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
+//			image   : await zipContent(data),
+//			classes : '',
+//			meta    : { ...meta, url, text,
+//				pathname : (pathname !== '') ? pathname : '/',
+//				bounds   : { ...meta.bounds, ...size }
+//			},
+//			zip     : { ...zip, accessibility,
+//				html : await zipContent(html),
+//			}
+//		} }, '::|::');
 
-	return ({ ...element, html, accessibility, title,
+	return ({ ...element, html, accessibility,
+		title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
 		image   : await zipContent(data),
 		classes : '',
 		meta    : { ...meta, url, text,
 			pathname : (pathname !== '') ? pathname : '/',
 			bounds   : { ...meta.bounds, ...size }
 		},
-		enc     : { ...enc, accessibility,
+		zip     : { ...zip, accessibility,
 			html : await zipContent(html),
 		}
 	});
@@ -414,7 +427,7 @@ export async function processNode(device, page, node) {
 			box  : await node.boxModel(),
 			data : (meta.data || (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : null)
 		},
-		enc     : {
+		zip     : {
 			html          : await zipContent(html),
 			styles        : await zipContent(JSON.stringify(styles)),
 			root_styles   : await zipContent(JSON.stringify(rootStyles)),

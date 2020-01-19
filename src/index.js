@@ -27,7 +27,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 //	console.log('::|::', 'parsePage()', { url }, '::|::');
 
 	if (ind > 0 || tot > 0) {
-		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH(url)} view elements…`);
+		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('/' + url.split('/').slice(3))} view elements…`);
 	}
 
 	const page = await browser.newPage();
@@ -104,7 +104,8 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		title : projectName()
 	};
 
-	await elements.views.push(await pageElement(device, page, doc, html));
+	const view = await pageElement(device, page, doc, html);
+	await elements.views.push(view);
 
 	delete (doc['accessibility']);
 	delete (doc['axTree']);
@@ -114,7 +115,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	delete (doc['pathname']);
 	delete (doc['styles']);
 
-	console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Finished parsing view ${ChalkStyles.PATH(page.url())}`);
+	console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Finished parsing view ${ChalkStyles.PATH(((ind > 0 || tot > 0) ? '/' : '') + view.title)}`);
 
 	await listeners(page, false);
 	await page.close();
@@ -145,11 +146,11 @@ export async function renderWorker(url) {
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 	const renders = await Promise.all(devices.map(async(device, i)=> {
-		console.log(`${ChalkStyles.HEADER()}${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting root view elements…`);
+		console.log(`${ChalkStyles.HEADER()}${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('Index')} view elements…`);
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 		const links = await parseLinks(browser, device, url); //
-		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}}: [ ${links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', ')} ]…`);
+		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}: [ ${links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', ')} ]…`);
 
 		await Promise.all(links.map(async(link, i)=> {
 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
@@ -159,7 +160,7 @@ export async function renderWorker(url) {
 			});
 		}));
 
-		console.log(ChalkStyles.FOOTER, '\n');
+		console.log(ChalkStyles.FOOTER(), '\n');
 
 		console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
