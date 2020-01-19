@@ -195,7 +195,7 @@ export async function zipContent(content, filename=`${(Date.now() * 0.001).toStr
 
 
 export async function extractElements(device, page) {
-	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() }, '::|::');
+//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() }, '::|::');
 
 	const elements = {
 		'views'      : [],
@@ -213,7 +213,7 @@ export async function extractElements(device, page) {
 
 
 export async function extractMeta(device, page, elements) {
-	console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
+//	console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
 //
 // 	const docHandle = await page.evaluateHandle(() => (window.document));
 
@@ -222,7 +222,7 @@ export async function extractMeta(device, page, elements) {
 
 	const pathname = await page.evaluate(()=> (window.location.pathname));
 	return ({ pathname,
-		title       : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.slice(1)}`,
+		title       : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
 		colors      : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))],
 			fg : [ ...new Set(Object.keys(elements).map((key)=> (elements[key].map((element)=> ((element.styles.hasOwnProperty('color')) ? element.styles['color'] : element.styles['color'] = window.rgbaObject('rgba(0, 0, 0, 0.0)'))))).flat(Infinity))]
@@ -297,8 +297,8 @@ export async function inlineCSS(html, style='') {
 
 
 export async function pageElement(device, page, doc, html) {
-	console.log('::|::', 'pageElement() -=[¡]=-  // init', { page : page.url() }, '::|::');
-	console.log('pageElement()', { html : { org : html.length, enc : (await encryptTxt(html)).length, zip : { org : (await zipContent(html)).length, enc : (await zipContent(await encryptTxt(html))).length }} }, '::|::');
+//	console.log('::|::', 'pageElement() -=[¡]=-  // init', { page : page.url() }, '::|::');
+//	console.log('pageElement()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
 
 //	console.log('::|::', 'pageElement()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
 
@@ -318,7 +318,7 @@ export async function pageElement(device, page, doc, html) {
 
 //	console.log('::|::', 'pageElement() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
 	const { failed, passed, aborted } = axeReport;
-	const accessibility = await zipContent(await encryptObj({ tree,
+	const accessibility = await zipContent(JSON.stringify({ tree,
 		report : {
 			failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
 			passed  : passed.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html))))),
@@ -326,8 +326,6 @@ export async function pageElement(device, page, doc, html) {
 		}
 	}));
 //	console.log('::|::', 'pageElement() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
-
-	console.log(`${ChalkStyles.H_DIV()}${ChalkStyles.INFO} Packing up view… ${ChalkStyles.URL(title)}`, ChalkStyles.H_DIV());
 
 	return ({ ...element, html, accessibility, title,
 		image   : await zipContent(data),
@@ -337,7 +335,7 @@ export async function pageElement(device, page, doc, html) {
 			bounds   : { ...meta.bounds, ...size }
 		},
 		enc     : { ...enc, accessibility,
-			html : await zipContent(await encryptTxt(html)),
+			html : await zipContent(html),
 		}
 	});
 }
@@ -349,7 +347,7 @@ export async function pageStyleTag(html) {
 
 
 export async function processNode(device, page, node) {
-	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : page.url(), node : (await (await node.getProperty('tagName')).jsonValue()).toLowerCase() });
+//	console.log('::|::', 'processNode()', { device : device.viewport.deviceScaleFactor, page : page.url(), node : (await (await node.getProperty('tagName')).jsonValue()).toLowerCase() });
 // 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
 // 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
 	const attribs = await page.evaluate((el)=> {
@@ -417,10 +415,10 @@ export async function processNode(device, page, node) {
 			data : (meta.data || (tag === 'img' && node.asElement().hasAttribute('src') && visible) ? imageData(node.asElement(), { width : bounds.width, height : bounds.height }) : null)
 		},
 		enc     : {
-			html          : await zipContent(await encryptTxt(html)),
-			styles        : await zipContent(await encryptObj(styles)),
-			root_styles   : await zipContent(await encryptObj(rootStyles)),
-			accessibility : await zipContent(await encryptObj(accessibility))
+			html          : await zipContent(html),
+			styles        : await zipContent(JSON.stringify(styles)),
+			root_styles   : await zipContent(JSON.stringify(rootStyles)),
+			accessibility : await zipContent(JSON.stringify(accessibility))
 		}
 	};
 
