@@ -52,8 +52,8 @@ export const CHROME_DEVICE = {
 	name      : 'Chrome',
 	userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
 	viewport  : {
-		width             : 800,
-		height            : 600,
+		width             : 1920,
+		height            : 1080,
 		deviceScaleFactor : 1,
 		isMobile          : false,
 		hasTouch          : false,

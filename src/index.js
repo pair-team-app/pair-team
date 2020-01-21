@@ -141,7 +141,8 @@ export async function renderWorker(url) {
 //	console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
-		puppeteer.devices['iPhone 6'],
+//		puppeteer.devices['iPhone 6'],
+		puppeteer.devices['iPhone X'],
 		CHROME_DEVICE
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
