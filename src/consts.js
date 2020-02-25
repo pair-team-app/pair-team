@@ -45,11 +45,12 @@ export const BROWSER_OPTS = {
 	devTools          : true,
 	headless          : true,
 	ignoreHTTPSErrors : true,
-	args              : ['--no-sandbox', '--disable-gpu']
+	// args              : ['--no-sandbox', '--disable-gpu']
+	args              : ['--no-sandbox']
 };
 
-export const CHROME_DEVICE = {
-	name      : 'Chrome',
+export const CHROME_MACOS = {
+	name      : 'MacOS Desktop',
 	userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
 	viewport  : {
 		width             : 1920,
@@ -57,6 +58,32 @@ export const CHROME_DEVICE = {
 		deviceScaleFactor : 1,
 		isMobile          : false,
 		hasTouch          : false,
+		isLandscape       : false
+	}
+};
+
+export const CHROME_WINDOWS = {
+	name      : 'Windows Desktop',
+	userAgent : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+	viewport  : {
+		width             : 1366,
+		height            : 768,
+		deviceScaleFactor : 1,
+		isMobile          : false,
+		hasTouch          : false,
+		isLandscape       : false
+	}
+};
+
+export const GALAXY_S8 = {
+	name      : 'Samsung Galaxy S8',
+	userAgent : 'Mozilla/5.0 (Linux; Android 7.0; SAMSUNG SM-G950F Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/5.2 Chrome/51.0.2704.106 Mobile Safari/537.36',
+	viewport  : {
+		width             : 720,
+		height            : 1480,
+		deviceScaleFactor : 2,
+		isMobile          : true,
+		hasTouch          : true,
 		isLandscape       : false
 	}
 };

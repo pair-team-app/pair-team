@@ -8,7 +8,7 @@ import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, globals, listeners } from './config';
-import { ChalkStyles, BROWSER_OPTS, CHROME_DEVICE } from './consts';
+import { ChalkStyles, BROWSER_OPTS, CHROME_MACOS, CHROME_WINDOWS, GALAXY_S8 } from './consts';
 import {
 	embedPageStyles,
 	extractElements,
@@ -106,7 +106,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	};
 
 	const view = await pageElement(device, page, doc, html);
-	await elements.views.push(view);
+	elements.views.push(view);
 
 	delete (doc['accessibility']);
 	delete (doc['axTree']);
@@ -142,9 +142,13 @@ export async function renderWorker(url) {
 //	console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
-//		puppeteer.devices['iPhone 6'],
+		puppeteer.devices['Galaxy Note 3'],
+		puppeteer.devices['iPad Pro landscape'],
+		puppeteer.devices['iPhone 8'],
 		puppeteer.devices['iPhone X'],
-		CHROME_DEVICE
+		CHROME_MACOS,
+		CHROME_WINDOWS,
+		GALAXY_S8
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 
