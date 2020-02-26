@@ -499,7 +499,8 @@ export async function pageElement(device, page, doc, html) {
 
 	//	console.log('::|::', 'pageElement() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
 	const { failed, passed, aborted } = axeReport;
-	const accessibility = await zipContent(
+	// const accessibility = await zipContent(
+	const accessibility = 
 		JSON.stringify({
 			tree,
 			report: {
@@ -513,8 +514,7 @@ export async function pageElement(device, page, doc, html) {
 					nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html))
 				)
 			}
-		})
-	);
+		});
 	//	console.log('::|::', 'pageElement() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
 	//	console.log('::|::', 'pageElement() -=[¡V]=-', { element : { ...element, html, accessibility,
 	//			title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
@@ -647,7 +647,7 @@ export async function processNode(device, page, node) {
 	delete attribs[ "pageCSS" ];
 	delete attribs[ "html" ];
 	// 	delete (attribs['styles']); // needed for extracting fonts / colors / etc
-	delete attribs[ "accessibility" ];
+	// delete attribs[ "accessibility" ];
 	delete attribs[ "visible" ];
 	// delete (attribs['rootStyles']);
 	// 	delete (attribs['']);
@@ -729,7 +729,7 @@ export async function processNode(device, page, node) {
 			html: await zipContent(html),
 			styles: await zipContent(JSON.stringify(styles)),
 			// root_styles   : await zipContent(JSON.stringify(rootStyles)),
-			accessibility: await zipContent(JSON.stringify(accessibility))
+			//accessibility: await zipContent(JSON.stringify(accessibility))
 		}
 	};
 
