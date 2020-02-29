@@ -173,11 +173,11 @@ export async function renderWorker(url) {
 // 		console.log('::::', 'doc.links', { links : doc.links });
 // 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
 // 		console.log('VIEWS -->', elements.views.length);
-		// console.log('VIEWS -->', JSON.stringify(elements.views[0].accessibility, null, 2));
+		// console.log('VIEWS -->', JSON.stringify(elements.views[0].images, null, 2));
+		// console.log('VIEWS -->', elements.views[0].images);
 // 		console.log('IMAGES -->', elements.images[0]);
-// 		console.log('BUTTONS -->', elements.buttons[0]);
-		// console.log('BUTTONS -->', elements.buttons[0].accessibility);
-		console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));
+		// console.log('BUTTONS -->', elements.buttons[0].images);
+		// console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));
 //		console.log('IMAGES -->', elements.views.map(({ id, title, image }, i)=> (JSON.stringify({ id, title, image }, null, 2))));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));

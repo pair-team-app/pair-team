@@ -711,6 +711,7 @@ export async function processNode(device, page, node) {
 			cropped: { ...cropped, data: await zipContent(cropped.data || null) },
 			full: { ...full, data: await zipContent(full.data || null) }
 		},
+
 		//		image   : (tag !== 'body' && visible && thumb && cropped && full) ? await zipContent(cropped.data) : null,
 		meta: {
 			...meta,
