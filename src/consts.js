@@ -21,7 +21,7 @@ export const ChalkStyles = {
 
 
 export const IMAGE_MAX_HEIGHT = 1800;
-export const API_ENDPT_URL = 'https://api.designengine.ai/v2/pairurl-2.php';
+export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
 
 export const FETCH_CFG = {
 	method  : 'POST',
@@ -34,8 +34,9 @@ export const FETCH_CFG = {
 
 export const ZIP_OPTS = {
 	type               : 'binarystring',
-	mimeType           : 'application/dat',
+	mimeType           : 'application/zip',
 	streamFiles        : true,
+	// streamFiles        : false,
 	compression        : 'DEFLATE',
 	compressionOptions : { level : 9 }
 };

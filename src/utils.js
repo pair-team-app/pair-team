@@ -114,6 +114,7 @@ export async function captureScreenImage(page, scale = 1.0) {
 	return {
 		full: fullsize
 			? {
+				type: 'fullsize',
 				data: await fullsize.getBase64Async(Jimp.MIME_PNG),
 				size: {
 					width: fullsize.bitmap.width,
@@ -123,6 +124,7 @@ export async function captureScreenImage(page, scale = 1.0) {
 			: null,
 		cropped: cropsize
 			? {
+				type: 'full',
 				data: await cropsize.getBase64Async(Jimp.MIME_PNG),
 				size: {
 					width: cropsize.bitmap.width,
@@ -202,6 +204,7 @@ export async function captureElementImage(
 	return {
 		full: fullsize
 			? {
+				type: 'fullsize',
 				data: await fullsize.getBase64Async(Jimp.MIME_PNG),
 				size: {
 					width: fullsize.bitmap.width,
@@ -211,6 +214,7 @@ export async function captureElementImage(
 			: null,
 		cropped: cropsize
 			? {
+				type: 'cropped',
 				data: await cropsize.getBase64Async(Jimp.MIME_PNG),
 				size: {
 					width: cropsize.bitmap.width,
@@ -220,6 +224,7 @@ export async function captureElementImage(
 			: null,
 		thumb: thumbsize
 			? {
+				type: 'thumb',
 				data: await thumbsize.getBase64Async(Jimp.MIME_PNG),
 				size: {
 					width: thumbsize.bitmap.width,
@@ -273,7 +278,7 @@ export async function encryptTxt(txt, { type, key } = {}) {
 
 export async function zipContent(
 	content,
-	filename = `${(Date.now() * 0.001).toString().replace(".", "_")}.dat`
+	filename = `${(Date.now() * 0.001).toString().replace(".", "_")}.zip`
 ) {
 	const zip = new JSZip();
 	return zip
@@ -461,105 +466,6 @@ export async function inlineCSS(html, style = "") {
 	});
 }
 
-export async function pageElement(device, page, doc, html) {
-	//	console.log('::|::', 'pageElement() -=[¡]=-  // init', { page : page.url(), doc }, '::|::');
-	//	console.log('pageElement()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
-
-	//	console.log('::|::', 'pageElement()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
-
-	const element = await processNode(
-		device,
-		page,
-		await page.$("body", async node => node)
-	);
-	const { meta, images, zip, tag, node_id, backend_node_id, remote_obj } = element;
-	const { bounds } = meta;
-
-	const { url, pathname, axeReport, axTree: tree, title: text } = doc;
-
-	const { full, cropped, thumb } = images; //await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
-	//	const { full, cropped, thumb } = await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
-	//	console.log('::|::', 'pageElement() -=[¡¡]=-  // processed', { cropped, page : page.url() }, '::|::');
-
-	// console.log(":::: PAGE ::::", {
-	// 	device : device.name,
-	// 	tag,
-	// 	// visible,
-	// 	bounds,
-	// 	full: full.size,
-	// 	cropped: cropped.size,
-	// 	thumb: thumb.size,
-	// 	nodeID: node_id,
-	// 	backendNodeID : backend_node_id,
-	// 	// remoteObject:remote_obj
-	// });
-
-	//	console.log('::::', { thumb, cropped, full });
-	//	const { size } = cropped;
-
-	//	console.log('::|::', 'pageElement() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
-	const { failed, passed, aborted } = axeReport;
-	// const accessibility = await zipContent(
-	const accessibility = 
-		JSON.stringify({
-			tree,
-			report: {
-				failed: failed.filter(({ nodes }) =>
-					nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html))
-				),
-				passed: passed.filter(({ nodes }) =>
-					nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html))
-				),
-				aborted: aborted.filter(({ nodes }) =>
-					nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html))
-				)
-			}
-		});
-	//	console.log('::|::', 'pageElement() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
-	//	console.log('::|::', 'pageElement() -=[¡V]=-', { element : { ...element, html, accessibility,
-	//			title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
-	//			image   : await zipContent(data),
-	//			classes : '',
-	//			meta    : { ...meta, url, text,
-	//				pathname : (pathname !== '') ? pathname : '/',
-	//				bounds   : { ...meta.bounds, ...size }
-	//			},
-	//			zip     : { ...zip, accessibility,
-	//				html : await zipContent(html),
-	//			}
-	//		} }, '::|::');
-
-	return {
-		...element,
-		html,
-		accessibility,
-		title:
-			pathname === "" || pathname === "/"
-				? "Index"
-				: `${pathname
-					.split("/")
-					.slice(1)
-					.join("/")}`,
-		//		images  : { thumb, cropped, full },
-		images: {
-			thumb: await zipContent(thumb.data),
-			cropped: await zipContent(cropped.data),
-			full: await zipContent(full.data)
-		},
-		//		image   : cropped,
-		image: await zipContent(cropped.data),
-		classes: "",
-		meta: {
-			...meta,
-			url,
-			text,
-			pathname: pathname !== "" ? pathname : "/"
-			//			bounds   : { ...meta.bounds, ...size }
-		},
-		zip: { ...zip, accessibility, html: await zipContent(html) }
-	};
-}
-
 export async function pageStyleTag(html) {
 	return `<style>${Array.from(
 		html.matchAll(/<style.*?>(.+?)<\/style>/g),
@@ -706,13 +612,7 @@ export async function processNode(device, page, node) {
 		node_id: nodeID,
 		backend_node_id: backendNodeID,
 		remote_obj: node._remoteObject,
-		images: {
-			thumb: { ...thumb, data: await zipContent(thumb.data || null) },
-			cropped: { ...cropped, data: await zipContent(cropped.data || null) },
-			full: { ...full, data: await zipContent(full.data || null) }
-		},
-
-		//		image   : (tag !== 'body' && visible && thumb && cropped && full) ? await zipContent(cropped.data) : null,
+		images: { thumb, cropped, full },
 		meta: {
 			...meta,
 			bounds,
@@ -730,7 +630,7 @@ export async function processNode(device, page, node) {
 			html: await zipContent(html),
 			styles: await zipContent(JSON.stringify(styles)),
 			// root_styles   : await zipContent(JSON.stringify(rootStyles)),
-			//accessibility: await zipContent(JSON.stringify(accessibility))
+			accessibility: await zipContent(JSON.stringify(accessibility))
 		}
 	};
 
@@ -738,9 +638,78 @@ export async function processNode(device, page, node) {
 	return element;
 }
 
-export async function stripPageTags(page, tags = []) {
-	await page.$$eval([ HTML_STRIP_TAGS, ...tags ].join(", "), nodes => {
-		nodes.forEach(node => {
+export async function processView(device, page, doc, html) {
+	//	console.log('::|::', 'processView() -=[¡]=-  // init', { page : page.url(), doc }, '::|::');
+	//	console.log('processView()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
+
+	//	console.log('::|::', 'processView()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
+
+	const element = await processNode(device, page, await page.$("body", async node => node));
+	const { meta, images, zip, tag, node_id, backend_node_id, remote_obj } = element;
+	const { bounds } = meta;
+
+	const { url, pathname, axeReport, axTree: tree, title: text } = doc;
+
+	const { full, cropped, thumb } = images; //await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
+	//	const { full, cropped, thumb } = await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
+	//	console.log('::|::', 'processView() -=[¡¡]=-  // processed', { cropped, page : page.url() }, '::|::');
+
+	// console.log(":::: PAGE ::::", {
+	// 	device : device.name,
+	// 	tag,
+	// 	// visible,
+	// 	bounds,
+	// 	images,
+	// 	nodeID: node_id,
+	// 	backendNodeID : backend_node_id,
+	// 	remoteObject: remote_obj
+	// });
+
+	//	console.log('::::', { thumb, cropped, full });
+	//	const { size } = cropped;
+
+	//	console.log('::|::', 'processView() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
+	const { failed, passed, aborted } = axeReport;
+	// const accessibility = await zipContent(
+	const accessibility = JSON.stringify({ tree,
+		report : {
+			failed  : failed.filter(({ nodes })=> (nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html)))),
+			passed  : passed.filter(({ nodes })=> (nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html)))),
+			aborted : aborted.filter(({ nodes })=> (nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html))))
+		}
+	});
+	//	console.log('::|::', 'processView() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
+	//	console.log('::|::', 'processView() -=[¡V]=-', { element : { ...element, html, accessibility,
+	//			title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
+	//			image   : await zipContent(data),
+	//			classes : '',
+	//			meta    : { ...meta, url, text,
+	//				pathname : (pathname !== '') ? pathname : '/',
+	//				bounds   : { ...meta.bounds, ...size }
+	//			},
+	//			zip     : { ...zip, accessibility,
+	//				html : await zipContent(html),
+	//			}
+	//		} }, '::|::');
+
+	return ({ ...element, html, accessibility,
+		title  : (pathname === "" || pathname === "/") ? "Index" : `${pathname.split("/").slice(1).join("/")}`,
+		images : { thumb, cropped, full },
+		meta   : { ...meta, url, text,
+			pathname : (pathname !== "") ? pathname : "/"
+			// bounds   : { ...meta.bounds, ...size }
+		},
+		zip    : { ...zip, 
+			accessibility : await zipContent(accessibility), 
+			html          : await zipContent(html)
+		}
+	});
+}
+
+
+export async function stripPageTags(page, tags=[]) {
+	await page.$$eval([ HTML_STRIP_TAGS, ...tags ].join(", "), (nodes)=> {
+		nodes.forEach((node)=> {
 			if (node.parentNode) {
 				node.parentNode.removeChild(node);
 			}

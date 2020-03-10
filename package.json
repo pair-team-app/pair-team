@@ -58,6 +58,6 @@
   },
   "devDependencies": {
     "@wordpress/jest-puppeteer-axe": "^1.4.0",
-    "jest": "^24.9.0"
+    "jest": "^25.1.0"
   }
 }

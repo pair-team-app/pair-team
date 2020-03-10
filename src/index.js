@@ -17,8 +17,8 @@ import {
 	formatAXNode,
 	formatHTML,
 	inlineCSS,
-	pageElement,
 	pageStyleTag,
+	processView,
 	stripPageTags,
 } from './utils';
 
@@ -105,7 +105,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		title : projectName()
 	};
 
-	const view = await pageElement(device, page, doc, html);
+	const view = await processView(device, page, doc, html);
 	elements.views.push(view);
 
 	delete (doc['accessibility']);
@@ -142,13 +142,13 @@ export async function renderWorker(url) {
 //	console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
-		puppeteer.devices['Galaxy Note 3'],
-		puppeteer.devices['iPad Pro landscape'],
+		// puppeteer.devices['Galaxy Note 3'],
+		// puppeteer.devices['iPad Pro landscape'],
 		puppeteer.devices['iPhone 8'],
-		puppeteer.devices['iPhone X'],
-		CHROME_MACOS,
-		CHROME_WINDOWS,
-		GALAXY_S8
+		// puppeteer.devices['iPhone X'],
+		// CHROME_MACOS,
+		// CHROME_WINDOWS,
+		// GALAXY_S8
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 
@@ -174,6 +174,8 @@ export async function renderWorker(url) {
 // 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
 // 		console.log('VIEWS -->', elements.views.length);
 		// console.log('VIEWS -->', JSON.stringify(elements.views[0].images, null, 2));
+		// console.log('AX -->', JSON.stringify(elements.views[0].accessibility, null, 2));
+		console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
 		// console.log('VIEWS -->', elements.views[0].images);
 // 		console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);
