@@ -108,10 +108,10 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const view = await processView(device, page, doc, html);
 	elements.views.push(view);
 
-	delete (doc['accessibility']);
+	// delete (doc['accessibility']);
 	delete (doc['axTree']);
 	delete (doc['axeReport']);
-	delete (doc['html']);
+	// delete (doc['html']);
 	delete (doc['image']);
 	delete (doc['pathname']);
 	delete (doc['styles']);
@@ -133,7 +133,7 @@ const parseLinks = async(browser, device, url)=> {
 	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
-	return ([ ...new Set(links)]);
+	return ([ ...new Set(links.slice(0, 1))]);
 //	return ([ ...new Set(links.slice(-1))]);
 };
 
@@ -168,14 +168,14 @@ export async function renderWorker(url) {
 			});
 		}));
 
-//		console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
+		console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
 // 		console.log('::::', 'doc.links', { links : doc.links });
 // 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
 // 		console.log('VIEWS -->', elements.views.length);
 		// console.log('VIEWS -->', JSON.stringify(elements.views[0].images, null, 2));
 		// console.log('AX -->', JSON.stringify(elements.views[0].accessibility, null, 2));
-		console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
+		// console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
 		// console.log('VIEWS -->', elements.views[0].images);
 // 		console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);

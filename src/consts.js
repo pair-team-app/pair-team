@@ -21,7 +21,8 @@ export const ChalkStyles = {
 
 
 export const IMAGE_MAX_HEIGHT = 1800;
-export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
+// export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
+export const API_ENDPT_URL = 'http://157.230.173.158/api-test/v4/pairurl.php';
 
 export const FETCH_CFG = {
 	method  : 'POST',

@@ -323,9 +323,41 @@ export async function extractElements(device, page) {
 	//	console.log('::::: RESOLVED ::::', { buttons : (await Promise.all((await buttons.map(async(node)=> (await processNode(device, page, node)))))) });
 	//	console.log('::::: RESOLVED ::::', { buttons : (await Promise.all(buttons)) });
 
+
+	let multi = buttons;
+
+	for (let i=0; i<20; i++) {
+		multi = { ...multi, ...(
+		await Promise.allSettled(
+			await page.$$(
+				'button, input[type="button"], input[type="submit"]',
+				nodes => nodes
+			)
+		)
+	)
+		.map(({ status, value }) =>
+			status === "fulfilled" ? value : reject(status)
+		)
+		.map(async (node, i) => {
+			return new Promise(async (resolve, reject) => {
+				if (node === null || !(await node.boundingBox())) {
+					reject(
+						new Error("NO BOUNDS for node [" + node._remoteObject.objectI+ "]")
+					);
+				} else {
+					resolve(node);
+				}
+			})
+			
+				.then(async node => await processNode(device, page, node))
+				.catch(error => null);
+		}) }
+	}
+	
+
 	const elements = {
 		views: [],
-		buttons: (await Promise.all(buttons)).filter(node => node !== null), //[],//(await Promise.all(buttons.map(async(node)=> (await processNode(device, page, node))))),
+		buttons:  (await Promise.all(buttons)).filter(node => node !== null), //[],//(await Promise.all(buttons.map(async(node)=> (await processNode(device, page, node))))),
 		//		'headings'   : (await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
 		//		'icons'      : (await Promise.all((await page.$$('img, svg',                                           (nodes)=> (nodes)))).map(async(node)=> (await processNode(device, page, node)))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
 		//		'images'     : (await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
@@ -335,6 +367,10 @@ export async function extractElements(device, page) {
 	};
 
 	//	console.log('::::: ELEMENTS ::::', elements);
+
+
+
+
 
 	return elements;
 }
@@ -551,7 +587,7 @@ export async function processNode(device, page, node) {
 
 	delete attribs[ "flatDOM" ];
 	delete attribs[ "pageCSS" ];
-	delete attribs[ "html" ];
+	// delete attribs[ "html" ];
 	// 	delete (attribs['styles']); // needed for extracting fonts / colors / etc
 	// delete attribs[ "accessibility" ];
 	delete attribs[ "visible" ];
@@ -625,12 +661,6 @@ export async function processNode(device, page, node) {
 						height: bounds.height
 					})
 					: null
-		},
-		zip: {
-			html: await zipContent(html),
-			styles: await zipContent(JSON.stringify(styles)),
-			// root_styles   : await zipContent(JSON.stringify(rootStyles)),
-			accessibility: await zipContent(JSON.stringify(accessibility))
 		}
 	};
 
@@ -645,7 +675,7 @@ export async function processView(device, page, doc, html) {
 	//	console.log('::|::', 'processView()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
 
 	const element = await processNode(device, page, await page.$("body", async node => node));
-	const { meta, images, zip, tag, node_id, backend_node_id, remote_obj } = element;
+	const { meta, images, tag, node_id, backend_node_id, remote_obj } = element;
 	const { bounds } = meta;
 
 	const { url, pathname, axeReport, axTree: tree, title: text } = doc;
@@ -670,14 +700,13 @@ export async function processView(device, page, doc, html) {
 
 	//	console.log('::|::', 'processView() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
 	const { failed, passed, aborted } = axeReport;
-	// const accessibility = await zipContent(
-	const accessibility = JSON.stringify({ tree,
+	const accessibility = { tree,
 		report : {
 			failed  : failed.filter(({ nodes })=> (nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html)))),
 			passed  : passed.filter(({ nodes })=> (nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html)))),
 			aborted : aborted.filter(({ nodes })=> (nodes.find(({ html }) => /^<(html|meta|link|body)/.test(html))))
 		}
-	});
+	};
 	//	console.log('::|::', 'processView() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
 	//	console.log('::|::', 'processView() -=[¡V]=-', { element : { ...element, html, accessibility,
 	//			title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
@@ -698,10 +727,6 @@ export async function processView(device, page, doc, html) {
 		meta   : { ...meta, url, text,
 			pathname : (pathname !== "") ? pathname : "/"
 			// bounds   : { ...meta.bounds, ...size }
-		},
-		zip    : { ...zip, 
-			accessibility : await zipContent(accessibility), 
-			html          : await zipContent(html)
 		}
 	});
 }
