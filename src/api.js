@@ -42,14 +42,15 @@ export async function createPlayground(buildID, userID, teamID, device, doc) {
 
 
 export async function sendPlaygroundComponents(userID, playgroundID, components) {
-// 	console.log('sendPlaygroundComponents()', JSON.stringify({ userID, playgroundID, components }, null, 2));
+	console.log('sendPlaygroundComponents()', JSON.stringify({ userID, playgroundID, components    : { views : [[ ...components.views ].shift()] }}, null, 2));
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'ADD_COMPONENTS',
-			payload : { components,
+			payload : { 
 				user_id       : userID,
-				playground_id : playgroundID
+				playground_id : playgroundID,
+				components    : { views : [[ ...components.views ].shift()] }
 			}
 		})
 	};

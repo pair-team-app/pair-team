@@ -546,7 +546,7 @@ export async function processNode(device, page, node) {
 			styles: styles,
 			accessibility: {
 				tree: null,
-				report: window.elementAccessibility(el)
+				report: null//window.elementAccessibility(el)
 			},
 			classes: el.className.length > 0 ? el.className : "",
 			rootStyles: null,
