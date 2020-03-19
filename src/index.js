@@ -133,7 +133,8 @@ const parseLinks = async(browser, device, url)=> {
 	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
-	return ([ ...new Set(links.slice(0, 1))]);
+	return ([ ...new Set(links)]);
+	// return ([ ...new Set(links.slice(0, 1))]);
 //	return ([ ...new Set(links.slice(-1))]);
 };
 
@@ -146,7 +147,7 @@ export async function renderWorker(url) {
 		// puppeteer.devices['iPad Pro landscape'],
 		puppeteer.devices['iPhone 8'],
 		// puppeteer.devices['iPhone X'],
-		// CHROME_MACOS,
+		CHROME_MACOS,
 		// CHROME_WINDOWS,
 		// GALAXY_S8
 	].reverse();

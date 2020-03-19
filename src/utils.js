@@ -322,37 +322,6 @@ export async function extractElements(device, page) {
 	//	console.log('::::: BUTTONS ::::', { buttons : await Promise.all(buttons.map(({ _remoteObject })=> (_remoteObject.objectId))) });
 	//	console.log('::::: RESOLVED ::::', { buttons : (await Promise.all((await buttons.map(async(node)=> (await processNode(device, page, node)))))) });
 	//	console.log('::::: RESOLVED ::::', { buttons : (await Promise.all(buttons)) });
-
-
-	let multi = buttons;
-
-	for (let i=0; i<20; i++) {
-		multi = { ...multi, ...(
-		await Promise.allSettled(
-			await page.$$(
-				'button, input[type="button"], input[type="submit"]',
-				nodes => nodes
-			)
-		)
-	)
-		.map(({ status, value }) =>
-			status === "fulfilled" ? value : reject(status)
-		)
-		.map(async (node, i) => {
-			return new Promise(async (resolve, reject) => {
-				if (node === null || !(await node.boundingBox())) {
-					reject(
-						new Error("NO BOUNDS for node [" + node._remoteObject.objectI+ "]")
-					);
-				} else {
-					resolve(node);
-				}
-			})
-			
-				.then(async node => await processNode(device, page, node))
-				.catch(error => null);
-		}) }
-	}
 	
 
 	const elements = {
@@ -367,10 +336,6 @@ export async function extractElements(device, page) {
 	};
 
 	//	console.log('::::: ELEMENTS ::::', elements);
-
-
-
-
 
 	return elements;
 }
