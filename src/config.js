@@ -218,7 +218,8 @@ export async function listeners(page, attach=true) {
 
 	const onPageRequest = (request)=> {
 // 		console.log('onPageRequest -->', { url : request.url(), headers : request.headers() });
-		request.continue(request.headers());
+		// request.continue(request.headers());
+		request.continue();
 	};
 
 	const onPageResponse = async(response)=> {
