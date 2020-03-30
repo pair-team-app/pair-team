@@ -78,7 +78,7 @@ export const CHROME_WINDOWS = {
 };
 
 export const GALAXY_S8 = {
-	name      : 'Samsung Galaxy S8',
+	name      : 'Galaxy S8',
 	userAgent : 'Mozilla/5.0 (Linux; Android 7.0; SAMSUNG SM-G950F Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/5.2 Chrome/51.0.2704.106 Mobile Safari/537.36',
 	viewport  : {
 		width             : 720,

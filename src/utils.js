@@ -78,161 +78,106 @@ export async function captureScreenImage(page, scale = 1.0) {
 
 	let ts = Date.now();
 	const pngData = await page.screenshot({
-		fullPage: false,
-		omitBackground: true
+		fullPage       : false,
+		omitBackground : true
 	});
 
-	const fullsize = pngData
-		? await Jimp.read(pngData)
-			.then(async image => {
-				//		console.log('::|::', 'captureScreenImage() -=[¡¡]=-  // full sized', { page : page.url(), time : Date.now() - ts }, '::|::');
-				return image.scale(scale, Jimp.RESIZE_BICUBIC);
-			})
-			.catch(e => {
-				console.log("//|\\\\", "captureScreenImage()", e);
-			})
-		: null;
+	const fullsize = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
+	//		console.log('::|::', 'captureScreenImage() -=[¡¡]=-  // full sized', { page : page.url(), time : Date.now() - ts }, '::|::');
+		return image.scale(scale);
+	}).catch(e => {
+			console.log("//|\\\\", "captureScreenImage()", e);
+	}) : null;
 
 	//	const cropsize = fullsize.clone().crop(0, 0, fullsize.bitmap.width, Math.min(fullsize.bitmap.height, IMAGE_MAX_HEIGHT));
-	const cropsize = fullsize
-		? fullsize.bitmap.height < IMAGE_MAX_HEIGHT
-			? fullsize.clone()
-			: fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT)
-		: null;
+	const cropsize = (fullsize) ? (fullsize.bitmap.height < IMAGE_MAX_HEIGHT) ? fullsize.clone() : fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT) : null;
 	//	console.log('::|::', 'captureScreenImage() -=[¡i¡]=-  // cropsize', { page : page.url(), time : Date.now() - ts }, '::|::');
 
-	const thumbsize = cropsize
-		? await cropsize
-			.clone()
-			.scaleToFit(
-				Math.min(224, cropsize.bitmap.width),
-				Math.min(140, cropsize.bitmap.height),
-				Jimp.RESIZE_BICUBIC
-			)
-		: null;
+	const thumbsize = (cropsize) ? cropsize.clone().scaleToFit(Math.min(224, cropsize.bitmap.width), Math.min(140, cropsize.bitmap.height)) : null;
 
-	return {
-		full: fullsize
-			? {
-				type: 'fullsize',
-				data: await fullsize.getBase64Async(Jimp.MIME_PNG),
-				size: {
-					width: fullsize.bitmap.width,
-					height: fullsize.bitmap.height
-				}
+	return ({
+		full    : (fullsize) ? {
+			type : 'fullsize',
+			data : await fullsize.getBase64Async(Jimp.MIME_PNG),
+			size : {
+				width  : fullsize.bitmap.width,
+				height : fullsize.bitmap.height
 			}
-			: null,
-		cropped: cropsize
-			? {
-				type: 'full',
-				data: await cropsize.getBase64Async(Jimp.MIME_PNG),
-				size: {
-					width: cropsize.bitmap.width,
-					height: cropsize.bitmap.height
-				}
+		} : null,
+		cropped : (cropsize) ? {
+			type : 'full',
+			data : await cropsize.getBase64Async(Jimp.MIME_PNG),
+			size : {
+				width  : cropsize.bitmap.width,
+				height : cropsize.bitmap.height
 			}
-			: null,
-		thumb: thumbsize
-			? {
-				data: await thumbsize.getBase64Async(Jimp.MIME_PNG),
-				size: {
-					width: thumbsize.bitmap.width,
-					height: thumbsize.bitmap.height
-				}
+		} : null,
+		thumb   : (thumbsize) ? {
+			data : await thumbsize.getBase64Async(Jimp.MIME_PNG),
+			size : {
+				width  : thumbsize.bitmap.width,
+				height : thumbsize.bitmap.height
 			}
-			: null
-	};
+		} : null
+	});
 }
 
-export async function captureElementImage(
-	page,
-	element,
-	scale = 1.0,
-	padding = null
-) {
-	padding = padding || [ 0, 3, 2, 0 ];
+export async function captureElementImage(page, element, scale=1.0, padding=[0, 3, 2, 0]) {
 	const boundingBox = await element.boundingBox();
 	const title = (await (await element.getProperty("tagName")).jsonValue()).toLowerCase();
 
 	//	console.log('::|::', 'captureElementImage() -=[¡]=-  // init', { page : page.url(), element : title, boundingBox }, '::|::');
 	let ts = Date.now();
-	const pngData =
-		boundingBox && boundingBox.width * boundingBox.height > 0
-			? await page.screenshot({
-				omitBackground: true,
-				clip: {
-					x: boundingBox.x - padding[ 3 ],
-					y: boundingBox.y - padding[ 0 ],
-					width: boundingBox.width + (padding[ 1 ] + padding[ 3 ]),
-					height: boundingBox.height + (padding[ 0 ] + padding[ 2 ])
-				}
-			})
-			: null;
+	const pngData = (boundingBox && boundingBox.width * boundingBox.height > 0) ? await page.screenshot({
+		omitBackground : true,
+		clip           : {
+			x      : boundingBox.x - padding[3],
+			y      : boundingBox.y - padding[0],
+			width  : boundingBox.width + (padding[1] + padding[3]),
+			height : boundingBox.height + (padding[0] + padding[2])
+		}
+	}) : null;
 
-	const fullsize = pngData
-		? await Jimp.read(pngData)
-			.then(async image => {
-				//		console.log('::|::', 'captureElementImage() -=[¡¡]=-  // full sized', { page : page.url(), element : title, time : Date.now() - ts }, '::|::');
-				return await image.scale(scale, Jimp.RESIZE_BICUBIC);
-			})
-			.catch(e => {
-				console.log("//|\\\\", "captureElementImage()", e);
-				return null;
-			})
-		: null;
+	const fullsize = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
+	//		console.log('::|::', 'captureElementImage() -=[¡¡]=-  // full sized', { page : page.url(), element : title, time : Date.now() - ts }, '::|::');
+		return (image.scale(scale));
+	}).catch(e => {
+		console.log("//|\\\\", "captureElementImage()", e);
+		return (null);
+	}) : null;
 
 	//	ts = Date.now();
-	const cropsize = fullsize
-		? fullsize.bitmap.height < IMAGE_MAX_HEIGHT
-			? fullsize.clone()
-			: fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT)
-		: null;
+	const cropsize = (fullsize) ? (fullsize.bitmap.height < IMAGE_MAX_HEIGHT) ? fullsize.clone() : fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT) : null;
 	//	console.log('::|::', 'captureElementImage() -=[¡i¡]=-  // cropsize', { page : page.url(), element : title, time : Date.now() - ts }, '::|::');
 
-	const thumbsize = cropsize
-		? cropsize.bitmap.width < 224 && cropsize.bitmap.height < 140
-			? cropsize.clone()
-			: await cropsize
-				.clone()
-				.scaleToFit(
-					Math.min(224, cropsize.bitmap.width),
-					Math.min(140, cropsize.bitmap.height),
-					Jimp.RESIZE_BICUBIC
-				)
-		: null;
+	const thumbsize = (cropsize) ? (cropsize.bitmap.width < 224 && cropsize.bitmap.height < 140) ? cropsize.clone() : await cropsize.clone().scaleToFit(Math.min(224, cropsize.bitmap.width), Math.min(140, cropsize.bitmap.height)) : null;
 
-	return {
-		full: fullsize
-			? {
-				type: 'fullsize',
-				data: await fullsize.getBase64Async(Jimp.MIME_PNG),
-				size: {
-					width: fullsize.bitmap.width,
-					height: fullsize.bitmap.height
-				}
+	return ({
+		full    : (fullsize) ? {
+			type : 'fullsize',
+			data : await fullsize.getBase64Async(Jimp.MIME_PNG),
+			size : {
+				width  : fullsize.bitmap.width,
+				height : fullsize.bitmap.height
 			}
-			: null,
-		cropped: cropsize
-			? {
-				type: 'cropped',
-				data: await cropsize.getBase64Async(Jimp.MIME_PNG),
-				size: {
-					width: cropsize.bitmap.width,
-					height: cropsize.bitmap.height
-				}
+		} : null,
+		cropped : (cropsize) ? {
+			type : 'cropped',
+			data : await cropsize.getBase64Async(Jimp.MIME_PNG),
+			size : {
+				width  : cropsize.bitmap.width,
+				height : cropsize.bitmap.height
 			}
-			: null,
-		thumb: thumbsize
-			? {
-				type: 'thumb',
-				data: await thumbsize.getBase64Async(Jimp.MIME_PNG),
-				size: {
-					width: thumbsize.bitmap.width,
-					height: thumbsize.bitmap.height
-				}
+		} : null,
+		thumb   : (thumbsize) ? {
+			type : 'thumb',
+			data : await thumbsize.getBase64Async(Jimp.MIME_PNG),
+			size : {
+				width  : thumbsize.bitmap.width,
+				height : thumbsize.bitmap.height
 			}
-			: null
-	};
+		} : null
+	});
 }
 
 export async function elementBackendNodeID(page, objectID) {
@@ -400,7 +345,7 @@ export async function extractMeta(device, page, elements) {
 					.flat(Infinity)
 			)
 		],
-		links: elements.links.map(link => link.meta.href).join(" "),
+		links: [],//elements.links.map(link => link.meta.href).join(" "),
 		styles: await page.evaluate(() => elementStyles(document.documentElement)),
 		url: await page.url()
 	};

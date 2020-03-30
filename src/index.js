@@ -130,7 +130,8 @@ const parseLinks = async(browser, device, url)=> {
 	await page.emulate(device);
 	await page.goto(url, { waitUntil : 'networkidle0' });
 
-	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
+	// const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
+	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && link.startsWith(url) && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
 	return ([ ...new Set(links)]);
@@ -143,13 +144,13 @@ export async function renderWorker(url) {
 //	console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
-		// puppeteer.devices['Galaxy Note 3'],
-		// puppeteer.devices['iPad Pro landscape'],
+		puppeteer.devices['Galaxy Note 3'],
+		{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
 		puppeteer.devices['iPhone 8'],
-		// puppeteer.devices['iPhone X'],
+		puppeteer.devices['iPhone X'],
 		CHROME_MACOS,
-		// CHROME_WINDOWS,
-		// GALAXY_S8
+		CHROME_WINDOWS,
+		GALAXY_S8
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 
@@ -158,8 +159,9 @@ export async function renderWorker(url) {
 		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('Index')} view elements…`);
 
 		const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
-		const links = await parseLinks(browser, device, url); //
-		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}: [ ${links.map((link)=> (ChalkStyles.PATH(`/${link.split('/').slice(3).join('/')}`))).join(', ')} ]…`);
+		const links = await parseLinks(browser, device, url);
+		doc.links = links.map((link)=> (`/${link.split('/').slice(3).join('/')}`));
+		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}: [ ${doc.links.map((link)=> (ChalkStyles.PATH(link))).join(', ')} ]…`);
 
 		await Promise.all(links.map(async(link, i)=> {
 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
