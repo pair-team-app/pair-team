@@ -144,14 +144,14 @@ export async function renderWorker(url) {
 //	console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
-		// puppeteer.devices['Galaxy Note 3'],
+		CHROME_MACOS,
+		CHROME_WINDOWS,
+		GALAXY_S8,
+		puppeteer.devices['iPhone X'],
+		puppeteer.devices['iPhone 8'],
 		{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
-		// puppeteer.devices['iPhone 8'],
-		// puppeteer.devices['iPhone X'],
-		// CHROME_MACOS,
-		// CHROME_WINDOWS,
-		GALAXY_S8
-	].reverse();
+		puppeteer.devices['Galaxy Note 3']
+	];
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 
 	console.log(ChalkStyles.HEADER());
@@ -185,7 +185,7 @@ export async function renderWorker(url) {
 		// console.log('AX -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 		// console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
 		// console.log('VIEWS -->', elements.views[0].images);
-		console.log('IMAGES -->', elements.images[0]);
+		// console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);
 		// console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));
 		// console.log('IMAGES -->', elements.views.map(({ id, title, images }, i)=> ({ id, title, images : { f : images.full.data.length, c : images.cropped.data.length }})));

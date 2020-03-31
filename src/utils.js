@@ -111,7 +111,7 @@ const elementBackendNodeID = async(page, objectID)=> {
 
 const genImageSizes = async({ pngData, scale })=> {
 	const fullsize = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
-		return (image.scale(scale, Jimp.IMAGE_DEVICE_SCALER));
+		return (image.scale(scale, IMAGE_DEVICE_SCALER));
 	}).catch((error)=> (null)) : null;
 
 	const cropsize = (fullsize) ? (fullsize.bitmap.height <= IMAGE_MAX_HEIGHT) ? fullsize.clone() : fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT) : null;
@@ -288,13 +288,11 @@ export async function extractElements(device, page) {
 
 	const elements = {
 		views      : [],
-		buttons    : (await Promise.all(await elementFilter('button, input[type="button"], input[type="submit"]'))).filter((node)=> (node !== null)), //[],//(await Promise.all(buttons.map(async(node)=> (await processNode(device, page, node))))),
-		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		// 'icons'      : (await Promise.all((await page.$$('img, svg',                                           (nodes)=> (nodes)))).map(async(node)=> (await processNode(device, page, node)))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
-		images     : (await Promise.all(await elementFilter('img, svg'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		links      : (await Promise.all(await elementFilter('a'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element && element.visible)),
-		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		// 'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		buttons    : (await Promise.all(await elementFilter('button, input[type="button"], input[type="submit"]'))).filter((node)=> (node !== null)),
+		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), 
+		images     : (await Promise.all(await elementFilter('img, svg'))).filter((node)=> (node !== null)),
+		links      : (await Promise.all(await elementFilter('a'))).filter((node)=> (node !== null)),
+		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null))
 	};
 
 	//	console.log('::::: ELEMENTS ::::', elements);

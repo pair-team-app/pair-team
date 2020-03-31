@@ -26,8 +26,8 @@ export const IMAGE_THUMB_WIDTH = 224;
 export const IMAGE_THUMB_HEIGHT = 140;
 
 
-export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BICUBIC;
-export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BILINEAR;
+export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BILINEAR;
+export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BICUBIC;
 
 
 export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
