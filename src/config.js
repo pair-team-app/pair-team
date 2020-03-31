@@ -29,8 +29,8 @@ export async function funcs(page) {
 			const { failed, passed, aborted } = axeReport;
 			return ({
 				failed  : failed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
-				passed  : passed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
-				aborted : aborted.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift())))))
+				passed  : [],//passed.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift()))))),
+				aborted : []//aborted.filter(({ nodes })=> (nodes.find(({ html })=> (element.outerHTML.split('>').shift().startsWith(html.split('>').shift())))))
 			})
 		};
 
