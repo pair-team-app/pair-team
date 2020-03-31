@@ -1,63 +1,20 @@
 #!/usr/bin/env node
 'use strict';
 
-import crypto from 'crypto';
 import inlineCss from 'inline-css';
 import Jimp from 'jimp';
-import JSZip from 'jszip';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
-import cryproCreds from '../crypto-creds';
 import { 
-	CSS_PURGE_STYLES, HTML_STRIP_TAGS, 
+	HTML_STRIP_TAGS, 
 	IMAGE_MAX_HEIGHT, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
 	IMAGE_DEVICE_SCALER, IMAGE_THUMB_SCALER 
 } from './consts';
 
 
-// const elementRootStyles = async (html, pageStyles)=> {
-// 	const inline = await inlineElementStyles(html, pageStyles, 'span');
-// 	const { styles } = inline.match(/^.+? style="(?<styles>.+?)"/).groups;
-
-// 	let obj = {};
-// 	styles.slice(0, -1).split(';').forEach((style)=> {
-// 		const kv = style.split(':');
-// 		obj[kv[0].trim()] = kv[1].trim();
-// 	});
-
-// 	CSS_PURGE_STYLES.forEach((key)=> {
-// 		if (obj.hasOwnProperty(key)) {
-// 			delete (obj[key]);
-// 		}
-// 	});
-
-// 	return (obj);
-// };
-
-// const inlineElementStyles = (html, styles, wrapper=null)=> {
-// 	return (new Promise((resolve, reject)=> {
-// 		inlineCss(`<html>${styles}${html}</html>`, { url: ' ' }).then((result)=> {
-// 			resolve((!wrapper) ? result.replace(/<html.+?>(.+)<\/html>/g, '$1') : result.replace(/^<html(.+)<\/html>$/, `<${wrapper}$1</${wrapper}>`));
-// 		}).catch((error)=> {
-// 			reject(error);
-// 		});
-// 	}));
-// };
-
-// const makeCipher = async({ method, key }={})=> {
-// 	method = (method || cryproCreds.method);
-// 	key = (key || cryproCreds.key);
-
-// 	const iv = await crypto.randomBytes(cryproCreds.iv);
-// 	const cipher = await crypto.createCipheriv(method, Buffer.from(key), iv);
-// 	return ({ cipher, iv });
-// };
-
-
-
 const captureElementImage = async (page, element, scale=1.0, padding=[0, 0, 0, 0])=> {
 	const boundingBox = await element.boundingBox();
-	const title = (await (await element.getProperty('tagName')).jsonValue()).toLowerCase();
+	// const title = (await (await element.getProperty('tagName')).jsonValue()).toLowerCase();
 
 	//	console.log('::|::', 'captureElementImage() -=[¡]=-  // init', { page : page.url(), element : title, boundingBox }, '::|::');
 	let ts = Date.now();
@@ -188,7 +145,7 @@ const processNode = async(device, page, node)=> {
 	//	console.log('::|::', JSON.stringify(attribs, null, 2));
 	//	console.log('::|::', attribs.selector);
 
-	const { flatDOM, pageCSS, tag, html, styles, accessibility, visible, meta } = attribs;
+	const { flatDOM, tag, visible, meta } = attribs;
 	// const html = await inlineElementStyles(attribs.html, pageCSS);
 	// const rootStyles = await elementRootStyles(attribs.html, pageCSS);
 
@@ -197,16 +154,15 @@ const processNode = async(device, page, node)=> {
 	delete (attribs['visible']);
 	// 	delete (attribs['']);
 
-	const title = (tag !== 'body') ? attribs.title : page.url();
 	const backendNodeID = await elementBackendNodeID(page, node._remoteObject.objectId);
 
-	// 	console.log('::::', attribs);
+	// console.log('::::', attribs);
 	// console.log('::|::', { device : (await device).name, tag: (await (await node.getProperty('tagName')).jsonValue()).toLowerCase(), title, bounds: await node.boundingBox(), backendNodeID, properties : await (await node.getProperties()).values(), remoteObject: node._remoteObject });
 
 	const { full, cropped, thumb } = (tag === 'body') ? await captureScreenImage(page, 1 / device.viewport.deviceScaleFactor) : await captureElementImage(page, node, 1 / device.viewport.deviceScaleFactor);
 	const bounds = { ...(await node.boundingBox()), ...cropped.size };
 	
-	const { nodeID } = domNodeIDs(flatDOM, await elementBackendNodeID(page, node._remoteObject.objectId));
+	const { nodeID } = domNodeIDs(flatDOM, backendNodeID);
 
 	// if (tag !== 'body') {
 	// 	console.log('\n::::(' + page.url() + ') ELEMENT ::::', { inlineHTML: await inlineElementStyles(html, pageCSS), device : device.name, nodeID, backendNodeID, tag, title, bounds, images: { full: full.size, cropped: cropped.size, thumb: thumb.size }});
@@ -224,7 +180,7 @@ const processNode = async(device, page, node)=> {
 		}
 	};
 
-	//	console.log('::|::', 'processNode() -=[¡]=-  // complete', { tag, title : attribs.title, bounds, cropped : (cropped !== null) }, '::|::');
+	// console.log('::|::', 'processNode() -=[¡]=-  // complete', { tag, title : attribs.title, bounds, cropped : (cropped !== null) }, '::|::');
 	return (element);
 };
 
@@ -248,27 +204,9 @@ export async function embedPageStyles(html, relativeTo='build') {
 	}));
 }
 
-// export async function encryptObj(obj, { type, key }={}) {
-// 	return (await encryptTxt(JSON.stringify(obj), { type, key }));
-// }
-
-// export async function encryptTxt(txt, { type, key }={}) {
-// 	const { cipher, iv } = await makeCipher({ type, key });
-// 	const encTxt = Buffer.concat([ cipher.update(txt), cipher.final() ]);
-
-// 	return (`${iv.toString('hex')}:${encTxt.toString('hex')}`);
-// }
-
-// export async function zipContent(content, filename=`${(Date.now() * 0.001).toString().replace('.', '_')}.zip`) {
-// 	const zip = new JSZip();
-// 	return (zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
-// 		return data;
-// 	}));
-// }
-
 
 export async function extractElements(device, page) {
-	//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() }, '::|::');
+	// console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() }, '::|::');
 
 	const elementFilter = async(query)=> {
 		return ((await Promise.allSettled(await page.$$(query, (nodes)=> (nodes))))
@@ -295,22 +233,18 @@ export async function extractElements(device, page) {
 		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null))
 	};
 
-	//	console.log('::::: ELEMENTS ::::', elements);
+	// console.log('::::: ELEMENTS ::::', elements);
 
 	return (elements);
 }
 
 
 export async function extractMeta(device, page, elements) {
-	//	console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
-	//
-	// 	const docHandle = await page.evaluateHandle(()=> (window.document));
+	// console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
+	// const docHandle = await page.evaluateHandle(()=> (window.document));
 
-	// 	const doc = await page.$('body');
-	// 	console.log('extractMeta()', await doc.boundingBox());
-
-	const pathname = await page.evaluate(()=> window.location.pathname);
-	return ({ pathname,
+	return ({ 
+		pathname    : await page.evaluate(()=> window.location.pathname),
 		title       : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
 		colors      : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> (element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : (element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)')))).flat(Infinity))],
@@ -318,7 +252,7 @@ export async function extractMeta(device, page, elements) {
 		},
 		description : await page.title(),
 		fonts       : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> element.styles['font-family'])).flat(Infinity))],
-		links       : [],//elements.links.map((link)=> link.meta.href).join(' '),
+		links       : [],
 		styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
 		url         : await page.url()
 	});
@@ -390,9 +324,9 @@ export async function pageStyleTag(html) {
 
 
 export async function processView(device, page, doc, html) {
-	//	console.log('::|::', 'processView() -=[¡]=-  // init', { page : page.url(), doc }, '::|::');
-	//	console.log('processView()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
-	//	console.log('::|::', 'processView()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
+	// console.log('::|::', 'processView() -=[¡]=-  // init', { page : page.url(), doc }, '::|::');
+	// console.log('processView()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
+	// console.log('::|::', 'processView()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
 
 	const element = await processNode(device, page, await page.$('body', async(node)=> (node)));
 	const { meta, images, tag, node_id, backend_node_id, remote_obj } = element;

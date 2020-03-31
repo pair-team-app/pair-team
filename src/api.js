@@ -70,31 +70,3 @@ export async function sendPlaygroundComponents({ userID, teamID, buildID, playgr
 	// console.log('ADD_COMPONENTS -->>', response.components);
 	return (response.components);
 }
-
-
-
-export async function sendImageSizes(playgroundID, componentID, images) {
-	const cfg = { ...FETCH_CFG,
-		body : JSON.stringify({ ...FETCH_CFG.body,
-			action  : 'AWS_S3',
-			payload : { images,
-				playground_id : playgroundID,
-				component_id  : componentID
-			}
-		})
-	};
-
-	let response = await fetch(API_ENDPT_URL, cfg);
-//	console.log('RESP -->>', response.headers.raw(), await response.text());
-//	console.log('RESP -->>', await response.text());
-
-	try {
-		response = await response.json();
-
-	} catch (e) {
-		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
-	}
-
-// 	console.log('ADD_COMPONENTS -->>', response.components);
-	return (response.components);
-}

@@ -39,22 +39,13 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 
 	const client = await page.target().createCDPSession();
 
-// 	const el = await page.$('h1');
-// 	console.log('el', el.matches('a'));
-// 	console.log('el', JSON.stringify(el, 2, null));
-
 	await client.send('DOM.enable');
-// 	await client.send('DOMSnapshot.enable');
 	await client.send('Accessibility.enable');
 
 
 // 	console.log('flatDOM', (await client.send('DOM.getFlattenedDocument', { depth : -1 })));
 	const flatDOM = (await client.send('DOM.getFlattenedDocument', { depth : -1 })).nodes.map(({ nodeId, backendNodeId, parentId })=> ({ nodeId, backendNodeId, parentId }));
 // 	console.log('DOM.getFlattenedDocument', flatDOM);
-
-//	const dom = await client.send('DOM.getDocument', { depth : -1 });
-// 	console.log('DOM.getDocument', JSON.stringify(dom, null, 2));
-
 
 	const axNodes = (await client.send('Accessibility.getFullAXTree')).nodes.filter(({ backendDOMNodeId, childIds, name, role })=> ((typeof backendDOMNodeId !== 'undefined') && name && role && !(role.value === 'GenericContainer' && childIds.length === 0))).map((axNode)=> {
 		return (formatAXNode(flatDOM, axNode));
@@ -68,12 +59,12 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		childNodes : fillChildNodes(axNodes, childIDs)
 	};
 
-// 	console.log(':::: doc el', await page.$('document'));
-// 	console.log(':::: acc', JSON.stringify(axTree, null, 2));
+	// console.log(':::: doc el', await page.$('document'));
+	// console.log(':::: acc', JSON.stringify(axTree, null, 2));
 
 
 	const axeResults = await new AxePuppeteer(page).analyze();
-//	console.log('AxePuppeteer SAYS:', JSON.stringify(axeResults, null, 2));
+	// console.log('AxePuppeteer SAYS:', JSON.stringify(axeResults, null, 2));
 
 	const {
 		violations : failed,
@@ -81,7 +72,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 		incomplete : aborted
 	} = axeResults;
 	const axeReport = { failed, passed, aborted };
-//	console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
+	// console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
 
 	await stripPageTags(page, ['iframe']);
 	const embedHTML = await embedPageStyles(await page.content());
@@ -108,10 +99,8 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	const view = await processView(device, page, doc, html);
 	elements.views.push(view);
 
-	// delete (doc['accessibility']);
 	delete (doc['axTree']);
 	delete (doc['axeReport']);
-	// delete (doc['html']);
 	delete (doc['image']);
 	delete (doc['pathname']);
 	delete (doc['styles']);
@@ -124,7 +113,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 };
 
 const parseLinks = async(browser, device, url)=> {
-//	console.log('::|::', 'parseLinks()', { url }, '::|::');
+	// console.log('::|::', 'parseLinks()', { url }, '::|::');
 
 	const page = await browser.newPage();
 	await page.emulate(device);
@@ -136,12 +125,12 @@ const parseLinks = async(browser, device, url)=> {
 
 	return ([ ...new Set(links)]);
 	// return ([ ...new Set(links.slice(0, 1))]);
-//	return ([ ...new Set(links.slice(-1))]);
+	// return ([ ...new Set(links.slice(-1))]);
 };
 
 
 export async function renderWorker(url) {
-//	console.log('::|::', 'renderWorker()', { url }, '::|::');
+	// console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
 		CHROME_MACOS,

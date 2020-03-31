@@ -25,13 +25,11 @@ export const IMAGE_MAX_HEIGHT = 1800;
 export const IMAGE_THUMB_WIDTH = 224;
 export const IMAGE_THUMB_HEIGHT = 140;
 
-
 export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BILINEAR;
 export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BICUBIC;
 
 
 export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
-// export const API_ENDPT_URL = 'http://157.230.173.158/api-test/v4/pairurl.php';
 
 export const FETCH_CFG = {
 	method  : 'POST',
@@ -41,16 +39,6 @@ export const FETCH_CFG = {
 		payload : null
 	}
 };
-
-export const ZIP_OPTS = {
-	type               : 'binarystring',
-	mimeType           : 'application/zip',
-	streamFiles        : true,
-	// streamFiles        : false,
-	compression        : 'DEFLATE',
-	compressionOptions : { level : 9 }
-};
-
 
 export const BROWSER_OPTS = {
 	devTools          : true,
