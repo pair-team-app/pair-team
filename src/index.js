@@ -144,12 +144,12 @@ export async function renderWorker(url) {
 //	console.log('::|::', 'renderWorker()', { url }, '::|::');
 
 	const devices = [
-		puppeteer.devices['Galaxy Note 3'],
+		// puppeteer.devices['Galaxy Note 3'],
 		{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
-		puppeteer.devices['iPhone 8'],
-		puppeteer.devices['iPhone X'],
-		CHROME_MACOS,
-		CHROME_WINDOWS,
+		// puppeteer.devices['iPhone 8'],
+		// puppeteer.devices['iPhone X'],
+		// CHROME_MACOS,
+		// CHROME_WINDOWS,
 		GALAXY_S8
 	].reverse();
 	const browser = await puppeteer.launch(BROWSER_OPTS);
@@ -183,7 +183,7 @@ export async function renderWorker(url) {
 // 		console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);
 		// console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));
-//		console.log('IMAGES -->', elements.views.map(({ id, title, image }, i)=> (JSON.stringify({ id, title, image }, null, 2))));
+		// console.log('IMAGES -->', elements.views.map(({ id, title, images }, i)=> ({ id, title, images : { f : images.full.data.length, c : images.cropped.data.length }})));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${el.styles.background}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.styles, null, 2)}`)));
 // 		console.log('LINKS -->', elements.links.map((el, i)=> (`[${el.title}] [${el.html}] ${el.path}`)));
