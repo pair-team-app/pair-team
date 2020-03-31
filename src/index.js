@@ -169,6 +169,11 @@ export async function renderWorker(url) {
 			Object.keys(elements).forEach((key)=> {
 				elements[key] = [ ...elements[key], ...els[key]];
 			});
+
+			// elements = Object.keys(elements).map((key)=> elements[key].map((element)=> {
+			// 	let { styles, ...el} = element;
+			// 	return (el);
+			// }));
 		}));
 
 		// console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
@@ -180,7 +185,7 @@ export async function renderWorker(url) {
 		// console.log('AX -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 		// console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
 		// console.log('VIEWS -->', elements.views[0].images);
-// 		console.log('IMAGES -->', elements.images[0]);
+		console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);
 		// console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));
 		// console.log('IMAGES -->', elements.views.map(({ id, title, images }, i)=> ({ id, title, images : { f : images.full.data.length, c : images.cropped.data.length }})));

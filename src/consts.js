@@ -3,6 +3,7 @@
 
 
 import chalk from 'chalk';
+import Jimp from 'jimp';
 
 
 export const ChalkStyles = {
@@ -21,6 +22,14 @@ export const ChalkStyles = {
 
 
 export const IMAGE_MAX_HEIGHT = 1800;
+export const IMAGE_THUMB_WIDTH = 224;
+export const IMAGE_THUMB_HEIGHT = 140;
+
+
+export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BICUBIC;
+export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BILINEAR;
+
+
 export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
 // export const API_ENDPT_URL = 'http://157.230.173.158/api-test/v4/pairurl.php';
 

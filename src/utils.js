@@ -8,62 +8,54 @@ import JSZip from 'jszip';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 import cryproCreds from '../crypto-creds';
-import { CSS_PURGE_STYLES, HTML_STRIP_TAGS, IMAGE_MAX_HEIGHT, ZIP_OPTS } from './consts';
-
-const domNodeIDs = (flatDOM, backendNodeID)=> {
-	const node = flatDOM.find(
-		({ backendNodeId })=> backendNodeId === backendNodeID
-	);
-
-	return ((node) ? {
-		nodeID       : node.nodeId << 0,
-		parentNodeID : node.parentId << 0
-	} : 0);
-};
-
-const elementRootStyles = async (html, pageStyles)=> {
-	const inline = await inlineElementStyles(html, pageStyles, 'span');
-	const { styles } = inline.match(/^.+? style="(?<styles>.+?)"/).groups;
-
-	let obj = {};
-	styles
-		.slice(0, -1)
-		.split(';')
-		.forEach((style)=> {
-			const kv = style.split(':');
-			obj[ kv[ 0 ].trim() ] = kv[ 1 ].trim();
-		});
-
-	CSS_PURGE_STYLES.forEach((key)=> {
-		if (obj.hasOwnProperty(key)) {
-			delete (obj[ key ]);
-		}
-	});
-
-	return (obj);
-};
-
-const inlineElementStyles = (html, styles, wrapper=null)=> {
-	return (new Promise((resolve, reject)=> {
-		inlineCss(`<html>${styles}${html}</html>`, { url: ' ' }).then((result)=> {
-			resolve((!wrapper) ? result.replace(/<html.+?>(.+)<\/html>/g, '$1') : result.replace(/^<html(.+)<\/html>$/, `<${wrapper}$1</${wrapper}>`));
-		}).catch((error)=> {
-			reject(error);
-		});
-	}));
-};
-
-const makeCipher = async ({ method, key } = {})=> {
-	method = method || cryproCreds.method;
-	key = key || cryproCreds.key;
-
-	const iv = await crypto.randomBytes(cryproCreds.iv);
-	const cipher = await crypto.createCipheriv(method, Buffer.from(key), iv);
-	return ({ cipher, iv });
-};
+import { 
+	CSS_PURGE_STYLES, HTML_STRIP_TAGS, 
+	IMAGE_MAX_HEIGHT, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
+	IMAGE_DEVICE_SCALER, IMAGE_THUMB_SCALER 
+} from './consts';
 
 
-export async function captureElementImage(page, element, scale=1.0, padding=[0, 0, 0, 0]) {
+// const elementRootStyles = async (html, pageStyles)=> {
+// 	const inline = await inlineElementStyles(html, pageStyles, 'span');
+// 	const { styles } = inline.match(/^.+? style="(?<styles>.+?)"/).groups;
+
+// 	let obj = {};
+// 	styles.slice(0, -1).split(';').forEach((style)=> {
+// 		const kv = style.split(':');
+// 		obj[kv[0].trim()] = kv[1].trim();
+// 	});
+
+// 	CSS_PURGE_STYLES.forEach((key)=> {
+// 		if (obj.hasOwnProperty(key)) {
+// 			delete (obj[key]);
+// 		}
+// 	});
+
+// 	return (obj);
+// };
+
+// const inlineElementStyles = (html, styles, wrapper=null)=> {
+// 	return (new Promise((resolve, reject)=> {
+// 		inlineCss(`<html>${styles}${html}</html>`, { url: ' ' }).then((result)=> {
+// 			resolve((!wrapper) ? result.replace(/<html.+?>(.+)<\/html>/g, '$1') : result.replace(/^<html(.+)<\/html>$/, `<${wrapper}$1</${wrapper}>`));
+// 		}).catch((error)=> {
+// 			reject(error);
+// 		});
+// 	}));
+// };
+
+// const makeCipher = async({ method, key }={})=> {
+// 	method = (method || cryproCreds.method);
+// 	key = (key || cryproCreds.key);
+
+// 	const iv = await crypto.randomBytes(cryproCreds.iv);
+// 	const cipher = await crypto.createCipheriv(method, Buffer.from(key), iv);
+// 	return ({ cipher, iv });
+// };
+
+
+
+const captureElementImage = async (page, element, scale=1.0, padding=[0, 0, 0, 0])=> {
 	const boundingBox = await element.boundingBox();
 	const title = (await (await element.getProperty('tagName')).jsonValue()).toLowerCase();
 
@@ -79,49 +71,11 @@ export async function captureElementImage(page, element, scale=1.0, padding=[0, 
 		}
 	}) : null;
 
-	const fullsize = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
-	//		console.log('::|::', 'captureElementImage() -=[¡¡]=-  // full sized', { page : page.url(), element : title, time : Date.now() - ts }, '::|::');
-		return (image.scale(scale, Jimp.RESIZE_NEAREST_NEIGHBOR));
-	}).catch((error)=> {
-		console.log('//|\\\\', 'captureElementImage()', error);
-		return (null);
-	}) : null;
+	return (genImageSizes({ pngData, scale }));
+};
 
-	//	ts = Date.now();
-	const cropsize = (fullsize) ? (fullsize.bitmap.height <= IMAGE_MAX_HEIGHT) ? fullsize.clone() : fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT) : null;
-	//	console.log('::|::', 'captureElementImage() -=[¡i¡]=-  // cropsize', { page : page.url(), element : title, time : Date.now() - ts }, '::|::');
 
-	const thumbsize = (cropsize) ? (cropsize.bitmap.width <= 224 && cropsize.bitmap.height <= 140) ? cropsize.clone() : await cropsize.clone().scaleToFit(Math.min(224, cropsize.bitmap.width), Math.min(140, cropsize.bitmap.height), Jimp.RESIZE_HERMITE) : null;
-
-	return ({
-		full    : (fullsize) ? {
-			type : 'fullsize',
-			data : await fullsize.getBase64Async(Jimp.MIME_PNG),
-			size : {
-				width  : fullsize.bitmap.width,
-				height : fullsize.bitmap.height
-			}
-		} : null,
-		cropped : (cropsize) ? {
-			type : 'cropped',
-			data : await cropsize.getBase64Async(Jimp.MIME_PNG),
-			size : {
-				width  : cropsize.bitmap.width,
-				height : cropsize.bitmap.height
-			}
-		} : null,
-		thumb   : (thumbsize) ? {
-			type : 'thumb',
-			data : await thumbsize.getBase64Async(Jimp.MIME_PNG),
-			size : {
-				width  : thumbsize.bitmap.width,
-				height : thumbsize.bitmap.height
-			}
-		} : null
-	});
-}
-
-export async function captureScreenImage(page, scale=1.0) {
+const captureScreenImage = async(page, scale=1.0)=> {
 	//	console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale }, '::|::');
 
 	let ts = Date.now();
@@ -131,18 +85,37 @@ export async function captureScreenImage(page, scale=1.0) {
 		type           : 'png'
 	});
 
+	return (genImageSizes({ pngData, scale }));
+};
+
+
+const domNodeIDs = (flatDOM, backendNodeID)=> {
+	const node = flatDOM.find(({ backendNodeId })=> (backendNodeId === backendNodeID));
+
+	return ((node) ? {
+		nodeID       : node.nodeId << 0,
+		parentNodeID : node.parentId << 0
+	} : 0);
+};
+
+
+const elementBackendNodeID = async(page, objectID)=> {
+	const node = (await page._client.send('DOM.describeNode', {
+		objectId : objectID
+	})).node;
+
+	// 	console.log('DOM.describeNode', objectID, JSON.stringify(node, null, 2), node.backendNodeId);
+	return (node.backendNodeId << 0);
+};
+
+
+const genImageSizes = async({ pngData, scale })=> {
 	const fullsize = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
-			// console.log('::|::', 'captureScreenImage() -=[¡¡]=-  // full sized', { page : page.url(), time : Date.now() - ts, image : image.bitmap.height * (1 / scale) }, '::|::');
-		return (image.scale(scale, Jimp.RESIZE_NEAREST_NEIGHBOR));
-	}).catch((error)=> {
-			console.log('//|\\\\', 'captureScreenImage()', error);
-	}) : null;
+		return (image.scale(scale, Jimp.IMAGE_DEVICE_SCALER));
+	}).catch((error)=> (null)) : null;
 
-	//	const cropsize = fullsize.clone().crop(0, 0, fullsize.bitmap.width, Math.min(fullsize.bitmap.height, IMAGE_MAX_HEIGHT));
 	const cropsize = (fullsize) ? (fullsize.bitmap.height <= IMAGE_MAX_HEIGHT) ? fullsize.clone() : fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT) : null;
-	//	console.log('::|::', 'captureScreenImage() -=[¡i¡]=-  // cropsize', { page : page.url(), time : Date.now() - ts }, '::|::');
-
-	const thumbsize = (cropsize) ? (cropsize.bitmap.width <= 224 && cropsize.bitmap.height <= 140) ? cropsize.clone() : await cropsize.clone().scaleToFit(Math.min(224, cropsize.bitmap.width), Math.min(140, cropsize.bitmap.height), Jimp.RESIZE_HERMITE) : null;
+	const thumbsize = (cropsize) ? (cropsize.bitmap.width <= IMAGE_THUMB_WIDTH && cropsize.bitmap.height <= IMAGE_THUMB_HEIGHT) ? cropsize.clone() : await cropsize.clone().scaleToFit(Math.min(IMAGE_THUMB_WIDTH, cropsize.bitmap.width), Math.min(IMAGE_THUMB_HEIGHT, cropsize.bitmap.height), IMAGE_THUMB_SCALER) : null;
 
 	return ({
 		full    : (fullsize) ? {
@@ -170,234 +143,11 @@ export async function captureScreenImage(page, scale=1.0) {
 			}
 		} : null
 	});
-}
-
-export async function elementBackendNodeID(page, objectID) {
-	const node = (await page._client.send('DOM.describeNode', {
-		objectId : objectID
-	})).node;
-
-	// 	console.log('DOM.describeNode', objectID, JSON.stringify(node, null, 2), node.backendNodeId);
-	return (node.backendNodeId << 0);
-}
-
-export async function embedPageStyles(html, relativeTo='build') {
-	const opts = { relativeTo,
-		fileContent : html.replace(/="\//g, '="./'),
-		images      : false,
-		scripts     : false
-	};
-
-	return (new Promise((resolve, reject)=> {
-		inline.html(opts, (err, result)=> {
-			if (err) {
-				reject(err);
-			}
-
-			resolve(result.replace(/\n/g, ''));
-		});
-	}));
-}
-
-export async function encryptObj(obj, { type, key }={}) {
-	return (await encryptTxt(JSON.stringify(obj), { type, key }));
-}
-
-export async function encryptTxt(txt, { type, key }={}) {
-	const { cipher, iv } = await makeCipher({ type, key });
-	const encTxt = Buffer.concat([ cipher.update(txt), cipher.final() ]);
-
-	return (`${iv.toString('hex')}:${encTxt.toString('hex')}`);
-}
-
-export async function zipContent(content, filename=`${(Date.now() * 0.001).toString().replace('.', '_')}.zip`) {
-	const zip = new JSZip();
-	return (zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
-		return data;
-	}));
-}
-
-export async function extractElements(device, page) {
-	//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() }, '::|::');
-
-	const buttons = (await Promise.allSettled(await page.$$('button, input[type="button"], input[type="submit"]', (nodes)=> (nodes))))
-	.map(({ status, value })=> (status === ('fulfilled') ? value : reject(status)))
-	.map(async(node, i)=> {
-		return (new Promise(async(resolve, reject)=> {
-			if (node === null || !(await node.boundingBox())) {
-				reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
-			
-			} else {
-				resolve(node);
-			}
-		})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
-	});
-
-	const headings = (await Promise.allSettled(await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))))
-	.map(({ status, value })=> (status === ('fulfilled') ? value : reject(status)))
-	.map(async(node, i)=> {
-		return (new Promise(async(resolve, reject)=> {
-			if (node === null || !(await node.boundingBox())) {
-				reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
-			
-			} else {
-				resolve(node);
-			}
-		})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
-	});
-
-	const images = (await Promise.allSettled(await page.$$('img, svg', (nodes)=> (nodes))))
-	.map(({ status, value })=> (status === ('fulfilled') ? value : reject(status)))
-	.map(async(node, i)=> {
-		return (new Promise(async(resolve, reject)=> {
-			if (node === null || !(await node.boundingBox())) {
-				reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
-			
-			} else {
-				resolve(node);
-			}
-		})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
-	});
-
-	const links = (await Promise.allSettled(await page.$$('a', (nodes)=> (nodes))))
-	.map(({ status, value })=> (status === ('fulfilled') ? value : reject(status)))
-	.map(async(node, i)=> {
-		return (new Promise(async(resolve, reject)=> {
-			if (node === null || !(await node.boundingBox())) {
-				reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
-			
-			} else {
-				resolve(node);
-			}
-		})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
-	});
-
-	const textfields = (await Promise.allSettled(await page.$$('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea', (nodes)=> (nodes))))
-	.map(({ status, value })=> (status === ('fulfilled') ? value : reject(status)))
-	.map(async(node, i)=> {
-		return (new Promise(async(resolve, reject)=> {
-			if (node === null || !(await node.boundingBox())) {
-				reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
-			
-			} else {
-				resolve(node);
-			}
-		})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
-	});
+};
 
 
-	// const bounds = await node.boundingBox(); console.log({ i, objectID : node._remoteObject.objectId, tag : (await (await node.getProperty('tagName')).jsonValue()).toLowerCase(), bounds }); return (bounds !== null  && bounds.width * bounds.height > 0); });   //----- ///new Promise((resolve, reject)=> { (bounds !== null && bounds.width * bounds.height > 0) ? resolve(node) : reject(); })); });///   ); })).map((node)=> (new Promise((resolve, reject)=> (resolve(node) ))));
-	//	console.log('::::: BUTTONS ::::', { buttons : await Promise.all(buttons) });//: buttons.map(({ _remoteObject })=> ({ objectId : _remoteObject.objectId })) });
-	//	console.log('::::: BUTTONS ::::', { buttons : (await Promise.all(buttons)).filter((node)=> (node !== null)) });
-	//	console.log('::::: BUTTONS ::::', { buttons : await Promise.all(buttons.map(({ _remoteObject })=> (_remoteObject.objectId))) });
-	//	console.log('::::: RESOLVED ::::', { buttons : (await Promise.all((await buttons.map(async(node)=> (await processNode(device, page, node)))))) });
-	//	console.log('::::: RESOLVED ::::', { buttons : (await Promise.all(buttons)) });
-	
-
-	const elements = {
-		views      : [],
-		buttons    : (await Promise.all(buttons)).filter((node)=> (node !== null)), //[],//(await Promise.all(buttons.map(async(node)=> (await processNode(device, page, node))))),
-		headings   : (await Promise.all(headings)).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		//		'icons'      : (await Promise.all((await page.$$('img, svg',                                           (nodes)=> (nodes)))).map(async(node)=> (await processNode(device, page, node)))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
-		images     : (await Promise.all(images)).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		links      : (await Promise.all(links)).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element && element.visible)),
-		textfields : (await Promise.all(textfields)).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-		// 		'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
-	};
-
-	//	console.log('::::: ELEMENTS ::::', elements);
-
-	return (elements);
-}
-
-export async function extractMeta(device, page, elements) {
-	//	console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
-	//
-	// 	const docHandle = await page.evaluateHandle(()=> (window.document));
-
-	// 	const doc = await page.$('body');
-	// 	console.log('extractMeta()', await doc.boundingBox());
-
-	const pathname = await page.evaluate(()=> window.location.pathname);
-	return ({ pathname,
-		title       : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
-		colors      : {
-			bg : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> (element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : (element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)')))).flat(Infinity))],
-			fg : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> (element.styles.hasOwnProperty('color')) ? element.styles['color'] : (element.styles['color'] = window.rgbaObject('rgba(0, 0, 0, 0.0)')))).flat(Infinity))]
-		},
-		description : await page.title(),
-		fonts       : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> element.styles['font-family'])).flat(Infinity))],
-		links       : [],//elements.links.map((link)=> link.meta.href).join(' '),
-		styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
-		url         : await page.url()
-	});
-}
-
-export function formatAXNode(flatDOM, node) {
-	const { backendDOMNodeId, childIds, name, nodeId, role } = node;
-
-	delete (node['backendDOMNodeId']);
-	delete (node['childIds']);
-	delete (node['ignored']);
-	delete (node['name']);
-	delete (node['nodeId']);
-	delete (node['properties']);
-	delete (node['role']);
-
-	return ({ ...node,
-		axNodeID      : nodeId << 0,
-		nodeID        : domNodeIDs(flatDOM, backendDOMNodeId).nodeID,
-		parentNodeID  : domNodeIDs(flatDOM, backendDOMNodeId).parentNodeID,
-		backendNodeID : backendDOMNodeId,
-		name          : name.value,
-		role          : role.value,
-		childIDs      : childIds.map((id)=> (id << 0)),
-		childNodes    : []
-	});
-}
-
-export function fillChildNodes(nodes, ids) {
-	const childNodes = nodes.filter(({ axNodeID })=> (ids.indexOf(axNodeID) !== -1)).map((axNode)=> {
-		const { childIDs } = axNode;
-		delete (axNode['childIDs']);
-
-		return ({ ...axNode,
-			childNodes : childIDs.length > 0 ? fillChildNodes(nodes, childIDs) : []
-		});
-	});
-
-	return (childNodes);
-}
-
-export function formatHTML(html, opts={}) {
-	return (stripHtml(html, {
-		stripTogetherWithTheirContents : ['head', 'style'],
-		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body', 'style'],
-		trimOnlySpaces                 : true,
-		...opts
-	}));
-}
-
-export async function inlineCSS(html, style='') {
-	return (new Promise((resolve, reject)=> {
-		inlineCss(`${style}${html}`, { url : ' ' }).then((result)=> {
-			resolve(result);
-		}).catch((error)=> {
-			reject(error);
-		});
-	}));
-}
-
-export async function pageStyleTag(html) {
-	return (`<style>${Array.from(html.matchAll(/<style.*?>(.+?)<\/style>/g), (match)=> match.pop()).join(' ')}</style>`);
-}
-
-export async function processNode(device, page, node) {
-	// console.log('::|::', 'processNode()', {
-	// 	device,
-	// 	page: page.url(),
-	// 	node: (await (await node.getProperty('tagName')).jsonValue()).toLowerCase()
-	// });
+const processNode = async(device, page, node)=> {
+	// console.log('::|::', 'processNode()', { device, page: page.url(), node: (await (await node.getProperty('tagName')).jsonValue()).toLowerCase() });
 	// 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
 	// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
 
@@ -476,12 +226,174 @@ export async function processNode(device, page, node) {
 
 	//	console.log('::|::', 'processNode() -=[¡]=-  // complete', { tag, title : attribs.title, bounds, cropped : (cropped !== null) }, '::|::');
 	return (element);
+};
+
+
+
+export async function embedPageStyles(html, relativeTo='build') {
+	const opts = { relativeTo,
+		fileContent : html.replace(/="\//g, '="./'),
+		images      : false,
+		scripts     : false
+	};
+
+	return (new Promise((resolve, reject)=> {
+		inline.html(opts, (err, result)=> {
+			if (err) {
+				reject(err);
+			}
+
+			resolve(result.replace(/\n/g, ''));
+		});
+	}));
 }
+
+// export async function encryptObj(obj, { type, key }={}) {
+// 	return (await encryptTxt(JSON.stringify(obj), { type, key }));
+// }
+
+// export async function encryptTxt(txt, { type, key }={}) {
+// 	const { cipher, iv } = await makeCipher({ type, key });
+// 	const encTxt = Buffer.concat([ cipher.update(txt), cipher.final() ]);
+
+// 	return (`${iv.toString('hex')}:${encTxt.toString('hex')}`);
+// }
+
+// export async function zipContent(content, filename=`${(Date.now() * 0.001).toString().replace('.', '_')}.zip`) {
+// 	const zip = new JSZip();
+// 	return (zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
+// 		return data;
+// 	}));
+// }
+
+
+export async function extractElements(device, page) {
+	//	console.log('::|::', 'extractElements()', { device : device.viewport.deviceScaleFactor, page : page.url() }, '::|::');
+
+	const elementFilter = async(query)=> {
+		return ((await Promise.allSettled(await page.$$(query, (nodes)=> (nodes))))
+			.map(({ status, value })=> (status === ('fulfilled') ? value : reject(status)))
+			.map(async(node, i)=> {
+				return (new Promise(async(resolve, reject)=> {
+					if (node === null || !(await node.boundingBox())) {
+						reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
+					
+					} else {
+						resolve(node);
+					}
+				})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
+			})
+		);
+	};	
+
+	const elements = {
+		views      : [],
+		buttons    : (await Promise.all(await elementFilter('button, input[type="button"], input[type="submit"]'))).filter((node)=> (node !== null)), //[],//(await Promise.all(buttons.map(async(node)=> (await processNode(device, page, node))))),
+		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('h1, h2, h3, h4, h5, h6', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		// 'icons'      : (await Promise.all((await page.$$('img, svg',                                           (nodes)=> (nodes)))).map(async(node)=> (await processNode(device, page, node)))).filter((icon)=> (icon.meta.bounds.x <= 32 && icon.meta.bounds.y <= 32)).filter((element)=> (element.visible)),
+		images     : (await Promise.all(await elementFilter('img, svg'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('img', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		links      : (await Promise.all(await elementFilter('a'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('a', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element && element.visible)),
+		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null)), //(await Promise.all((await page.$$('input:not([type="checkbox"]), input:not([type="radio"])', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+		// 'videos'     : (await Promise.all((await page.$$('video', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node))))).filter((element)=> (element.visible)),
+	};
+
+	//	console.log('::::: ELEMENTS ::::', elements);
+
+	return (elements);
+}
+
+
+export async function extractMeta(device, page, elements) {
+	//	console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
+	//
+	// 	const docHandle = await page.evaluateHandle(()=> (window.document));
+
+	// 	const doc = await page.$('body');
+	// 	console.log('extractMeta()', await doc.boundingBox());
+
+	const pathname = await page.evaluate(()=> window.location.pathname);
+	return ({ pathname,
+		title       : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
+		colors      : {
+			bg : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> (element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : (element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)')))).flat(Infinity))],
+			fg : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> (element.styles.hasOwnProperty('color')) ? element.styles['color'] : (element.styles['color'] = window.rgbaObject('rgba(0, 0, 0, 0.0)')))).flat(Infinity))]
+		},
+		description : await page.title(),
+		fonts       : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> element.styles['font-family'])).flat(Infinity))],
+		links       : [],//elements.links.map((link)=> link.meta.href).join(' '),
+		styles      : await page.evaluate(()=> (elementStyles(document.documentElement))),
+		url         : await page.url()
+	});
+}
+
+
+export function formatAXNode(flatDOM, node) {
+	const { backendDOMNodeId, childIds, name, nodeId, role } = node;
+
+	delete (node['backendDOMNodeId']);
+	delete (node['childIds']);
+	delete (node['ignored']);
+	delete (node['name']);
+	delete (node['nodeId']);
+	delete (node['properties']);
+	delete (node['role']);
+
+	return ({ ...node,
+		axNodeID      : nodeId << 0,
+		nodeID        : domNodeIDs(flatDOM, backendDOMNodeId).nodeID,
+		parentNodeID  : domNodeIDs(flatDOM, backendDOMNodeId).parentNodeID,
+		backendNodeID : backendDOMNodeId,
+		name          : name.value,
+		role          : role.value,
+		childIDs      : childIds.map((id)=> (id << 0)),
+		childNodes    : []
+	});
+}
+
+
+export function fillChildNodes(nodes, ids) {
+	const childNodes = nodes.filter(({ axNodeID })=> (ids.indexOf(axNodeID) !== -1)).map((axNode)=> {
+		const { childIDs } = axNode;
+		delete (axNode['childIDs']);
+
+		return ({ ...axNode,
+			childNodes : childIDs.length > 0 ? fillChildNodes(nodes, childIDs) : []
+		});
+	});
+
+	return (childNodes);
+}
+
+
+export function formatHTML(html, opts={}) {
+	return (stripHtml(html, {
+		stripTogetherWithTheirContents : ['head', 'style'],
+		onlyStripTags                  : ['DOCTYPE', 'html', 'head', 'body', 'style'],
+		trimOnlySpaces                 : true,
+		...opts
+	}));
+}
+
+
+export async function inlineCSS(html, style='') {
+	return (new Promise((resolve, reject)=> {
+		inlineCss(`${style}${html}`, { url : ' ' }).then((result)=> {
+			resolve(result);
+		}).catch((error)=> {
+			reject(error);
+		});
+	}));
+}
+
+
+export async function pageStyleTag(html) {
+	return (`<style>${Array.from(html.matchAll(/<style.*?>(.+?)<\/style>/g), (match)=> match.pop()).join(' ')}</style>`);
+}
+
 
 export async function processView(device, page, doc, html) {
 	//	console.log('::|::', 'processView() -=[¡]=-  // init', { page : page.url(), doc }, '::|::');
 	//	console.log('processView()', { html : { org : html.length, zip : (await zipContent(html)).length } }, '::|::');
-
 	//	console.log('::|::', 'processView()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
 
 	const element = await processNode(device, page, await page.$('body', async(node)=> (node)));
@@ -489,16 +401,12 @@ export async function processView(device, page, doc, html) {
 	const { bounds } = meta;
 
 	const { url, pathname, axeReport, axTree: tree, title: text } = doc;
-	const { full, cropped, thumb } = images; //await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
-	//	const { full, cropped, thumb } = await captureScreenImage(page, (1 / device.viewport.deviceScaleFactor));
-	//	console.log('::|::', 'processView() -=[¡¡]=-  // processed', { cropped, page : page.url() }, '::|::');
-
+	const { full, cropped, thumb } = images;
+	
 	// console.log(':::: PAGE ::::', { device : device.name, tag, visible, bounds, images, nodeID: node_id, backendNodeID : backend_node_id, remoteObject: remote_obj });
+	// console.log('::::', { thumb, cropped, full });
+	// console.log('::|::', 'processView() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
 
-	//	console.log('::::', { thumb, cropped, full });
-	//	const { size } = cropped;
-
-	//	console.log('::|::', 'processView() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
 	const { failed, passed, aborted } = axeReport;
 	const accessibility = { tree,
 		report : {
@@ -507,26 +415,15 @@ export async function processView(device, page, doc, html) {
 			aborted : aborted.filter(({ nodes })=> (nodes.find(({ html })=> (/^<(html|meta|link|body)/.test(html)))))
 		}
 	};
-	//	console.log('::|::', 'processView() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
-	//	console.log('::|::', 'processView() -=[¡V]=-', { element : { ...element, html, accessibility,
-	//			title    : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
-	//			image   : await zipContent(data),
-	//			classes : '',
-	//			meta    : { ...meta, url, text,
-	//				pathname : (pathname !== '') ? pathname : '/',
-	//				bounds   : { ...meta.bounds, ...size }
-	//			},
-	//			zip     : { ...zip, accessibility,
-	//				html : await zipContent(html),
-	//			}
-	//		} }, '::|::');
+
+	// console.log('::|::', 'processView() -=[¡V]=-  // AX done', { page : page.url() }, '::|::');
+	// console.log('::|::', 'processView() -=[¡V]=-', { element : { ...element, html, accessibility, title : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`, image : await zipContent(data), classes : '', meta    : { ...meta, url, text, pathname : (pathname !== '') ? pathname : '/', bounds : { ...meta.bounds, ...size }}, zip : { ...zip, accessibility, html : await zipContent(html) }}}, '::|::');
 
 	return ({ ...element, html, accessibility,
 		title  : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
 		images : { thumb, cropped, full },
 		meta   : { ...meta, url, text,
 			pathname : (pathname !== '') ? pathname : '/'
-			// bounds   : { ...meta.bounds, ...size }
 		}
 	});
 }
