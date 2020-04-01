@@ -132,15 +132,23 @@ const parseLinks = async(browser, device, url)=> {
 export async function renderWorker(url) {
 	// console.log('::|::', 'renderWorker()', { url }, '::|::');
 
+	// const devices = [
+	// 	CHROME_MACOS,
+	// 	CHROME_WINDOWS,
+	// 	GALAXY_S8,
+	// 	puppeteer.devices['iPhone X'],
+	// 	puppeteer.devices['iPhone 8'],
+	// 	{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
+	// 	puppeteer.devices['Galaxy Note 3']
+	// ];
+
 	const devices = [
 		CHROME_MACOS,
-		CHROME_WINDOWS,
-		GALAXY_S8,
-		puppeteer.devices['iPhone X'],
-		puppeteer.devices['iPhone 8'],
-		{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
-		puppeteer.devices['Galaxy Note 3']
+		// GALAXY_S8,
+		puppeteer.devices['iPhone X']
 	];
+
+
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 
 	console.log(ChalkStyles.HEADER());
@@ -158,6 +166,7 @@ export async function renderWorker(url) {
 			Object.keys(elements).forEach((key)=> {
 				elements[key] = [ ...elements[key], ...els[key]];
 			});
+			elements['links'] = doc.links;
 
 			// elements = Object.keys(elements).map((key)=> elements[key].map((element)=> {
 			// 	let { styles, ...el} = element;
@@ -173,7 +182,7 @@ export async function renderWorker(url) {
 		// console.log('VIEWS -->', JSON.stringify(elements.views[0].images, null, 2));
 		// console.log('AX -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 		// console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
-		// console.log('VIEWS -->', elements.views[0].images);
+		console.log('VIEWS -->', elements.views[0].images);
 		// console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);
 		// console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));

@@ -7,16 +7,21 @@ import Jimp from 'jimp';
 
 
 export const ChalkStyles = {
+	CMD    : (val)=> (chalk.redBright(`\`${val}\``)),
 	BANNER : (msg)=> (`|:| ${msg} |:|`),
-	INFO   : chalk.cyanBright.bold('INFO'),
 	ERROR  : chalk.red.bold('ERROR'),
 	DONE   : chalk.greenBright.bold('DONE'),
 	DEVICE : (dev)=> (`[${chalk.grey.bold(dev)}]`),
-	FOOTER : (len=50)=> (`\\_<>${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('<>')}/\n`),
-	H_DIV  : (len=50)=> (`${'\n'}|${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}|${'\n'}`),
-	HEADER : (len=50)=> (`${'\n'}/${chalk.whiteBright('<>')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('<>')}\\_`),
+	// FOOTER : (len=50)=> (`${chalk.white('\\')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('/')}\n`),
+	// H_DIV  : (len=50, newline=false)=> (`${(newline) ? '\n' : ''}${chalk.white('|')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('|')}${(newline) ? '\n' : ''}`),
+	// HEADER : (len=50)=> (`\n${chalk.white('/')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('\\')}`),
+	FOOTER : (len=50)=> (`${chalk.white('\\')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('/')}\n`),
+	H_DIV  : (newline=false, len=50)=> (`${(newline) ? '\n' : ''}${chalk.white('|')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('|')}${(newline) ? '\n' : ''}`),
+	HEADER : (len=50)=> (`\n${chalk.white('/')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('\\')}`),
+	INFO   : chalk.cyanBright.bold('INFO'),
 	NUMBER : (val, bare=false)=> ((bare) ? chalk.yellow.bold(val) : `(${chalk.yellow.bold(val)})`),
 	PATH   : chalk.magenta.bold,
+	TITLE  : (val)=> (chalk.yellowBright(val.toUpperCase())),
 	URL    : chalk.blueBright.bold.underline
 };
 
@@ -25,8 +30,8 @@ export const IMAGE_MAX_HEIGHT = 1800;
 export const IMAGE_THUMB_WIDTH = 224;
 export const IMAGE_THUMB_HEIGHT = 140;
 
-export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BILINEAR;
-export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BICUBIC;
+export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_NEAREST_NEIGHBOR;
+export const IMAGE_THUMB_SCALER = Jimp.RESIZE_HERMITE;
 
 
 export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';

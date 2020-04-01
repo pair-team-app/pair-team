@@ -34,12 +34,22 @@ const captureElementImage = async (page, element, scale=1.0, padding=[0, 0, 0, 0
 
 const captureScreenImage = async(page, scale=1.0)=> {
 	//	console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale }, '::|::');
+	// console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale, boundingBox : await (await page.$('body', async(node)=> (node))).boundingBox() }, '::|::');
+
+	// const boundingBox = await (await page.$('body', async(node)=> (node))).boundingBox();
 
 	let ts = Date.now();
 	const pngData = await page.screenshot({
+		type           : 'png',
 		fullPage       : false,
 		omitBackground : true,
-		type           : 'png'
+		// clip           : { ...await (await page.$('body', async(node)=> (node))).boundingBox() }
+		// clip           : { 
+		// 	x      : 0,
+		// 	y      : 0,
+		// 	width  : boundingBox.width,
+		// 	height : Math.min(IMAGE_MAX_HEIGHT, boundingBox.height)
+		//  }
 	});
 
 	return (genImageSizes({ pngData, scale }));
@@ -71,13 +81,14 @@ const genImageSizes = async({ pngData, scale })=> {
 		return (image.scale(scale, IMAGE_DEVICE_SCALER));
 	}).catch((error)=> (null)) : null;
 
-	const cropsize = (fullsize) ? (fullsize.bitmap.height <= IMAGE_MAX_HEIGHT) ? fullsize.clone() : fullsize.clone().crop(0, 0, fullsize.bitmap.width, IMAGE_MAX_HEIGHT) : null;
+	// const scalesize = (fullsize) ? (scale === 1) ? fullsize.clone() : fullsize.clone().scale(scale, IMAGE_DEVICE_SCALER) : null;
+	const cropsize = (fullsize) ? (fullsize.bitmap.height <= IMAGE_MAX_HEIGHT) ? fullsize.clone() : scalesize.clone().crop(0, 0, fullsize.bitmap.width, Math.min(fullsize.bitmap.height, IMAGE_MAX_HEIGHT)) : null;
 	const thumbsize = (cropsize) ? (cropsize.bitmap.width <= IMAGE_THUMB_WIDTH && cropsize.bitmap.height <= IMAGE_THUMB_HEIGHT) ? cropsize.clone() : await cropsize.clone().scaleToFit(Math.min(IMAGE_THUMB_WIDTH, cropsize.bitmap.width), Math.min(IMAGE_THUMB_HEIGHT, cropsize.bitmap.height), IMAGE_THUMB_SCALER) : null;
 
 	return ({
 		full    : (fullsize) ? {
 			type : 'fullsize',
-			data : await fullsize.getBase64Async(Jimp.MIME_PNG),
+			data : await thumbsize.getBase64Async(Jimp.MIME_PNG),//await fullsize.getBase64Async(Jimp.MIME_PNG),
 			size : {
 				width  : fullsize.bitmap.width,
 				height : fullsize.bitmap.height
@@ -227,7 +238,7 @@ export async function extractElements(device, page) {
 	const elements = {
 		views      : [],
 		buttons    : (await Promise.all(await elementFilter('button, input[type="button"], input[type="submit"]'))).filter((node)=> (node !== null)),
-		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), 
+		headings   : [],//(await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), 
 		images     : (await Promise.all(await elementFilter('img, svg'))).filter((node)=> (node !== null)),
 		links      : (await Promise.all(await elementFilter('a'))).filter((node)=> (node !== null)),
 		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null))
@@ -243,8 +254,8 @@ export async function extractMeta(device, page, elements) {
 	// console.log('::|::', 'extractMeta() -=[¡]=-  // init', { page : page.url() }, '::|::');
 	// const docHandle = await page.evaluateHandle(()=> (window.document));
 
-	return ({ 
-		pathname    : await page.evaluate(()=> window.location.pathname),
+	const pathname = await page.evaluate(()=> window.location.pathname);
+	return ({ pathname,
 		title       : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
 		colors      : {
 			bg : [ ...new Set(Object.keys(elements).map((key)=> elements[key].map((element)=> (element.styles.hasOwnProperty('background')) ? element.styles['background'].replace(/ none.*$/, '') : (element.styles['background'] = window.rgbaObject('rgba(0, 0, 0, 0.0)')))).flat(Infinity))],
@@ -329,7 +340,7 @@ export async function processView(device, page, doc, html) {
 	// console.log('::|::', 'processView()', { device : device.viewport.deviceScaleFactor, page : typeof page, doc, html });
 
 	const element = await processNode(device, page, await page.$('body', async(node)=> (node)));
-	const { meta, images, tag, node_id, backend_node_id, remote_obj } = element;
+	const { meta, images } = element;
 	const { bounds } = meta;
 
 	const { url, pathname, axeReport, axTree: tree, title: text } = doc;
