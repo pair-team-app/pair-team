@@ -89,7 +89,6 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 
 	const html = formatHTML(await inlineCSS(embedHTML));
 	const elements = await extractElements(device, page);
-
 	const docMeta = await extractMeta(device, page, elements);
 
 	const doc = { ...docMeta, axTree, axeReport, html,
@@ -97,7 +96,7 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	};
 
 	const view = await processView(device, page, doc, html);
-	elements.views.push(view);
+	elements['views'].push(view);
 
 	delete (doc['axTree']);
 	delete (doc['axeReport']);
@@ -145,7 +144,7 @@ export async function renderWorker(url) {
 	const devices = [
 		CHROME_MACOS,
 		// GALAXY_S8,
-		puppeteer.devices['iPhone X']
+		// puppeteer.devices['iPhone X']
 	];
 
 
@@ -164,9 +163,9 @@ export async function renderWorker(url) {
 			const els = (await parsePage(browser, device, link, { ind : (i + 1), tot : links.length })).elements;
 
 			Object.keys(elements).forEach((key)=> {
-				elements[key] = [ ...elements[key], ...els[key]];
+				const items = [ ...elements[key], ...els[key]];
+				elements[key] = (key === 'views') ? items : items.map((el, i)=> ((items.find(({ html }, ii)=> (html === el.html && ii > i))) ? null : el)).filter((el)=> (el !== null));
 			});
-			elements['links'] = doc.links;
 
 			// elements = Object.keys(elements).map((key)=> elements[key].map((element)=> {
 			// 	let { styles, ...el} = element;
@@ -174,15 +173,19 @@ export async function renderWorker(url) {
 			// }));
 		}));
 
+		elements['links'] = doc.links;
+
 		// console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
-// 		console.log('::::', 'doc.links', { links : doc.links });
+		// console.log('::::', 'doc.links', { links : doc.links });
 // 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
 // 		console.log('VIEWS -->', elements.views.length);
 		// console.log('VIEWS -->', JSON.stringify(elements.views[0].images, null, 2));
 		// console.log('AX -->', JSON.stringify(elements.views[0].accessibility, null, 2));
 		// console.log('ZIP -->', elements.views.map((el, i)=> (`[${el.title}] ${JSON.stringify(el.zip.accessibility, null, 2)}\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n`)));
-		console.log('VIEWS -->', elements.views[0].images);
+		// console.log('VIEWS -->', elements.views[0].images);
+		// console.log('VIEWS -->', elements.views);
+		// console.log('HEADINGS -->', elements.headings.map(({ html })=> (html)));
 		// console.log('IMAGES -->', elements.images[0]);
 		// console.log('BUTTONS -->', elements.buttons[0].images);
 		// console.log('BUTTONS -->', JSON.stringify(elements.buttons[0].accessibility, null, 2));

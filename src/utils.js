@@ -238,7 +238,7 @@ export async function extractElements(device, page) {
 	const elements = {
 		views      : [],
 		buttons    : (await Promise.all(await elementFilter('button, input[type="button"], input[type="submit"]'))).filter((node)=> (node !== null)),
-		headings   : [],//(await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), 
+		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), 
 		images     : (await Promise.all(await elementFilter('img, svg'))).filter((node)=> (node !== null)),
 		links      : (await Promise.all(await elementFilter('a'))).filter((node)=> (node !== null)),
 		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null))
@@ -363,6 +363,7 @@ export async function processView(device, page, doc, html) {
 	// console.log('::|::', 'processView() -=[¡V]=-', { element : { ...element, html, accessibility, title : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`, image : await zipContent(data), classes : '', meta    : { ...meta, url, text, pathname : (pathname !== '') ? pathname : '/', bounds : { ...meta.bounds, ...size }}, zip : { ...zip, accessibility, html : await zipContent(html) }}}, '::|::');
 
 	return ({ ...element, html, accessibility,
+	html : '',
 		title  : (pathname === '' || pathname === '/') ? 'Index' : `${pathname.split('/').slice(1).join('/')}`,
 		images : { thumb, cropped, full },
 		meta   : { ...meta, url, text,
