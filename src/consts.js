@@ -6,6 +6,25 @@ import chalk from 'chalk';
 import Jimp from 'jimp';
 
 
+export const DeviceExtract = {
+	FULL           : 'FULL',
+	DESKTOP_FULL   : 'DESKTOP_FULL',
+	MOBILE_FULL    : 'MOBILE_FULL',
+	DESKTOP_SINGLE : 'DESKTOP_SINGLE',
+	MOBILE_SINGLE  : 'MOBILE_SINGLE',
+	DESKTOP_MOBILE : 'DESKTOP_MOBILE'
+};
+
+export const LinkExtract = {
+	FULL   : 'FULL',
+	NONE   : 'NONE',
+	FIRST  : 'FIRST',
+	LAST   : 'LAST',
+	AMOUNT : (amt=-1)=> (amt)
+};
+
+
+
 export const ChalkStyles = {
 	CMD    : (val)=> (chalk.redBright(`\`${val}\``)),
 	BANNER : (msg)=> (`|:| ${msg} |:|`),
@@ -26,12 +45,24 @@ export const ChalkStyles = {
 };
 
 
+
+export const ZIP_OPTS = {
+	type               : 'binarystring',
+	mimeType           : 'application/dat',
+	streamFiles        : true,
+	compression        : 'DEFLATE',
+	compressionOptions : { level : 9 }
+};
+
+
 export const IMAGE_MAX_HEIGHT = 1800;
 export const IMAGE_THUMB_WIDTH = 224;
 export const IMAGE_THUMB_HEIGHT = 140;
 
-export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_NEAREST_NEIGHBOR;
-export const IMAGE_THUMB_SCALER = Jimp.RESIZE_HERMITE;
+// export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_NEAREST_NEIGHBOR;
+export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BILINEAR;
+// export const IMAGE_THUMB_SCALER = Jimp.RESIZE_HERMITE;
+export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BEZIER;
 
 
 export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';

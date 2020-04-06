@@ -48,6 +48,7 @@
     "inline-css": "^2.5.1",
     "jimp": "^0.9.3",
     "json-stringify-safe": "^5.0.1",
+    "jszip": "^3.3.0",
     "lang-js-utils": "file:///labor/projects/npm_modules/lang-js-utils",
     "node-fetch": "^2.6.0",
     "project-name": "^1.0.0",

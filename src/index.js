@@ -8,7 +8,12 @@ import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, globals, listeners } from './config';
-import { ChalkStyles, BROWSER_OPTS, CHROME_MACOS, CHROME_WINDOWS, GALAXY_S8 } from './consts';
+import { 
+	ChalkStyles, 
+	BROWSER_OPTS, 
+	CHROME_MACOS, CHROME_WINDOWS, GALAXY_S8,
+	DeviceExtract, LinkExtract
+} from './consts';
 import {
 	embedPageStyles,
 	extractElements,
@@ -22,6 +27,9 @@ import {
 	stripPageTags,
 } from './utils';
 
+
+const deviceRender = DeviceExtract.MOBILE_SINGLE;
+const LINK_EXTRACT = LinkExtract.LAST;
 
 const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 //	console.log('::|::', 'parsePage()', { url }, '::|::');
@@ -122,31 +130,46 @@ const parseLinks = async(browser, device, url)=> {
 	const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && link.startsWith(url) && !/^https?:\/\/.+https?:\/\//.test(link)));
 	await page.close();
 
-	return ([ ...new Set(links)]);
-	// return ([ ...new Set(links.slice(0, 1))]);
-	// return ([ ...new Set(links.slice(-1))]);
+	if (LINK_EXTRACT === LinkExtract.NONE) {
+		return ([]);
+	
+	} else if (LINK_EXTRACT === LinkExtract.FIRST) {
+		return ([ ...new Set(links.slice(0, 1))]);
+	
+	} else if (LINK_EXTRACT === LinkExtract.LAST) {
+		return ([ ...new Set(links.slice(-1))]);
+	
+	} else if (LINK_EXTRACT === LinkExtract.AMOUNT) {
+		return ([ ...new Set(links.slice(0, Math.min(links.length, LinkExtract.AMOUNT)))]);
+	
+	} else {
+		return ([ ...new Set(links)]);
+	}
 };
 
 
 export async function renderWorker(url) {
 	// console.log('::|::', 'renderWorker()', { url }, '::|::');
 
-	// const devices = [
-	// 	CHROME_MACOS,
-	// 	CHROME_WINDOWS,
-	// 	GALAXY_S8,
-	// 	puppeteer.devices['iPhone X'],
-	// 	puppeteer.devices['iPhone 8'],
-	// 	{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
-	// 	puppeteer.devices['Galaxy Note 3']
-	// ];
 
-	const devices = [
+	const devices = (deviceRender === DeviceExtract.DESKTOP) ? [
+		CHROME_MACOS
+	] : (deviceRender === DeviceExtract.MOBILE) ? [
+		puppeteer.devices['iPhone 8']
+	] : (deviceRender === DeviceExtract.DESKTOP_MOBILE) ? [
 		CHROME_MACOS,
-		// GALAXY_S8,
-		// puppeteer.devices['iPhone X']
+		puppeteer.devices['iPhone 8']
+	] : (deviceRender === DeviceExtract.MOBILE_SINGLE) ? [
+		puppeteer.devices['iPhone X']
+	] : [
+		CHROME_MACOS,
+		CHROME_WINDOWS,
+		GALAXY_S8,
+		puppeteer.devices['iPhone X'],
+		puppeteer.devices['iPhone 8'],
+		{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },
+		puppeteer.devices['Galaxy Note 3']
 	];
-
 
 	const browser = await puppeteer.launch(BROWSER_OPTS);
 
@@ -172,8 +195,6 @@ export async function renderWorker(url) {
 			// 	return (el);
 			// }));
 		}));
-
-		elements['links'] = doc.links;
 
 		// console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
 // 		console.log('::::', JSON.stringify(doc.axTree, null, 2));

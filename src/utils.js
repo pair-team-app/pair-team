@@ -3,12 +3,14 @@
 
 import inlineCss from 'inline-css';
 import Jimp from 'jimp';
+import JSZip from 'jszip';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
 import { 
-	HTML_STRIP_TAGS, 
+	HTML_STRIP_TAGS, ZIP_OPTS,
 	IMAGE_MAX_HEIGHT, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
-	IMAGE_DEVICE_SCALER, IMAGE_THUMB_SCALER 
+	IMAGE_DEVICE_SCALER, IMAGE_THUMB_SCALER,
+	DeviceExtract, LinkExtract
 } from './consts';
 
 
@@ -28,7 +30,7 @@ const captureElementImage = async (page, element, scale=1.0, padding=[0, 0, 0, 0
 		}
 	}) : null;
 
-	return (genImageSizes({ pngData, scale }));
+	return (genImageSizes({ pngData, scale }, false));
 };
 
 
@@ -41,7 +43,7 @@ const captureScreenImage = async(page, scale=1.0)=> {
 	let ts = Date.now();
 	const pngData = await page.screenshot({
 		type           : 'png',
-		fullPage       : false,
+		fullPage       : true,
 		omitBackground : true,
 		// clip           : { ...await (await page.$('body', async(node)=> (node))).boundingBox() }
 		// clip           : { 
@@ -52,7 +54,7 @@ const captureScreenImage = async(page, scale=1.0)=> {
 		//  }
 	});
 
-	return (genImageSizes({ pngData, scale }));
+	return (genImageSizes({ pngData, scale }, false, { page }));
 };
 
 
@@ -76,41 +78,73 @@ const elementBackendNodeID = async(page, objectID)=> {
 };
 
 
-const genImageSizes = async({ pngData, scale })=> {
-	const fullsize = (pngData) ? await Jimp.read(pngData).then(async(image)=> {
-		return (image.scale(scale, IMAGE_DEVICE_SCALER));
-	}).catch((error)=> (null)) : null;
+const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> {
+	// console.log('genImageSizes()', { pngData, scale, deviceScaled });
 
-	// const scalesize = (fullsize) ? (scale === 1) ? fullsize.clone() : fullsize.clone().scale(scale, IMAGE_DEVICE_SCALER) : null;
-	const cropsize = (fullsize) ? (fullsize.bitmap.height <= IMAGE_MAX_HEIGHT) ? fullsize.clone() : scalesize.clone().crop(0, 0, fullsize.bitmap.width, Math.min(fullsize.bitmap.height, IMAGE_MAX_HEIGHT)) : null;
-	const thumbsize = (cropsize) ? (cropsize.bitmap.width <= IMAGE_THUMB_WIDTH && cropsize.bitmap.height <= IMAGE_THUMB_HEIGHT) ? cropsize.clone() : await cropsize.clone().scaleToFit(Math.min(IMAGE_THUMB_WIDTH, cropsize.bitmap.width), Math.min(IMAGE_THUMB_HEIGHT, cropsize.bitmap.height), IMAGE_THUMB_SCALER) : null;
-
-	return ({
-		full    : (fullsize) ? {
-			type : 'fullsize',
-			data : await thumbsize.getBase64Async(Jimp.MIME_PNG),//await fullsize.getBase64Async(Jimp.MIME_PNG),
-			size : {
-				width  : fullsize.bitmap.width,
-				height : fullsize.bitmap.height
-			}
-		} : null,
-		cropped : (cropsize) ? {
-			type : 'cropped',
-			data : await cropsize.getBase64Async(Jimp.MIME_PNG),
-			size : {
-				width  : cropsize.bitmap.width,
-				height : cropsize.bitmap.height
-			}
-		} : null,
-		thumb   : (thumbsize) ? {
-			type : 'thumb',
-			data : await thumbsize.getBase64Async(Jimp.MIME_PNG),
-			size : {
-				width  : thumbsize.bitmap.width,
-				height : thumbsize.bitmap.height
-			}
-		} : null
+	const MAX_BYTES = 1048576 * 2;
+	const { page } = meta || {};
+	const scaled = (scale !== 1.0 || deviceScaled);
+	const scaleImage = ({ image, factor} )=> (image.scale(factor, IMAGE_DEVICE_SCALER));
+	const imageObj = async({ image, type })=> ((!image) ? null : { type,
+		// data : await zipContent(await image.getBase64Async(Jimp.MIME_PNG)),
+		data : await image.getBase64Async(Jimp.MIME_PNG),
+		size : {
+			width  : image.bitmap.width,
+			height : image.bitmap.height
+		}
 	});
+
+	const fullImage = ({ image, scaleFactor=1.0 })=> {
+		const img = (scaleFactor !== 1.0) ? scaleImage({ image, factor : scaleFactor }) : image;
+		return ((img.bitmap.data.length > MAX_BYTES) ? img.crop(0, 0, img.bitmap.width, (MAX_BYTES / img.bitmap.width)) : img);
+	};
+	const croppedImage = async({ image, size })=> (await image.clone().crop(0, 0, size.width, Math.min(size.height, IMAGE_MAX_HEIGHT)));
+	const thumbedImage = ({ image, size} )=> (image.clone().scaleToFit(Math.min(IMAGE_THUMB_WIDTH, cropsize.bitmap.width), Math.min(IMAGE_THUMB_HEIGHT, cropsize.bitmap.height), IMAGE_THUMB_SCALER));
+
+	const srcImage = (pngData) ? await Jimp.read(pngData).then(async(image)=> (image)).catch((error)=> (null)) : null;
+	const fullsize = fullImage({ image : srcImage, scaleFactor : (scaled) ? scale : 1.0 });
+	const cropsize = await croppedImage({ image : fullsize, size : fullsize.bitmap });
+	const thumbsize = thumbedImage({ image : fullsize, size : fullsize.bitmap });
+	
+	const imageData = {
+		org     : await imageObj({
+			image : srcImage,
+			type  : 'org'
+		}),
+		full    : await imageObj({ 
+			image : fullsize, 
+			type  : 'full' 
+		}),
+		cropped : await imageObj({ 
+			image : cropsize, 
+			type  : 'cropped' 
+		}),
+		thumb   : await imageObj({ 
+			image : thumbsize, 
+			type  : 'thumb' 
+		})
+	};
+
+	if (imageData.cropped.data.length === imageData.full.data.length) {
+		delete (imageData.cropped.data);
+	}
+
+	if (imageData.thumb.data.length === imageData.full.data.length) {
+		delete (imageData.thumb.data);
+	}
+
+	
+	delete (imageData['org']);
+
+	console.log('::|::', 'genImageSizes() -=[¡i¡]=-', { page : page.url(), data : { 
+		// org     : imageData.org.data.length, 
+		full    : imageData.full.data.length, 
+		cropped : (imageData.cropped.data) ? imageData.cropped.data.length : 0, 
+		thumb   : (imageData.thumb.data) ? imageData.thumb.data.length : 0
+	}}, '::|::');
+
+
+	return (imageData);
 };
 
 
@@ -126,6 +160,13 @@ const processNode = async(device, page, node)=> {
 
 	const attribs = await page.evaluate((el)=> {
 		const styles = window.elementStyles(el);
+		const html = el.outerHTML;
+
+		// Object.keys(elements).forEach((key)=> {
+		// 	const items = [ ...elements[key], ...els[key]];
+		// 	elements[key] = (key === 'views') ? items : items.map((el, i)=> ((items.find(({ html }, ii)=> (html === el.html && ii > i))) ? null : el)).filter((el)=> (el !== null));
+		// });
+
 		// 		console.log(`el stuff: [${el.outerHTML}] [${el.nodeName}] [${el.nodeType}]`);
 
 		return ({ styles,
@@ -195,6 +236,18 @@ const processNode = async(device, page, node)=> {
 	return (element);
 };
 
+
+const zipContent = async(content, filename=`${(Date.now() * 0.001).toString().replace('.', '_')}.dat`)=> {
+	const zip = new JSZip();
+	return (await (new Promise((resolve, reject)=> {
+		zip.file(filename, content).generateAsync(ZIP_OPTS).then((data)=> {
+			resolve(data);
+
+		}).catch((e)=> {
+			reject(e);
+		});
+	})));
+}
 
 
 export async function embedPageStyles(html, relativeTo='build') {

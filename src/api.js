@@ -32,7 +32,7 @@ export async function createPlayground({ doc, device, userID, teamID, buildID })
  	}
 
 	const { playground } = response;
-  // console.log('ADD_PLAYGROUND -->>', { id : playground.id, buildID : playground.build_id });
+  console.log('ADD_PLAYGROUND -->>', { id : playground.id, buildID : playground.build_id, tmpDir : response.tmp_dir });
 
 	return ({ ...playground,
 		id       : playground.id << 0,
@@ -67,7 +67,7 @@ export async function sendPlaygroundComponents({ userID, teamID, buildID, playgr
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 	}
 
-	console.log('ADD_COMPONENTS -->>', response);
-	// console.log('ADD_COMPONENTS -->>', response.components);
+	// console.log('ADD_COMPONENTS -->>', response);
+	console.log('ADD_COMPONENTS -->>', { components : response.components });
 	return (response.components);
 }
