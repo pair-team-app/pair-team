@@ -9,5 +9,8 @@
 #-- compile stuff --#
 build
 
+/tmp
+/.history
+
 #-- npm stuff --#
 node_modules
