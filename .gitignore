@@ -14,3 +14,17 @@ build
 
 #-- npm stuff --#
 node_modules
+
+
+#-- testing --#
+*.spec.js
+*.test.js
+
+#-- tmp stuff --#
+tmp
+
+
+
+
+#-- creds --#
+crypto-creds.json

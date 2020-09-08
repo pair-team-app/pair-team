@@ -1,10 +1,15 @@
 {
   "name": "design-engine-extract",
-  "version": "0.2.0",
+  "version": "1.8.1",
   "description": "Sub module functionality for design-engine-playground",
   "main": "src/index.js",
+  "jest": {
+    "setupFilesAfterEnv": [
+      "@wordpress/jest-puppeteer-axe"
+    ]
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [
     "design-system",
@@ -38,9 +43,21 @@
   },
   "homepage": "https://github.com/de-ai/design-engine-extract#readme",
   "dependencies": {
+    "axe-puppeteer": "^1.0.0",
     "chalk": "^2.4.2",
+    "inline-css": "^2.5.1",
+    "jimp": "^0.9.3",
+    "json-stringify-safe": "^5.0.1",
+    "jszip": "^3.3.0",
+    "lang-js-utils": "file:///labor/projects/npm_modules/lang-js-utils",
     "node-fetch": "^2.6.0",
     "project-name": "^1.0.0",
-    "puppeteer": "^1.20.0"
+    "puppeteer": "^1.20.0",
+    "string-strip-html": "^4.3.7",
+    "web-resource-inliner": "^4.3.3"
+  },
+  "devDependencies": {
+    "@wordpress/jest-puppeteer-axe": "^1.4.0",
+    "jest": "^25.1.0"
   }
 }

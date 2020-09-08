@@ -2,6 +2,132 @@
 'use strict';
 
 
+import chalk from 'chalk';
+import Jimp from 'jimp';
+
+
+export const DeviceExtract = {
+	FULL           : 'FULL',
+	DESKTOP_FULL   : 'DESKTOP_FULL',
+	MOBILE_FULL    : 'MOBILE_FULL',
+	DESKTOP_SINGLE : 'DESKTOP_SINGLE',
+	MOBILE_SINGLE  : 'MOBILE_SINGLE',
+	DESKTOP_MOBILE : 'DESKTOP_MOBILE'
+};
+
+export const LinkExtract = {
+	FULL   : 'FULL',
+	NONE   : 'NONE',
+	FIRST  : 'FIRST',
+	LAST   : 'LAST',
+	AMOUNT : (amt=-1)=> (amt)
+};
+
+
+
+export const ChalkStyles = {
+	CMD    : (val)=> (chalk.redBright(`\`${val}\``)),
+	BANNER : (msg)=> (`|:| ${msg} |:|`),
+	ERROR  : chalk.red.bold('ERROR'),
+	DONE   : chalk.greenBright.bold('DONE'),
+	DEVICE : (dev)=> (`[${chalk.grey.bold(dev)}]`),
+	// FOOTER : (len=50)=> (`${chalk.white('\\')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('/')}\n`),
+	// H_DIV  : (len=50, newline=false)=> (`${(newline) ? '\n' : ''}${chalk.white('|')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('|')}${(newline) ? '\n' : ''}`),
+	// HEADER : (len=50)=> (`\n${chalk.white('/')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('\\')}`),
+	FOOTER : (len=50)=> (`${chalk.white('\\')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('/')}\n`),
+	H_DIV  : (newline=false, len=50)=> (`${(newline) ? '\n' : ''}${chalk.white('|')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('|')}${(newline) ? '\n' : ''}`),
+	HEADER : (len=50)=> (`\n${chalk.white('/')}${(new Array(len * 0.5).fill(`${chalk.grey('=')}${chalk.whiteBright('<>')}`)).join('')}${chalk.grey('=')}${chalk.white('\\')}`),
+	INFO   : chalk.cyanBright.bold('INFO'),
+	NUMBER : (val, bare=false)=> ((bare) ? chalk.yellow.bold(val) : `(${chalk.yellow.bold(val)})`),
+	PATH   : chalk.magenta.bold,
+	TITLE  : (val)=> (chalk.yellowBright(val.toUpperCase())),
+	URL    : chalk.blueBright.bold.underline
+};
+
+
+
+export const ZIP_OPTS = {
+	type               : 'binarystring',
+	mimeType           : 'application/dat',
+	streamFiles        : true,
+	compression        : 'DEFLATE',
+	compressionOptions : { level : 9 }
+};
+
+
+export const IMAGE_MAX_HEIGHT = 1800;
+export const IMAGE_THUMB_WIDTH = 224;
+export const IMAGE_THUMB_HEIGHT = 140;
+
+// export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_NEAREST_NEIGHBOR;
+export const IMAGE_DEVICE_SCALER = Jimp.RESIZE_BILINEAR;
+// export const IMAGE_THUMB_SCALER = Jimp.RESIZE_HERMITE;
+export const IMAGE_THUMB_SCALER = Jimp.RESIZE_BEZIER;
+
+
+export const API_ENDPT_URL = 'http://api.pairurl.com/v4/pairurl.php';
+
+export const FETCH_CFG = {
+	method  : 'POST',
+	headers : { 'Content-Type' : 'application/json' },
+	body    : {
+		action  : null,
+		payload : null
+	}
+};
+
+export const BROWSER_OPTS = {
+	devTools          : true,
+	headless          : true,
+	ignoreHTTPSErrors : true,
+	// args              : ['--no-sandbox', '--disable-gpu']
+	args              : ['--no-sandbox']
+};
+
+export const CHROME_MACOS = {
+	name      : 'MacOS Desktop',
+	userAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+	viewport  : {
+		width             : 1920,
+		height            : 1080,
+		deviceScaleFactor : 1,
+		isMobile          : false,
+		hasTouch          : false,
+		isLandscape       : false
+	}
+};
+
+export const CHROME_WINDOWS = {
+	name      : 'Windows Desktop',
+	userAgent : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+	viewport  : {
+		width             : 1366,
+		height            : 768,
+		deviceScaleFactor : 1,
+		isMobile          : false,
+		hasTouch          : false,
+		isLandscape       : false
+	}
+};
+
+export const GALAXY_S8 = {
+	name      : 'Galaxy S8',
+	userAgent : 'Mozilla/5.0 (Linux; Android 7.0; SAMSUNG SM-G950F Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/5.2 Chrome/51.0.2704.106 Mobile Safari/537.36',
+	viewport  : {
+		width             : 720,
+		height            : 1480,
+		deviceScaleFactor : 2,
+		isMobile          : true,
+		hasTouch          : true,
+		isLandscape       : false
+	}
+};
+
+export const HTML_STRIP_TAGS = [
+	'noscript',
+	'script'
+];
+
 export const CSS_AUTO_STYLES = [
 	'align-self',
 	'alignment-baseline',
@@ -143,6 +269,15 @@ export const CSS_NORMAL_STYLES = [
 	'white-space',
 	'word-break',
 	'word-wrap'
+];
+
+export const CSS_PURGE_STYLES = [
+	'block-size',
+	'font',
+	'height',
+	'max-block-size',
+	'max-height',
+	'-webkit-logical-height'
 ];
 
 export const CSS_ZERO_STYLES = [
