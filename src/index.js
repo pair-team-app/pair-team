@@ -8,9 +8,9 @@ import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from './api';
 import { consts, funcs, globals, listeners } from './config';
-import { 
-	ChalkStyles, 
-	BROWSER_OPTS, 
+import {
+	ChalkStyles,
+	BROWSER_OPTS,
 	CHROME_MACOS, CHROME_WINDOWS, GALAXY_S8,
 	DeviceExtract, LinkExtract
 } from './consts';
@@ -28,11 +28,11 @@ import {
 } from './utils';
 
 
-const deviceRender = DeviceExtract.MOBILE_SINGLE;
-const LINK_EXTRACT = LinkExtract.LAST;
+const deviceRender = DeviceExtract.DESKTOP_MOBILE;
+const LINK_EXTRACT = LinkExtract.FIRST;
 
 const parsePage = async(browser, device, url, { ind, tot }=null)=> {
-//	console.log('::|::', 'parsePage()', { url }, '::|::');
+	// console.log('::|::', 'parsePage()', { url }, '::|::');
 
 	if (ind > 0 || tot > 0) {
 		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('/' + url.split('/').slice(3))} view elements…`);
@@ -96,7 +96,8 @@ const parsePage = async(browser, device, url, { ind, tot }=null)=> {
 	});
 
 	const html = formatHTML(await inlineCSS(embedHTML));
-	const elements = await extractElements(device, page);
+	// const elements = await extractElements(device, page);
+	const elements = { views : [] };
 	const docMeta = await extractMeta(device, page, elements);
 
 	const doc = { ...docMeta, axTree, axeReport, html,
@@ -132,16 +133,16 @@ const parseLinks = async(browser, device, url)=> {
 
 	if (LINK_EXTRACT === LinkExtract.NONE) {
 		return ([]);
-	
+
 	} else if (LINK_EXTRACT === LinkExtract.FIRST) {
 		return ([ ...new Set(links.slice(0, 1))]);
-	
+
 	} else if (LINK_EXTRACT === LinkExtract.LAST) {
 		return ([ ...new Set(links.slice(-1))]);
-	
+
 	} else if (LINK_EXTRACT === LinkExtract.AMOUNT) {
 		return ([ ...new Set(links.slice(0, Math.min(links.length, LinkExtract.AMOUNT)))]);
-	
+
 	} else {
 		return ([ ...new Set(links)]);
 	}
