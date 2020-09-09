@@ -140,7 +140,7 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 			puppeteer.devices['iPhone 8']
 		] : (deviceRender === DeviceExtract.DESKTOP_MOBILE) ? [
 			CHROME_MACOS,
-			puppeteer.devices['iPhone 8']
+			GALAXY_S8,
 		] : (deviceRender === DeviceExtract.MOBILE_SINGLE) ? [
 			puppeteer.devices['iPhone X']
 		] : [
@@ -238,7 +238,7 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 
 		renders.forEach((render, i)=> {
 			const { device, doc, elements } = render;
-			console.log('%s %s Completed parsing: %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device), [ ...Object.keys(elements).map((key)=> (`${ChalkStyles.NUMBER(elements[key].length)} ${Strings.pluralize(key.slice(0, -1), elements[key].length)}`)), `${ChalkStyles.NUMBER(Object.keys(doc.colors).map((key)=> (doc.colors[key].length)).reduce((acc, val)=> (acc + val)))} ${Strings.pluralize('color', Object.keys(doc.colors).map((key)=> (doc.colors[key].length)).reduce((acc, val)=> (acc + val)))}`, `${ChalkStyles.NUMBER(doc.fonts.length)} ${Strings.pluralize('font', doc.fonts.length)}`].join(', '));
+			console.log('%s %s Completed parsing: %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device), [ ...Object.keys(elements).map((key)=> (`${ChalkStyles.NUMBER(elements[key].length)} ${Strings.pluralize(key.slice(0, -1), elements[key].length)}`))].join(', '));
 		});
 
 
@@ -272,7 +272,7 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 					});
 				}
 
-				console.log('%s %s Created playground: %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device), ChalkStyles.URL(`http://dev.pairurl.com/app/${Strings.slugifyURI(team.title)}/${Strings.slugifyURI(render.doc.title)}/${playground.build_id}/${Strings.slugifyURI(device)}`));
+				console.log('%s %s Created playground: %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device), ChalkStyles.URL(`https://app.pair.team/team/${team.id}--${Strings.slugifyURI(team.title)}/project/${playground.build_id}--${Strings.slugifyURI(playground.title)}/${Strings.slugifyURI(device)}`));
 			}
 		}
 

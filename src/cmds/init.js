@@ -67,7 +67,8 @@ promise.promisifyAll(require('fs'));
 	}
 
 	await writeTeam({
-		id : 87
+		id : 87,
+		title : 'Pair URL 1'
 	});
 
 	const pkgPath = await checkDir();

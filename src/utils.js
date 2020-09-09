@@ -33,7 +33,8 @@ const captureElementImage = async (page, element, scale=1.0, padding=[0, 0, 0, 0
 
 
 const captureScreenImage = async(page, scale=1.0)=> {
-	//	console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale }, '::|::');
+		// console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale }, '::|::');
+		console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { scale }, '::|::');
 	// console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale, boundingBox : await (await page.$('body', async(node)=> (node))).boundingBox() }, '::|::');
 
 	// const boundingBox = await (await page.$('body', async(node)=> (node))).boundingBox();
@@ -95,6 +96,7 @@ const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> 
 	const fullImage = ({ image, scaleFactor=1.0 })=> {
 		const img = (scaleFactor !== 1.0) ? scaleImage({ image, factor : scaleFactor }) : image;
 		return ((img.bitmap.data.length > MAX_BYTES) ? img.crop(0, 0, img.bitmap.width, (MAX_BYTES / img.bitmap.width)) : img);
+		// return ((img.bitmap.data.length > MAX_BYTES) ? img.crop(0, 0, img.bitmap.width, (MAX_BYTES / img.bitmap.width)) : img);
 	};
 	const croppedImage = async({ image, size })=> (await image.clone().crop(0, 0, size.width, Math.min(size.height, IMAGE_MAX_HEIGHT)));
 	const thumbedImage = ({ image, size} )=> (image.clone().scaleToFit(Math.min(IMAGE_THUMB_WIDTH, cropsize.bitmap.width), Math.min(IMAGE_THUMB_HEIGHT, cropsize.bitmap.height), IMAGE_THUMB_SCALER));
@@ -105,9 +107,9 @@ const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> 
 	const thumbsize = thumbedImage({ image : fullsize, size : fullsize.bitmap });
 
 	const imageData = {
-		org     : await imageObj({
+		src     : await imageObj({
 			image : srcImage,
-			type  : 'org'
+			type  : 'src'
 		}),
 		full    : await imageObj({
 			image : fullsize,
@@ -123,22 +125,11 @@ const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> 
 		})
 	};
 
-	if (imageData.cropped.data.length === imageData.full.data.length) {
-		delete (imageData.cropped.data);
-	}
-
-	if (imageData.thumb.data.length === imageData.full.data.length) {
-		delete (imageData.thumb.data);
-	}
-
-
-	delete (imageData['org']);
-
 	console.log('::|::', 'genImageSizes() -=[¡i¡]=-', { page : page.url(), data : {
-		// org     : imageData.org.data.length,
+		src     : imageData.src.data.length,
 		full    : imageData.full.data.length,
-		cropped : (imageData.cropped.data) ? imageData.cropped.data.length : 0,
-		thumb   : (imageData.thumb.data) ? imageData.thumb.data.length : 0
+		cropped : imageData.cropped.data.length,
+		thumb   : imageData.thumb.data.length
 	}}, '::|::');
 
 
@@ -149,12 +140,6 @@ const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> 
 const processNode = async(device, page, node)=> {
 	// console.log('::|::', 'processNode()', { device, page: page.url(), node: (await (await node.getProperty('tagName')).jsonValue()).toLowerCase() });
 	// 	console.log(`node stuff:`, axe.commons.matches(node, 'a'));
-	// 	const children = ((await (await node.getProperty('tagName')).jsonValue()).toLowerCase() !== 'body') ? await Promise.all((await node.$$('*', (nodes)=> (nodes))).map(async(node)=> (await processNode(device, page, node)))) : [];
-
-	//	const bounds = await node.boundingBox();
-	//	if (!bounds || (bounds.width === 0 || bounds.height === 0)) {
-	//		return (null);
-	//	}
 
 	const attribs = await page.evaluate((el)=> {
 		return ({
