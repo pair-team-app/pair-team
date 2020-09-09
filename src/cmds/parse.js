@@ -64,8 +64,6 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 		await page.goto(url, { waitUntil : 'networkidle0' });
 		await page.content();
 
-	//	await page.addScriptTag({ path : './node_modules/design-engine-playground/node_modules/design-engine-extract/node_modules/axe-selector/dist/getSelector.js' });
-
 		const client = await page.target().createCDPSession();
 
 		await client.send('DOM.enable');
@@ -159,9 +157,8 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 
 		console.log(ChalkStyles.HEADER());
 		const renders = await Promise.all(devices.map(async(device, i)=> {
-			console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Extracting ${ChalkStyles.PATH('Index')} view elements…`);
-
 			const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
+
 			const links = await parseLinks(browser, device, url);
 			doc.links = links.map((link)=> (`/${link.split('/').slice(3).join('/')}`));
 			console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}: [ ${doc.links.map((link)=> (ChalkStyles.PATH(link))).join(', ')} ]…`);
@@ -173,11 +170,6 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 					const items = [ ...elements[key], ...els[key]];
 					elements[key] = (key === 'views') ? items : items.map((el, i)=> ((items.find(({ html }, ii)=> (html === el.html && ii > i))) ? null : el)).filter((el)=> (el !== null));
 				});
-
-				// elements = Object.keys(elements).map((key)=> elements[key].map((element)=> {
-				// 	let { styles, ...el} = element;
-				// 	return (el);
-				// }));
 			}));
 
 			// console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
@@ -232,7 +224,7 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 
 
 	if (!(await hasTeam()) || !(await hasUser())) {
-		require('./cmds/init');
+		require('./init');
 	}
 
 	const user = await getUser();
@@ -248,7 +240,6 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 			const { device, doc, elements } = render;
 			console.log('%s %s Completed parsing: %s', ChalkStyles.INFO, ChalkStyles.DEVICE(device), [ ...Object.keys(elements).map((key)=> (`${ChalkStyles.NUMBER(elements[key].length)} ${Strings.pluralize(key.slice(0, -1), elements[key].length)}`)), `${ChalkStyles.NUMBER(Object.keys(doc.colors).map((key)=> (doc.colors[key].length)).reduce((acc, val)=> (acc + val)))} ${Strings.pluralize('color', Object.keys(doc.colors).map((key)=> (doc.colors[key].length)).reduce((acc, val)=> (acc + val)))}`, `${ChalkStyles.NUMBER(doc.fonts.length)} ${Strings.pluralize('font', doc.fonts.length)}`].join(', '));
 		});
-
 
 
 		if (MAKE_PLAYGROUND) {
