@@ -13,16 +13,10 @@ import { consts, funcs, globals, listeners } from '../config';
 import { MAKE_PLAYGROUND, SEND_ELEMENTS, PORT, ChalkStyles, BROWSER_OPTS, CHROME_MACOS, CHROME_WINDOWS, GALAXY_S8, DeviceExtract, LinkExtract } from '../consts';
 import { makeServer } from '../server';
 import {
-	embedPageStyles,
-	extractElements,
 	extractMeta,
 	fillChildNodes,
 	formatAXNode,
-	formatHTML,
-	inlineCSS,
-	pageStyleTag,
 	processView,
-	stripPageTags,
 } from '../utils';
 
 const deviceRender = DeviceExtract.DESKTOP_MOBILE;
@@ -109,36 +103,27 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 		const axeReport = { failed, passed, aborted };
 		// console.log('AxePuppeteer SAYS:', JSON.stringify(axeReport, null, 2));
 
-		await stripPageTags(page, ['iframe']);
-		const embedHTML = await embedPageStyles(await page.content());
-		const styleTag = await pageStyleTag(embedHTML);
-
 		await consts(page);
 		await listeners(page);
 		await funcs(page);
-		await globals(page, { flatDOM, axeReport, styleTag });
+		await globals(page, { flatDOM, axeReport });
 
 		await page.exposeFunction('getSelector', (el)=> {
 			return (getSelector(el));
 		});
 
-		const html = formatHTML(await inlineCSS(embedHTML));
-		// const elements = await extractElements(device, page);
 		const elements = { views : [] };
-		const docMeta = await extractMeta(device, page, elements);
-
-		const doc = { ...docMeta, axTree, axeReport, html,
+		const doc = { ...(await extractMeta(device, page)), axTree, axeReport,
 			title : projectName()
 		};
 
-		const view = await processView(device, page, doc, html);
+		const view = await processView(device, page, doc);
 		elements['views'].push(view);
 
 		delete (doc['axTree']);
 		delete (doc['axeReport']);
 		delete (doc['image']);
 		delete (doc['pathname']);
-		delete (doc['styles']);
 
 		console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Finished parsing view ${ChalkStyles.PATH(((ind > 0 || tot > 0) ? '/' : '') + view.title)}`);
 
@@ -146,7 +131,7 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 		await page.close();
 		return({ doc, elements });
 	};
-	
+
 
 	const renderWorker = async(url)=> {
 		// console.log('::|::', 'renderWorker()', { url }, '::|::');
