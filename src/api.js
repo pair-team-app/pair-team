@@ -7,7 +7,7 @@ import { API_ENDPT_URL, FETCH_CFG, ChalkStyles } from './consts'
 
 
 export async function createPlayground({ doc, device, userID, teamID, buildID }) {
-	// console.log('createPlayground()', { doc, device, userID, teamID, buildID });
+	console.log('createPlayground()', { doc, device, userID, teamID, buildID });
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
@@ -32,7 +32,7 @@ export async function createPlayground({ doc, device, userID, teamID, buildID })
  	}
 
 	const { playground } = response;
-  console.log('ADD_PLAYGROUND -->>', { id : playground.id, buildID : playground.build_id, tmpDir : response.tmp_dir });
+  console.log('ADD_PLAYGROUND -->>', { id : playground.id, buildID : playground.build_id });
 
 	return ({ ...playground,
 		id       : playground.id << 0,

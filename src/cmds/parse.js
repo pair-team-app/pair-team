@@ -8,7 +8,7 @@ import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
 import { createPlayground, sendPlaygroundComponents } from '../api';
-import { initCache, getAll, dropPlayground, getPlayground, writePlayground, getTeam, getUser, hasUser, hasTeam } from '../cache';
+import { initCache, getAll, dropPlayground, getPlayground, writePlayground, getTeam, getUser, hasUser, hasTeam, writeUser, writeTeam } from '../cache';
 import { consts, funcs, globals, listeners } from '../config';
 import { MAKE_PLAYGROUND, SEND_ELEMENTS, PORT, ChalkStyles, BROWSER_OPTS, CHROME_MACOS, CHROME_WINDOWS, GALAXY_S8, DeviceExtract, LinkExtract } from '../consts';
 import { makeServer } from '../server';
@@ -216,6 +216,15 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 
 
 	await initCache();
+
+	await writeUser({
+		id : 542
+	});
+
+	await writeTeam({
+		id    : 87,
+		title : 'Pair URL 1'
+	});
 
 	const allCache = await getAll();
 	// console.log('//////--> allCache', { user : allCache.user.id, team : allCache.team.id });

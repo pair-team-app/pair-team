@@ -56,10 +56,6 @@ promise.promisifyAll(require('fs'));
 		// await writeTeam(team);
 	}
 
-	await writeUser({
-		id : 542
-	});
-
 	// team = await getTeam();
 	if (!team || team.id === 0) {
 		// const team = await teamLookup(user);
