@@ -4,17 +4,23 @@
 
 
 #-- ide stuff --#
-.idea
 /.history
+.idea
+*.iml
+*.ipr
 
 
 #-- npm stuff --#
 /node_modules
+npm-debug.log*
 
 
 #-- testing --#
+/coverage
+/.eslintrc.json
 *.spec.js
 *.test.js
+
 
 #-- tmp stuff --#
 /tmp
