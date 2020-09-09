@@ -6,9 +6,9 @@ import Jimp from 'jimp';
 import JSZip from 'jszip';
 import stripHtml from 'string-strip-html';
 import inline from 'web-resource-inliner';
-import { 
+import {
 	HTML_STRIP_TAGS, ZIP_OPTS,
-	IMAGE_MAX_HEIGHT, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT, 
+	IMAGE_MAX_HEIGHT, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT,
 	IMAGE_DEVICE_SCALER, IMAGE_THUMB_SCALER,
 	DeviceExtract, LinkExtract
 } from './consts';
@@ -46,7 +46,7 @@ const captureScreenImage = async(page, scale=1.0)=> {
 		fullPage       : true,
 		omitBackground : true,
 		// clip           : { ...await (await page.$('body', async(node)=> (node))).boundingBox() }
-		// clip           : { 
+		// clip           : {
 		// 	x      : 0,
 		// 	y      : 0,
 		// 	width  : boundingBox.width,
@@ -105,23 +105,23 @@ const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> 
 	const fullsize = fullImage({ image : srcImage, scaleFactor : (scaled) ? scale : 1.0 });
 	const cropsize = await croppedImage({ image : fullsize, size : fullsize.bitmap });
 	const thumbsize = thumbedImage({ image : fullsize, size : fullsize.bitmap });
-	
+
 	const imageData = {
 		org     : await imageObj({
 			image : srcImage,
 			type  : 'org'
 		}),
-		full    : await imageObj({ 
-			image : fullsize, 
-			type  : 'full' 
+		full    : await imageObj({
+			image : fullsize,
+			type  : 'full'
 		}),
-		cropped : await imageObj({ 
-			image : cropsize, 
-			type  : 'cropped' 
+		cropped : await imageObj({
+			image : cropsize,
+			type  : 'cropped'
 		}),
-		thumb   : await imageObj({ 
-			image : thumbsize, 
-			type  : 'thumb' 
+		thumb   : await imageObj({
+			image : thumbsize,
+			type  : 'thumb'
 		})
 	};
 
@@ -133,13 +133,13 @@ const genImageSizes = async({ pngData, scale }, deviceScaled=true, meta=null)=> 
 		delete (imageData.thumb.data);
 	}
 
-	
+
 	delete (imageData['org']);
 
-	console.log('::|::', 'genImageSizes() -=[¡i¡]=-', { page : page.url(), data : { 
-		// org     : imageData.org.data.length, 
-		full    : imageData.full.data.length, 
-		cropped : (imageData.cropped.data) ? imageData.cropped.data.length : 0, 
+	console.log('::|::', 'genImageSizes() -=[¡i¡]=-', { page : page.url(), data : {
+		// org     : imageData.org.data.length,
+		full    : imageData.full.data.length,
+		cropped : (imageData.cropped.data) ? imageData.cropped.data.length : 0,
 		thumb   : (imageData.thumb.data) ? imageData.thumb.data.length : 0
 	}}, '::|::');
 
@@ -213,7 +213,7 @@ const processNode = async(device, page, node)=> {
 
 	const { full, cropped, thumb } = (tag === 'body') ? await captureScreenImage(page, 1 / device.viewport.deviceScaleFactor) : await captureElementImage(page, node, 1 / device.viewport.deviceScaleFactor);
 	const bounds = { ...(await node.boundingBox()), ...cropped.size };
-	
+
 	const { nodeID } = domNodeIDs(flatDOM, backendNodeID);
 
 	// if (tag !== 'body') {
@@ -279,19 +279,19 @@ export async function extractElements(device, page) {
 				return (new Promise(async(resolve, reject)=> {
 					if (node === null || !(await node.boundingBox())) {
 						reject(new Error(`NO BOUNDS for node [${node._remoteObject.objectID}]`));
-					
+
 					} else {
 						resolve(node);
 					}
 				})).then(async(node)=> (await processNode(device, page, node))).catch((error)=> null);
 			})
 		);
-	};	
+	};
 
 	const elements = {
 		views      : [],
 		buttons    : (await Promise.all(await elementFilter('button, input[type="button"], input[type="submit"]'))).filter((node)=> (node !== null)),
-		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)), 
+		headings   : (await Promise.all(await elementFilter('h1, h2, h3, h4, h5, h6'))).filter((node)=> (node !== null)),
 		images     : (await Promise.all(await elementFilter('img, svg'))).filter((node)=> (node !== null)),
 		links      : (await Promise.all(await elementFilter('a'))).filter((node)=> (node !== null)),
 		textfields : (await Promise.all(await elementFilter('input:not([type="checkbox"]), input:not([type="radio"]), input:not([type="button"]), input:not([type="hidden"]), input:not([type="file"]), textarea'))).filter((node)=> (node !== null))
@@ -398,7 +398,7 @@ export async function processView(device, page, doc, html) {
 
 	const { url, pathname, axeReport, axTree: tree, title: text } = doc;
 	const { full, cropped, thumb } = images;
-	
+
 	// console.log(':::: PAGE ::::', { device : device.name, tag, visible, bounds, images, nodeID: node_id, backendNodeID : backend_node_id, remoteObject: remote_obj });
 	// console.log('::::', { thumb, cropped, full });
 	// console.log('::|::', 'processView() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');

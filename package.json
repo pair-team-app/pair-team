@@ -1,63 +1,83 @@
 {
-  "name": "design-engine-extract",
-  "version": "1.8.1",
-  "description": "Sub module functionality for design-engine-playground",
-  "main": "src/index.js",
-  "jest": {
-    "setupFilesAfterEnv": [
-      "@wordpress/jest-puppeteer-axe"
-    ]
-  },
-  "scripts": {
-    "test": "jest"
-  },
-  "keywords": [
-    "design-system",
-    "design",
-    "design-systems",
-    "design-module",
-    "design-npm-module",
-    "design-package",
-    "design-plugin",
-    "design-system",
-    "designer-system",
-    "design-system-module",
-    "designer-module",
-    "designer-plugin",
-    "css-design-system",
-    "node",
-    "node-module",
-    "javascript-module",
-    "javascript",
-    "code-to-design",
-    "design-to-code"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/de-ai/design-engine-extract.git"
-  },
-  "author": "Design Engine, Inc",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/de-ai/design-engine-extract/issues"
-  },
-  "homepage": "https://github.com/de-ai/design-engine-extract#readme",
-  "dependencies": {
-    "axe-puppeteer": "^1.0.0",
-    "chalk": "^2.4.2",
-    "inline-css": "^2.5.1",
-    "jimp": "^0.9.3",
-    "json-stringify-safe": "^5.0.1",
-    "jszip": "^3.3.0",
-    "lang-js-utils": "file:///labor/projects/npm_modules/lang-js-utils",
-    "node-fetch": "^2.6.0",
-    "project-name": "^1.0.0",
-    "puppeteer": "^1.20.0",
-    "string-strip-html": "^4.3.7",
-    "web-resource-inliner": "^4.3.3"
-  },
-  "devDependencies": {
-    "@wordpress/jest-puppeteer-axe": "^1.4.0",
-    "jest": "^25.1.0"
-  }
+    "name": "pair-team",
+    "version": "0.10.0",
+    "description": "A CLI to create a design engine playground",
+    "main": "src/index.js",
+    "bin": {
+        "pair-team": "src/index.js"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "adobe",
+        "adobe-xd",
+        "adobexd",
+        "adobe-plugin",
+        "xd-plugin",
+        "figma-plugin",
+        "sketch",
+        "sketch-plugin",
+        "design-system",
+        "design",
+        "design-systems",
+        "design-module",
+        "design-npm-module",
+        "design-package",
+        "design-plugin",
+        "design-system",
+        "designer-system",
+        "design-system-module",
+        "designer-module",
+        "designer-plugin",
+        "css-design-system",
+        "css",
+        "node",
+        "node-module",
+        "javascript-module",
+        "javascript",
+        "code-to-design",
+        "design-to-code"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/de-ai/design-engine-playground.git"
+    },
+    "author": "Design Engine, Inc",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/de-ai/design-engine-playground/issues"
+    },
+    "homepage": "https://github.com/de-ai/design-engine-playground#readme",
+    "files": [
+        "src/"
+    ],
+    "dependencies": {
+        "arg": "^4.1.1",
+        "axe-puppeteer": "^1.1.0",
+        "bluebird": "^3.7.0",
+        "chalk": "^2.4.2",
+        "esm": "^3.2.25",
+        "inline-css": "^2.6.3",
+        "inquirer": "^7.0.0",
+        "jimp": "^0.16.1",
+        "json-stringify-safe": "^5.0.1",
+        "jszip": "^3.5.0",
+        "node-cache": "^5.1.2",
+        "node-fetch": "^2.6.0",
+        "node-persist": "^3.0.5",
+        "open": "^6.4.0",
+        "project-name": "^1.0.0",
+        "puppeteer": "^5.2.1",
+        "shelljs": "^0.8.3",
+        "string-strip-html": "^5.0.2",
+        "web-resource-inliner": "^5.0.0"
+    },
+    "devDependencies": {
+        "@wordpress/jest-puppeteer-axe": "^1.9.0",
+        "jest": "^26.4.2"
+    }
 }

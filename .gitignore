@@ -1,16 +1,15 @@
 
 #-- os stuff --#
-.DS_STORE
-._DS_STORE
+.*DS_Store
+
 
 #-- ide stuff --#
 .idea
+/.history
 
-#-- compile stuff --#
-build
 
 #-- npm stuff --#
-node_modules
+/node_modules
 
 
 #-- testing --#
@@ -18,10 +17,5 @@ node_modules
 *.test.js
 
 #-- tmp stuff --#
-tmp
+/tmp
 
-
-
-
-#-- creds --#
-crypto-creds.json
