@@ -31,7 +31,6 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 		await page.emulate(device);
 		await page.goto(url, { waitUntil : 'networkidle0' });
 
-		// const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && !/^https?:\/\/.+https?:\/\//.test(link)));
 		const links = (await Promise.all((await page.$$('a', async(nodes)=> (nodes))).map(async(node)=> (await (await node.getProperty('href')).jsonValue())))).filter((link)=> (link !== url && link.startsWith(url) && !/^https?:\/\/.+https?:\/\//.test(link)));
 		await page.close();
 
@@ -147,6 +146,9 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 			CHROME_MACOS,
 			CHROME_WINDOWS,
 			GALAXY_S8,
+			puppeteer.devices['Pixel 2 XL'],
+			puppeteer.devices['Nexus 10'],
+			puppeteer.devices['iPhone SE'],
 			puppeteer.devices['iPhone X'],
 			puppeteer.devices['iPhone 8'],
 			{ ...puppeteer.devices['iPad Pro landscape'], name : 'iPad Pro' },

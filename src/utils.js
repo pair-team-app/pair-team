@@ -2,34 +2,12 @@
 'use strict';
 
 import Jimp from 'jimp';
-import JSZip from 'jszip';
 
 import {
-	HTML_STRIP_TAGS, ZIP_OPTS,
 	IMAGE_MAX_HEIGHT, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT,
 	IMAGE_DEVICE_SCALER, IMAGE_THUMB_SCALER,
 	DeviceExtract, LinkExtract
 } from './consts';
-
-
-const captureElementImage = async (page, element, scale=1.0, padding=[0, 0, 0, 0])=> {
-	const boundingBox = await element.boundingBox();
-	// const title = (await (await element.getProperty('tagName')).jsonValue()).toLowerCase();
-
-	//	console.log('::|::', 'captureElementImage() -=[¡]=-  // init', { page : page.url(), element : title, boundingBox }, '::|::');
-	let ts = Date.now();
-	const pngData = (boundingBox && boundingBox.width * boundingBox.height > 0) ? await page.screenshot({
-		type : 'png',
-		clip : {
-			x      : boundingBox.x - padding[3],
-			y      : boundingBox.y - padding[0],
-			width  : boundingBox.width + (padding[1] + padding[3]),
-			height : boundingBox.height + (padding[0] + padding[2])
-		}
-	}) : null;
-
-	return (genImageSizes({ pngData, scale }, false));
-};
 
 
 const captureScreenImage = async(page, scale=1.0)=> {
@@ -165,7 +143,7 @@ const processNode = async(device, page, node)=> {
 	// console.log('::::', attribs);
 	// console.log('::|::', { device : (await device).name, tag: (await (await node.getProperty('tagName')).jsonValue()).toLowerCase(), title, bounds: await node.boundingBox(), backendNodeID, properties : await (await node.getProperties()).values(), remoteObject: node._remoteObject });
 
-	const { full, cropped, thumb } = (tag === 'body') ? await captureScreenImage(page, 1 / device.viewport.deviceScaleFactor) : await captureElementImage(page, node, 1 / device.viewport.deviceScaleFactor);
+	const { full, cropped, thumb } = await captureScreenImage(page, 1 / device.viewport.deviceScaleFactor);
 	const bounds = { ...(await node.boundingBox()), ...cropped.size };
 
 	const { nodeID } = domNodeIDs(flatDOM, backendNodeID);
