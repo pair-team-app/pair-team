@@ -1,0 +1,21 @@
+{
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "extends": [
+    "es6",
+    "node"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "es6",
+    "node"
+  ],
+  "rules": {
+    "strict":"error"
+  }
+}

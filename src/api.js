@@ -31,6 +31,7 @@ export async function createPlayground({ doc, device, userID, teamID, buildID })
 // 		console.log('RESP -->>', await response.text());
  	}
 
+
 	const { playground } = response;
   console.log('ADD_PLAYGROUND -->>', { id : playground.id, buildID : playground.build_id });
 
@@ -39,6 +40,40 @@ export async function createPlayground({ doc, device, userID, teamID, buildID })
 		buildID : playground.build_id << 0
 	});
 }
+
+
+export async function createTeam(userID, team) {
+	console.log('createTeam()', JSON.stringify({ userID, team }, null, 2));
+
+	const cfg = { ...FETCH_CFG,
+		body : JSON.stringify({ ...FETCH_CFG.body,
+			action  : 'CREATE_TEAM',
+			payload : { ...team,
+				description : null,
+				invites     : null,
+				user_id     : team
+			}
+		})
+	};
+
+	let response = await fetch(API_ENDPT_URL, cfg);
+	try {
+		response = await response.json();
+
+	} catch (e) {
+		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
+	}
+
+	console.log('LOGIN -->>', response);
+
+	const status = parseInt(response.status, 16);
+	if (status !== 0x11) {
+		return (response.user);
+	}
+
+	return (response.user);
+}
+
 
 
 export async function disableAccount(user) {
@@ -89,7 +124,6 @@ export async function loginUser(user) {
 		return (response.user);
 	}
 
-
 	return (response.user);
 }
 
@@ -102,7 +136,9 @@ export async function registerUser(user) {
 			action  : 'REGISTER',
 			payload : { ...user,
 				username : user.email,
-				type     : 'npm'
+				types    : ['user', 'signup', 'npm'],
+				avatar   : null,
+				invite   : null
 			}
 		})
 	};
@@ -116,13 +152,7 @@ export async function registerUser(user) {
 	}
 
 	console.log('REGISTER -->>', response);
-
-	const status = parseInt(response.status, 16);
-	if (status === 0x11) {
-		return (response.user);
-	}
-
-	return (await loginUser(user));
+	return (response.user);
 }
 
 

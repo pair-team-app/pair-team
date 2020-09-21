@@ -9,7 +9,6 @@ import inquirer from 'inquirer';
 import { registerUser, teamLookup } from '../api';
 import { initCache, getUser, writeTeam, writeUser, reset, flushAll, getTeam } from '../cache';
 import { CMD_PARSE, ChalkStyles } from '../consts';
-import { checkDir, normalize, prettyPrint, savePackage } from '../utils';
 
 promise.promisifyAll(require('fs'));
 
@@ -35,6 +34,31 @@ promise.promisifyAll(require('fs'));
 	}
 
 	if (!user || user.id === 0) {
+		const prompt = await inquirer.prompt([{
+			type     : 'list',
+			name     : 'init',
+			message  : 'Signup or login to continue',
+			choices  : [
+				'Signup',
+				'Login',
+				new inquirer.Separator(),
+				'Quit'
+			],
+			filter   : (val)=> (val.toLowerCase())
+		}]);
+
+		const { init } = prompt;
+		if (init === 'signup') {
+			require('./signup');
+
+
+		} else if (init === 'login') {
+			require('./login');
+
+		} else {
+			return;
+		}
+
 		const questions = [{
 			type     : 'input',
 			name     : 'email',

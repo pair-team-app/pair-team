@@ -21,14 +21,7 @@ const captureScreenImage = async(page, scale=1.0)=> {
 	const pngData = await page.screenshot({
 		type           : 'png',
 		fullPage       : true,
-		omitBackground : true,
-		// clip           : { ...await (await page.$('body', async(node)=> (node))).boundingBox() }
-		// clip           : {
-		// 	x      : 0,
-		// 	y      : 0,
-		// 	width  : boundingBox.width,
-		// 	height : Math.min(IMAGE_MAX_HEIGHT, boundingBox.height)
-		//  }
+		omitBackground : false
 	});
 
 	return (genImageSizes({ pngData, scale }, false, { page }));

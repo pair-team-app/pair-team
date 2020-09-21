@@ -7,6 +7,8 @@ import { Strings } from 'lang-js-utils';
 import projectName from 'project-name';
 import puppeteer from 'puppeteer';
 
+import inquirer from 'inquirer';
+
 import { createPlayground, sendPlaygroundComponents } from '../api';
 import { initCache, getAll, dropPlayground, getPlayground, writePlayground, getTeam, getUser, hasUser, hasTeam, writeUser, writeTeam } from '../cache';
 import { consts, funcs, globals, listeners } from '../config';
@@ -216,8 +218,8 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 		return (renders);
 	};
 
-
 	await initCache();
+
 
 	await writeUser({
 		id : 542
