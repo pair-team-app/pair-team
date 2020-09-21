@@ -64,7 +64,7 @@ export async function createTeam(userID, team) {
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 	}
 
-	console.log('LOGIN -->>', response);
+	console.log('LOGIN -->>', { response });
 
 	const status = parseInt(response.status, 16);
 	if (status !== 0x11) {
@@ -105,7 +105,9 @@ export async function loginUser(user) {
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'LOGIN',
-			payload : { ...user }
+			payload : { ...user,
+				username : user.email
+			}
 		})
 	};
 
@@ -115,6 +117,7 @@ export async function loginUser(user) {
 
 	} catch (e) {
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
+		console.log('RESP -->>', await response.text());
 	}
 
 	console.log('LOGIN -->>', response);

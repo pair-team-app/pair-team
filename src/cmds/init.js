@@ -72,7 +72,7 @@ promise.promisifyAll(require('fs'));
 			validate : (val)=> (val.length > 0)
 		}];
 
-		const prompt = await inquirer.prompt(questions);
+		// const prompt = await inquirer.prompt(questions);
 		// user = await registerUser(prompt);
 		// await writeUser({ ...user });
 
@@ -91,15 +91,15 @@ promise.promisifyAll(require('fs'));
 		title : 'Pair URL 1'
 	});
 
-	const pkgPath = await checkDir();
-	const prompt = await inquirer.prompt({
-		type    : 'confirm',
-		name    : 'append',
-		message : 'Allow PairURL to add a postbuild script to your project\'s package.json?'
-	});
+	// const pkgPath = await checkDir();
+	// const prompt = await inquirer.prompt({
+	// 	type    : 'confirm',
+	// 	name    : 'append',
+	// 	message : 'Allow PairURL to add a postbuild script to your project\'s package.json?'
+	// });
 
-	if (prompt.append) {
-		fs.readFileAsync(pkgPath).then(JSON.parse).then(appendPostbuild).then(prettyPrint).then((data)=> savePackage(data, pkgPath)).catch(console.log);
-		console.log('%s Successfully modified postbuild script.', ChalkStyles.INFO);
-	}
+	// if (prompt.append) {
+	// 	fs.readFileAsync(pkgPath).then(JSON.parse).then(appendPostbuild).then(prettyPrint).then((data)=> savePackage(data, pkgPath)).catch(console.log);
+	// 	console.log('%s Successfully modified postbuild script.', ChalkStyles.INFO);
+	// }
 })();

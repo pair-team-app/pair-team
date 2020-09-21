@@ -5,8 +5,8 @@
 import promise from 'bluebird';
 import inquirer from 'inquirer';
 
-import { loginUser, teamLookup } from '../api';
-import { initCache, writeTeam, writeUser, reset, flushAll, getTeam, createTeam } from '../cache';
+import { loginUser, createTeam, teamLookup } from '../api';
+import { initCache, writeTeam, writeUser, reset, flushAll, getTeam } from '../cache';
 import { ChalkStyles } from '../consts';
 
 promise.promisifyAll(require('fs'));
@@ -35,7 +35,7 @@ promise.promisifyAll(require('fs'));
     return(await loginUser(prompt));
   };
 
-  const teamForm = (teams)=> {
+  const teamForm = async(teams)=> {
     const prompt = await inquirer.prompt([{
 			type     : 'list',
 			name     : 'team',
@@ -66,7 +66,7 @@ promise.promisifyAll(require('fs'));
 
   let user = null;
   while (!user) {
-    user = await registerForm();
+    user = await loginForm();
     if (!user) {
       console.log('%s Email address already in use!', ChalkStyles.ERROR);
     }
@@ -74,10 +74,11 @@ promise.promisifyAll(require('fs'));
 
   await writeUser(user);
 
-  let team = null;
-  while (!team) {
-    team = teamForm(user.id);
-  }
+  // let team = null;
+  // //const team = await teamLookup(user);
+  // while (!team) {
+  //   team = teamForm(user.id);
+  // }
 
-  await writeTeam(team);const team = await teamLookup(user);
+  // await writeTeam(team);
 })();

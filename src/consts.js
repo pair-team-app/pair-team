@@ -19,7 +19,8 @@ export const CMD_PARSE = 'npx pair-url --parse';
 export const HOSTNAME = '127.0.0.1';
 export const PORT = 1066;
 
-export const API_ENDPT_URL = (process.env.NODE_ENV === 'development') ? 'http://api.pairurl.devlocal/current/gateway.php' : 'https://api.pair.team/current/pairurl.php';
+// export const API_ENDPT_URL = (process.env.NODE_ENV === 'development') ? 'http://api.pairurl.devlocal/current/gateway.php' : 'https://api.pair.team/current/gateway.php';
+export const API_ENDPT_URL = 'http://192.168.1.64/api.pair.team/current/gateway.php';
 
 export const IMAGE_MAX_HEIGHT = 1800;
 export const IMAGE_THUMB_WIDTH = 224;
