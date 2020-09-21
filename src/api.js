@@ -42,21 +42,25 @@ export async function createPlayground({ doc, device, userID, teamID, buildID })
 }
 
 
-export async function createTeam(userID, team) {
-	console.log('createTeam()', JSON.stringify({ userID, team }, null, 2));
+export async function createTeam(userID, title) {
+	console.log('createTeam()', { userID, title });
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'CREATE_TEAM',
-			payload : { ...team,
+			payload : { title,
+				user_id     : userID,
 				description : null,
-				invites     : null,
-				user_id     : team
+				image       : null,
+				rules       : null,
+				invites     : null
 			}
 		})
 	};
 
 	let response = await fetch(API_ENDPT_URL, cfg);
+	// console.log('RESP -->>', await response.text());
+
 	try {
 		response = await response.json();
 
@@ -64,14 +68,9 @@ export async function createTeam(userID, team) {
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 	}
 
-	console.log('LOGIN -->>', { response });
+	console.log('CREATE_TEAM -->>', { response });
 
-	const status = parseInt(response.status, 16);
-	if (status !== 0x11) {
-		return (response.user);
-	}
-
-	return (response.user);
+	return (response.team);
 }
 
 
@@ -100,7 +99,7 @@ export async function disableAccount(user) {
 
 
 export async function loginUser(user) {
-	console.log('loginUser()', JSON.stringify({ user }, null, 2));
+	// console.log('loginUser()', JSON.stringify({ user }, null, 2));
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
@@ -120,7 +119,7 @@ export async function loginUser(user) {
 		console.log('RESP -->>', await response.text());
 	}
 
-	console.log('LOGIN -->>', response);
+	// console.log('LOGIN -->>', response);
 
 	const status = parseInt(response.status, 16);
 	if (status !== 0x11) {
@@ -191,13 +190,13 @@ export async function sendPlaygroundComponents({ userID, teamID, buildID, playgr
 }
 
 
-export async function teamLookup(user) {
-	console.log('teamLookup()', JSON.stringify({ user }, null, 2));
+export async function teamLookup(userID) {
+	console.log('teamLookup()', JSON.stringify({ userID }, null, 2));
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
 			action  : 'TEAM_LOOKUP',
-			payload : { user_id : user.id }
+			payload : { user_id : userID }
 		})
 	};
 
@@ -213,4 +212,32 @@ export async function teamLookup(user) {
 	console.log('TEAM_LOOKUP -->>', { team });
 
 	return (team);
+}
+
+
+
+export async function userTeams(userID) {
+	// console.log('userTeams()', JSON.stringify({ userID }, null, 2));
+
+	const cfg = { ...FETCH_CFG,
+		body : JSON.stringify({ ...FETCH_CFG.body,
+			action  : 'USER_TEAMS',
+			payload : { user_id : userID }
+		})
+	};
+
+	let response = await fetch(API_ENDPT_URL, cfg);
+	// console.log('RESP -->>', await response.text());
+
+	try {
+		response = await response.json();
+
+	} catch (e) {
+		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
+	}
+
+	const { teams } = response;
+	// console.log('USER_TEAMS -->>', { teams });
+
+	return (teams);
 }

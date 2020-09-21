@@ -6,90 +6,82 @@ import promise from 'bluebird';
 import fs from 'fs';
 import inquirer from 'inquirer';
 
-import { registerUser, teamLookup } from '../api';
+import { userTeams } from '../api';
 import { initCache, getUser, writeTeam, writeUser, reset, flushAll, getTeam } from '../cache';
 import { CMD_PARSE, ChalkStyles } from '../consts';
+import { userLogin } from './login';
+import { userRegister } from './signup';
 
 promise.promisifyAll(require('fs'));
 
 
 (async()=> {
-	const appendPostbuild = async(data)=> {
-		let scripts = await normalize(data);
-		scripts['postbuild'] = (!scripts.hasOwnProperty('postbuild')) ? CMD_PARSE : `${scripts['postbuild']}${(!scripts['postbuild'].includes(CMD_PARSE)) ? ` && ${CMD_PARSE}` : ''}`;
-
-		data.scripts = scripts;
-		return (data);
-	};
-
-
 	await initCache();
 //	await flushAll();
 
-	let user = await getUser();
-	let team = await getTeam();
-	console.log('USER >>', user);
-	if (!user) {
-		await reset();
-	}
+	// console.log('USER >>', user);
+	// if (!user) {
+	// 	await reset();
+	// }
 
-	if (!user || user.id === 0) {
-		const prompt = await inquirer.prompt([{
-			type     : 'list',
-			name     : 'init',
-			message  : 'Signup or login to continue',
-			choices  : [
-				'Signup',
-				'Login',
-				new inquirer.Separator(),
-				'Quit'
+	const createTeamForm = async(userID)=> {
+    const prompt = await inquirer.prompt([{
+      type     : 'input',
+      name     : 'title',
+      message  : 'Enter a new team name',
+      validate : (val)=> (val.length > 0)
+    }]);
+
+    return(await createTeam(userID, prompt.title));
+  };
+
+	const teamsForm = async(userID, teams)=> {
+    const prompt = await inquirer.prompt([{
+			type    : 'rawlist',
+			name    : 'teamID',
+      loop    : false,
+			message : 'Choose an existing team, or create a new one',
+			choices : [
+        'Create New',
+        new inquirer.Separator(),
+				...teams.reverse().map(({ id, title })=> ({ name : title, value : id }))
 			],
-			filter   : (val)=> (val.toLowerCase())
+			filter  : (input)=> (input << 0)
 		}]);
 
-		const { init } = prompt;
-		if (init === 'signup') {
-			require('./signup');
+    const { teamID } = prompt;
+    return((teamID === 0) ? await createTeamForm(userID) : teams.find(({ id })=> (id === teamID)));
+  };
 
 
-		} else if (init === 'login') {
-			require('./login');
+	const prompt = await inquirer.prompt([{
+		type     : 'rawlist',
+		name     : 'init',
+		message  : 'Signup or login to continue',
+		choices  : [
+			'Signup',
+			'Login',
+			new inquirer.Separator(),
+			'Quit'
+		],
+		filter   : (val)=> (val.toLowerCase())
+	}]);
 
-		} else {
-			return;
-		}
-
-		const questions = [{
-			type     : 'input',
-			name     : 'email',
-			message  : 'Enter Email Address',
-			validate : (val)=> ((/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(String(val))))
-		}, {
-			type     : 'password',
-			name     : 'password',
-			mask     : '*',
-			message  : 'Enter Password',
-			validate : (val)=> (val.length > 0)
-		}];
-
-		// const prompt = await inquirer.prompt(questions);
-		// user = await registerUser(prompt);
-		// await writeUser({ ...user });
-
-		// const team = await teamLookup(user);
-		// await writeTeam(team);
+	const { init } = prompt;
+	if (init === 'quit') {
+		return;
 	}
 
-	// team = await getTeam();
-	if (!team || team.id === 0) {
-		// const team = await teamLookup(user);
-		await writeTeam(team);
-	}
+	const user = (init === 'signup') ? await userRegister() : await userLogin();
+	const teams = await userTeams(user.id);
+  const team = (teams.length === 0) ? await createTeamForm(user.id) : await teamsForm(user.id, teams);
 
-	await writeTeam({
-		id : 87,
-		title : 'Pair URL 1'
-	});
+  console.log('¡!¡!¡!¡!', { user, team });
+
+	// await writeTeam({
+	// 	id : 87,
+	// 	title : 'Pair URL 1'
+	// });
 
 	// const pkgPath = await checkDir();
 	// const prompt = await inquirer.prompt({

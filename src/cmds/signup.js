@@ -12,7 +12,8 @@ import { ChalkStyles } from '../consts';
 promise.promisifyAll(require('fs'));
 
 
-(async()=> {
+// (async()=> {
+export async function userRegister() {
 	await initCache();
 	await flushAll();
   await reset();
@@ -35,7 +36,7 @@ promise.promisifyAll(require('fs'));
     return(await registerUser(prompt));
   };
 
-  const teamForm = (userID)=> {
+  const teamForm = async(userID)=> {
     const questions = [{
       type     : 'input',
       name     : 'title',
@@ -55,11 +56,6 @@ promise.promisifyAll(require('fs'));
   }
 
   await writeUser(user);
-
-  let team = null;
-  while (!team) {
-    team = teamForm(user.id);
-  }
-
-  await writeTeam(team);
-})();
+  return (user);
+// })();
+}
