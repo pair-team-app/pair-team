@@ -131,7 +131,7 @@ export async function loginUser(user) {
 
 
 export async function registerUser(user) {
-	console.log('registerUser()', JSON.stringify({ user }, null, 2));
+	// console.log('registerUser()', JSON.stringify({ user }, null, 2));
 
 	const cfg = { ...FETCH_CFG,
 		body : JSON.stringify({ ...FETCH_CFG.body,
@@ -153,7 +153,7 @@ export async function registerUser(user) {
 		console.log('%s Couldn\'t parse response! %s', ChalkStyles.ERROR, e);
 	}
 
-	console.log('REGISTER -->>', response);
+	// console.log('REGISTER -->>', response);
 	return (response.user);
 }
 
