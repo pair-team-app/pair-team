@@ -21,8 +21,8 @@ import {
 	processView,
 } from '../utils';
 
-const deviceRender = DeviceExtract.DESKTOP_MOBILE;
-const LINK_EXTRACT = LinkExtract.FIRST;
+const deviceRender = DeviceExtract.DESKTOP;
+const LINK_EXTRACT = LinkExtract.FULL;
 
 
 (async()=> {
@@ -164,7 +164,8 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 			const { doc, elements } = await parsePage(browser, device, url, { ind : 0, tot : 0 });
 
 			const links = await parseLinks(browser, device, url);
-			doc.links = links.map((link)=> (`/${link.split('/').slice(3).join('/')}`));
+			// doc.links = links.map((link)=> (`/${link.split('/').slice(3).join('/')}`));
+			doc.links = links.map((link)=> (`/${link.split('/').join('/')}`));
 			console.log(`${ChalkStyles.INFO} ${ChalkStyles.DEVICE(device.name)} Parsing ${ChalkStyles.NUMBER(links.length)} add\'l ${Strings.pluralize('view', links.length)}: [ ${doc.links.map((link)=> (ChalkStyles.PATH(link))).join(', ')} ]…`);
 
 			await Promise.all(links.map(async(link, i)=> {
@@ -221,14 +222,14 @@ const LINK_EXTRACT = LinkExtract.FIRST;
 	await initCache();
 
 
-	await writeUser({
-		id : 542
-	});
+	// await writeUser({
+	// 	id : 542
+	// });
 
-	await writeTeam({
-		id    : 87,
-		title : 'Pair URL 1'
-	});
+	// await writeTeam({
+	// 	id    : 87,
+	// 	title : 'Pair URL 1'
+	// });
 
 	const allCache = await getAll();
 	// console.log('//////--> allCache', { user : allCache.user.id, team : allCache.team.id });

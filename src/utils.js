@@ -12,7 +12,7 @@ import {
 
 const captureScreenImage = async(page, scale=1.0)=> {
 		// console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale }, '::|::');
-		console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { scale }, '::|::');
+		console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url().split('/').slice(-1).join(), scale }, '::|::');
 	// console.log('::|::', 'captureScreenImage() -=[¡]=-  // init', { page : page.url(), scale, boundingBox : await (await page.$('body', async(node)=> (node))).boundingBox() }, '::|::');
 
 	// const boundingBox = await (await page.$('body', async(node)=> (node))).boundingBox();
@@ -21,7 +21,8 @@ const captureScreenImage = async(page, scale=1.0)=> {
 	const pngData = await page.screenshot({
 		type           : 'png',
 		fullPage       : true,
-		omitBackground : false
+		omitBackground : true,
+		path           : `${page.url().split('/').slice(-1).join()}.png`
 	});
 
 	return (genImageSizes({ pngData, scale }, false, { page }));
@@ -221,7 +222,9 @@ export async function processView(device, page, doc, html) {
 	const { full, cropped, thumb } = images;
 
 	// console.log(':::: PAGE ::::', { device : device.name, tag, bounds, images, nodeID: node_id, backendNodeID : backend_node_id, remoteObject: remote_obj });
-	// console.log('::::', { thumb, cropped, full });
+	// if (pathname.includes('legal')) {
+		console.log('::::', { bounds, full });
+	// }
 	// console.log('::|::', 'processView() -=[¡i¡]=-  // AX init', { cropped, page : page.url() }, '::|::');
 
 	const { failed, passed, aborted } = axeReport;
