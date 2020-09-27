@@ -175,7 +175,7 @@ export async function sendPlaygroundComponents({ userID, teamID, buildID, playgr
 
 	let response = await fetch(API_ENDPT_URL, cfg);
 //	console.log('RESP -->>', response.headers.raw(), await response.text());
-//	console.log('RESP -->>', await response.text());
+	console.log('RESP -->>', await response.text());
 
 	try {
 		response = await response.json();

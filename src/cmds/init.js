@@ -126,5 +126,7 @@ promise.promisifyAll(require('fs'));
 	const teams = await userTeams(user.id);
   const team = (teams.length === 0) ? await createTeamForm(user.id) : await teamsForm(user.id, teams);
 
-  console.log('¡!¡!¡!¡!', { user, team });
+	await writeTeam(team);
+
+  console.log('¡!¡!¡!¡!', { user : await getUser(), team : await getTeam() });
 })();

@@ -21,7 +21,7 @@ import {
 	processView,
 } from '../utils';
 
-const deviceRender = DeviceExtract.DESKTOP;
+const deviceRender = DeviceExtract.DESKTOP_MOBILE;
 const LINK_EXTRACT = LinkExtract.FULL;
 
 
@@ -177,7 +177,7 @@ const LINK_EXTRACT = LinkExtract.FULL;
 				});
 			}));
 
-			// console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2).length, elements : JSON.stringify(elements, null, 2).length }, '|:|');
+			console.log('DEV OUTPUT -->\n', '|:|', { doc : JSON.stringify(doc, null, 2) }, '|:|');
 	// 		console.log('::::', JSON.stringify(doc.axTree, null, 2));
 			// console.log('::::', 'doc.links', { links : doc.links });
 	// 		console.log('::::', 'links', JSON.stringify(doc.links, null, 0).length);
@@ -231,18 +231,20 @@ const LINK_EXTRACT = LinkExtract.FULL;
 	// 	title : 'Pair URL 1'
 	// });
 
-	const allCache = await getAll();
+	// const allCache = await getAll();
 	// console.log('//////--> allCache', { user : allCache.user.id, team : allCache.team.id });
-	console.log('////// CACHE //////-->', { allCache });
-	console.log('////// user //////-->', { hasTeam : await hasTeam(), hasUser : await hasUser(), getUser : await getUser(), getTeam : await getTeam() });
+	// console.log('////// CACHE //////-->', { allCache });
+	// console.log('////// user //////-->', { hasTeam : await hasTeam(), hasUser : await hasUser(), getUser : await getUser(), getTeam : await getTeam() });
 
 
-	if (!(await hasTeam()) || !(await hasUser())) {
-		require('./init');
-	}
+	// if (!(await hasTeam()) || !(await hasUser())) {
+	// 	require('./init');
+	// }
 
 	const user = await getUser();
 	const team = await getTeam();
+
+	console.log('¡!¡!¡!¡!', { user : await getUser(), team : await getTeam() });
 
 	const startDate = Date.now();
 	const server = await makeServer(async()=> {
