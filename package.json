@@ -1,7 +1,7 @@
 {
     "name": "pair-team",
     "version": "0.10.0",
-    "description": "A CLI to create a design engine playground",
+    "description": "A CLI to create a paired build",
     "main": "src/index.js",
     "bin": {
         "pair-team": "src/index.js"
@@ -13,14 +13,6 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [
-        "adobe",
-        "adobe-xd",
-        "adobexd",
-        "adobe-plugin",
-        "xd-plugin",
-        "figma-plugin",
-        "sketch",
-        "sketch-plugin",
         "design-system",
         "design",
         "design-systems",
@@ -44,14 +36,14 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/de-ai/design-engine-playground.git"
+        "url": "git+https://github.com/pair-team-app/pair-team.git"
     },
-    "author": "Design Engine, Inc",
+    "author": "Pair Team, Inc",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/de-ai/design-engine-playground/issues"
+        "url": "https://github.com/pair-team-app/pair-team/issues"
     },
-    "homepage": "https://github.com/de-ai/design-engine-playground#readme",
+    "homepage": "https://github.com/pair-team-app/pair-team#readme",
     "files": [
         "src/"
     ],
@@ -63,7 +55,6 @@
         "esm": "^3.2.25",
         "inquirer": "^7.0.0",
         "jimp": "^0.16.1",
-        "jshint": "^2.12.0",
         "json-stringify-safe": "^5.0.1",
         "node-fetch": "^2.6.0",
         "node-persist": "^3.0.5",
@@ -74,6 +65,7 @@
     },
     "devDependencies": {
         "@wordpress/jest-puppeteer-axe": "^1.9.0",
-        "jest": "^26.4.2"
+        "jest": "^26.4.2",
+        "jshint": "^2.12.0"
     }
 }
