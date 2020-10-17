@@ -1,22 +1,11 @@
-## design-engine-playground
+## pair-team
 
-A CLI for syncing code components to design components in Adobe XD, Figma, & Sketch. Design Engine mirrors code components with design components for teams to consume & re-use keeping design systems intact.
+A CLI for syncing node JS projects with developers and designers.
 
 ### Install
 ```js
-$ npm install design-engine-playground
-$ npm link design-engine-playground
-```
-
-Add postbuild script to your `package.json`:
-```js
-"postbuild": "design-engine-playground"
+$ npm install pair-team
+$ npm link pair-team
 ```
 
 ### Usage
-
-> Design engine playground will automatically start after `npm run build` completes successfully.
-
-> A new playground will be created on its first run. Additionally, a new browser tab will open to the playground URL on first run.
-
-> Future builds will only display execution logs and your link to the playground URL 
